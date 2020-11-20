@@ -454,7 +454,7 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     if not parameterNode.GetParameter("Invert"):
       parameterNode.SetParameter("Invert", "false")
 
-  def process(self, inputVolume, rightLungMaskNode, leftLungMaskNode, rightLungMaskID, leftLungMaskID, bullMin,bullMax,ventMin,ventMax,infMin,infMax,collMin,collMax, vessMin, vessMax, genstat_cb, delprev_cb, inccov_cb, show3D_cb, showResult=True):
+  def process(self, inputVolume, rightLungMaskNode, leftLungMaskNode, rightLungMaskID, leftLungMaskID, bullMin,bullMax,ventMin,ventMax,infMin,infMax,collMin,collMax, vessMin, vessMax, genstat_cb, delprev_cb, inccov_cb, show3D_cb):
     """
     Run the processing algorithm.
     Can be used without GUI widget.
@@ -882,6 +882,11 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     
     # center viewports
     slicer.app.applicationLogic().FitSliceToAll()
+    # center 3D view
+    layoutManager = slicer.app.layoutManager()
+    threeDWidget = layoutManager.threeDWidget(0)
+    threeDView = threeDWidget.threeDView()
+    threeDView.resetFocalPoint()
     # bug workaround
     slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName('False lung masked volume'))
     # ensure user sees the new segments
@@ -955,17 +960,18 @@ class CTLungAnalyzerTest(ScriptedLoadableModuleTest):
       -1000.,
       -950.,
       -950.,
-      -470.,
-      -470.,
-      -20.,
-      -20.,
-      240.,
-      240.,
+      -750.,
+      -750.,
+      -400.,
+      -400.,
+      400.,
+      400.,
       1000.,
-      True,
-      True,  
-      False, # 3D 
-      False) # COVID
+      True,  # gen stat
+      True,  # delete prev seg
+      False, # COVID 
+      False) # 3D
+ 
     self.delayDisplay('Processing ends.')
 
     self.delayDisplay('Test passed')
