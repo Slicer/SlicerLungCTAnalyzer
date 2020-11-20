@@ -135,6 +135,7 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.saveThresholdsButton.connect('clicked(bool)', self.onSaveThresholdsButton)
     self.ui.loadThresholdsButton.connect('clicked(bool)', self.onLoadThresholdsButton)
     self.ui.segmentsOnOffButton.connect('clicked(bool)', self.onSegmentsOnOffButton)
+    self.ui.dwnlCOVIDDataButton.connect('clicked(bool)', self.ondwnlCOVIDDataButton)
     
 
     #Range sliders
@@ -375,6 +376,34 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     #slicer.util.infoDisplay("Test")
     logging.info('Restoring defaults')
     self.initThresholds()
+
+
+  def ondwnlCOVIDDataButton(self):
+    #slicer.util.infoDisplay("Test")
+    if slicer.util.confirmYesNoDisplay("This will clear all data in your current storage node. Are you sure ?", windowTitle=None, parent=None):
+        logging.info('Clearing the MRLM node')
+        slicer.mrmlScene.Clear()
+        import SampleData
+        logging.info('Registering the sample data')
+        registerSampleData()
+        logging.info('Downloading COVID Chest CT dataset')
+        inputVolume = SampleData.downloadSample('DemoChestCT')
+        logging.info('Downloading COVID Lung Mask segmentation')
+        lungMaskSegmentation = SampleData.downloadSample('DemoLungMasks')
+        logging.info('Centering.')
+        # center viewports
+        slicer.app.applicationLogic().FitSliceToAll()
+        # center 3D view
+        layoutManager = slicer.app.layoutManager()
+        threeDWidget = layoutManager.threeDWidget(0)
+        threeDView = threeDWidget.threeDView()
+        threeDView.resetFocalPoint()
+        logging.info('Normal end of loading procedure.')
+    else: 
+        logging.info('Aborted.')
+    
+
+
 
   def onSegmentsOnOffButton(self):
     if segmentationDisplayNode.GetVisibility2D(): 

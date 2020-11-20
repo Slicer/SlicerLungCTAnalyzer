@@ -14,7 +14,7 @@
    <item>
     <widget class="QLabel" name="label_8">
      <property name="text">
-      <string>Lung CT Analyzer V 1.1</string>
+      <string>Lung CT Analyzer V 1.2</string>
      </property>
     </widget>
    </item>
@@ -29,6 +29,9 @@
      <layout class="QFormLayout" name="formLayout_3">
       <item row="1" column="0">
        <widget class="QCheckBox" name="generateStatisticsCheckBox">
+        <property name="toolTip">
+         <string>Check this to generate a statistics table. </string>
+        </property>
         <property name="text">
          <string>generate statistics</string>
         </property>
@@ -39,6 +42,9 @@
       </item>
       <item row="2" column="0">
        <widget class="QCheckBox" name="deletePreviousSegmentationsCheckBox">
+        <property name="toolTip">
+         <string>Check this if you want to always delete the previous segmentations to avoid cluttering of your storage node. </string>
+        </property>
         <property name="text">
          <string>delete previous segmentations</string>
         </property>
@@ -49,6 +55,9 @@
       </item>
       <item row="3" column="0">
        <widget class="QCheckBox" name="show3DCheckBox">
+        <property name="toolTip">
+         <string>Check this to display the final results as a spatial reconstruction. This will prolong the calculations to about 1-2 minutes. </string>
+        </property>
         <property name="text">
          <string>Show result in 3D (longer waiting time)</string>
         </property>
@@ -77,6 +86,9 @@
       </item>
       <item row="8" column="0" colspan="2">
        <widget class="QCheckBox" name="includeCovidEvaluationCheckBox">
+        <property name="toolTip">
+         <string>Check this to include an extended result table. </string>
+        </property>
         <property name="text">
          <string>include COVID-19 evaluation </string>
         </property>
@@ -319,6 +331,9 @@
       </item>
       <item row="13" column="0">
        <widget class="QPushButton" name="restoreDefaultsButton">
+        <property name="toolTip">
+         <string>Press this button to restore the threshold sliders to their default positions. </string>
+        </property>
         <property name="text">
          <string>Restore defaults</string>
         </property>
@@ -326,6 +341,9 @@
       </item>
       <item row="14" column="0">
        <widget class="QPushButton" name="saveThresholdsButton">
+        <property name="toolTip">
+         <string>Press this button to save the current position of the threshold buttons. </string>
+        </property>
         <property name="text">
          <string>Save Thresholds</string>
         </property>
@@ -333,6 +351,9 @@
       </item>
       <item row="15" column="0">
        <widget class="QPushButton" name="loadThresholdsButton">
+        <property name="toolTip">
+         <string>Press this button to load the previously saved  positions of the threshold buttons. </string>
+        </property>
         <property name="text">
          <string>Load Thresholds</string>
         </property>
@@ -340,6 +361,9 @@
       </item>
       <item row="17" column="0">
        <widget class="QPushButton" name="segmentsOnOffButton">
+        <property name="toolTip">
+         <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
+        </property>
         <property name="text">
          <string>Segments on/off</string>
         </property>
@@ -357,6 +381,22 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="13" column="1">
+       <widget class="QPushButton" name="dwnlCOVIDDataButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Ignored">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Pressing this button will download a COVID-19 demo dataset. All currently loaded data will be erased. </string>
+        </property>
+        <property name="text">
+         <string>Demo COVID Data</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
