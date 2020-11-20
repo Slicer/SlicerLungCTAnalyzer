@@ -737,7 +737,38 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled","False")
     segStatLogic.computeStatistics()
     segStatLogic.exportToTable(resultsTableNode)
+
+    minThrCol = vtk.vtkFloatArray()
+    minThrCol.SetName("MinThr")
+    minThrCol.InsertNextValue(bullMin) #right lung
+    minThrCol.InsertNextValue(ventMin)
+    minThrCol.InsertNextValue(infMin)
+    minThrCol.InsertNextValue(collMin)
+    minThrCol.InsertNextValue(vessMin)
+    minThrCol.InsertNextValue(bullMin) #left lung
+    minThrCol.InsertNextValue(ventMin)
+    minThrCol.InsertNextValue(infMin)
+    minThrCol.InsertNextValue(collMin)
+    minThrCol.InsertNextValue(vessMin)
+
+    maxThrCol = vtk.vtkFloatArray()
+    maxThrCol.SetName("MaxThr")
+    maxThrCol.InsertNextValue(bullMax) #right lung
+    maxThrCol.InsertNextValue(ventMax)
+    maxThrCol.InsertNextValue(infMax)
+    maxThrCol.InsertNextValue(collMax)
+    maxThrCol.InsertNextValue(vessMax)
+    maxThrCol.InsertNextValue(bullMax) #left lung
+    maxThrCol.InsertNextValue(ventMax)
+    maxThrCol.InsertNextValue(infMax)
+    maxThrCol.InsertNextValue(collMax)
+    maxThrCol.InsertNextValue(vessMax)
+    
+    column = resultsTableNode.AddColumn(minThrCol)
+    column = resultsTableNode.AddColumn(maxThrCol)
+
     segStatLogic.showTable(resultsTableNode)
+    
     # Add a new column
     # Compute segment volumes
     
