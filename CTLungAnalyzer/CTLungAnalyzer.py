@@ -501,7 +501,7 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
 
     # Compute 
     masterVolumeNode = inputVolume
- 
+
     if delprev_cb: 
         # Delete previous clutter segments if present (and requested) 
         logging.info('Delete clutter segments ....')
@@ -561,6 +561,8 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     #segmentEditorNode.SetMaskSegmentID(segmentationNode.GetSegmentation().GetNthSegmentID(0))
     #segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments)
     #segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedInsideSingleSegment)
+    if not segmentEditorWidget.effectByName("Mask volume"):
+        slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
 
     logging.info('Get Display node ....')
     global segmentationDisplayNode
@@ -745,9 +747,10 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     slicer.mrmlScene.RemoveNode(segmentEditorNode)
 
    # Delete existing model storage nodes so that they will be recreated with default settings
-    existingTableNodes = slicer.util.getNodesByClass('vtkMRMLTableNode')
-    for TableNode in existingTableNodes:
-        slicer.mrmlScene.RemoveNode(TableNode)
+    if delprev_cb: 
+        existingTableNodes = slicer.util.getNodesByClass('vtkMRMLTableNode')
+        for TableNode in existingTableNodes:
+            slicer.mrmlScene.RemoveNode(TableNode)
 
     logging.info('Create Tables ....')        
     # Compute segment volumes
@@ -820,9 +823,9 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
     _functionalLeftVolume = _venLeftLung
     _functionalTotalVolume = _venRightLung + _venLeftLung
 
-    _affectedRightVolume = _infRightLung + _colRightLung
-    _affectedLeftVolume = _infLeftLung + _colLeftLung
-    _affectedTotalVolume = _infRightLung + _colRightLung + _infLeftLung + _colLeftLung
+    _affectedRightVolume = _infRightLung + _colRightLung + _bulRightLung
+    _affectedLeftVolume = _infLeftLung + _colLeftLung + _bulLeftLung
+    _affectedTotalVolume = _infRightLung + _colRightLung + _infLeftLung + _colLeftLung + _bulRightLung+ _bulLeftLung
     
     _rightLungVolumePerc = round(_rightLungVolume * 100. / _totalLungVolume)
     _leftLungVolumePerc = round(_leftLungVolume * 100. / _totalLungVolume)
