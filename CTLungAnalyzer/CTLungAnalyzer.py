@@ -130,11 +130,13 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.inputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputSegmentationSelected)
         self.ui.rightLungMaskSelector.connect("currentSegmentChanged(QString)", self.updateParameterNodeFromGUI)
         self.ui.leftLungMaskSelector.connect("currentSegmentChanged(QString)", self.updateParameterNodeFromGUI)
+        self.ui.toggleInputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleInputSegmentationVisibility2D)
+        self.ui.toggleInputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleInputSegmentationVisibility3D)
 
         # Output options
         self.ui.generateStatisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        self.ui.rightLungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-        self.ui.leftLungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+        self.ui.lungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+        self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.includeCovidEvaluationCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -166,10 +168,10 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.applyButton.connect('clicked()', self.onApplyButton)
         self.ui.showResultsTablePushButton.connect('clicked()', self.onShowResultsTable)
         self.ui.showCovidResultsTableButton.connect('clicked()', self.onShowCovidResultsTable)
-        self.ui.toggleSegmentsVisibility.connect('clicked()', self.onToggleSegmentsVisibility)
-        self.ui.showSegmentsIn3DPushButton.connect('clicked()', self.onShowSegmentsIn3D)
-        self.ui.toggleRightVolumeRenderingPushButton.connect('clicked()', lambda side='right': self.onToggleVolumeRendering(side))
-        self.ui.toggleLeftVolumeRenderingPushButton.connect('clicked()', lambda side='left': self.onToggleVolumeRendering(side))
+        self.ui.toggleOutputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility2D)
+        self.ui.toggleOutputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility3D)
+        self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
+        self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
@@ -295,8 +297,8 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
         self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
 
-        self.ui.rightLungMaskedVolumeSelector.setCurrentNode(self.logic.rightLungMaskedVolume)
-        self.ui.leftLungMaskedVolumeSelector.setCurrentNode(self.logic.leftLungMaskedVolume)
+        self.ui.lungMaskedVolumeSelector.setCurrentNode(self.logic.lungMaskedVolume)
+        self.ui.outputSegmentationSelector.setCurrentNode(self.logic.outputSegmentation)
         self.ui.outputResultsTableSelector.setCurrentNode(self.logic.resultsTable)
         self.ui.volumeRenderingPropertyNodeSelector.setCurrentNode(self.logic.volumeRenderingPropertyNode)
         self.ui.outputCovidResultsTableSelector.setCurrentNode(self.logic.covidResultsTable)
@@ -312,6 +314,13 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
             self.ui.applyButton.toolTip = "Select input volume and right and left lung masks"
             self.ui.applyButton.enabled = False
+
+        self.ui.showResultsTablePushButton.enabled = (self.logic.resultsTable is not None)
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.toggleInputSegmentationVisibility2DPushButton.enabled = (self.logic.inputSegmentation is not None)
+        self.ui.toggleInputSegmentationVisibility3DPushButton.enabled = (self.logic.inputSegmentation is not None)
+        self.ui.toggleOutputSegmentationVisibility2DPushButton.enabled = (self.logic.outputSegmentation is not None)
+        self.ui.toggleOutputSegmentationVisibility3DPushButton.enabled = (self.logic.outputSegmentation is not None)
 
         # If thresholds are changed then volume rendering needs an update, too
         self.volumeRenderingPropertyUpdateTimer.start()
@@ -347,8 +356,8 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         thresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
         self.logic.thresholds = thresholds
 
-        self.logic.rightLungMaskedVolume = self.ui.rightLungMaskedVolumeSelector.currentNode()
-        self.logic.leftLungMaskedVolume = self.ui.leftLungMaskedVolumeSelector.currentNode()
+        self.logic.lungMaskedVolume = self.ui.lungMaskedVolumeSelector.currentNode()
+        self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
         self.logic.resultsTable = self.ui.outputResultsTableSelector.currentNode()
         self.logic.volumeRenderingPropertyNode = self.ui.volumeRenderingPropertyNodeSelector.currentNode()
         self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
@@ -386,7 +395,6 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             volumeProperty.GetScalarOpacity().DeepCopy(scalarOpacity)
             volumeProperty.GetRGBTransferFunction().DeepCopy(colorTransferFunction)
 
-
     def onInputSegmentationSelected(self, segmentationNode):
         if segmentationNode == self.logic.inputSegmentation:
             # no change
@@ -405,7 +413,7 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.updateParameterNodeFromGUI()
 
-    def adjustSliders(self, lowerSlider, slider, upperSlider):
+    def adjustThresholdSliders(self, lowerSlider, slider, upperSlider):
         wasBlocked = slider.blockSignals(True)
         if lowerSlider:
             wasBlockedLower = lowerSlider.blockSignals(True)
@@ -421,21 +429,22 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             upperSlider.blockSignals(wasBlockedUpper)
         slider.blockSignals(wasBlocked)
         self.updateParameterNodeFromGUI()
+        self.logic.updateMaskedVolumeColors()
 
     def onBullaRangeWidgetChanged(self):
-      self.adjustSliders(None, self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget)
+      self.adjustThresholdSliders(None, self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget)
 
     def onVentilatedRangeWidgetChanged(self):
-      self.adjustSliders(self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget)
+      self.adjustThresholdSliders(self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget)
 
     def onInfiltratedRangeWidgetChanged(self):
-      self.adjustSliders(self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget)
+      self.adjustThresholdSliders(self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget)
 
     def onCollapsedRangeWidgetChanged(self):
-      self.adjustSliders(self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget, self.ui.VesselsRangeWidget)
+      self.adjustThresholdSliders(self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget, self.ui.VesselsRangeWidget)
 
     def onVesselsRangeWidgetChanged(self):
-      self.adjustSliders(self.ui.CollapsedRangeWidget, self.ui.VesselsRangeWidget, None)
+      self.adjustThresholdSliders(self.ui.CollapsedRangeWidget, self.ui.VesselsRangeWidget, None)
 
     def onSaveThresholdsButton(self):
         logging.info('Saving custom thresholds')
@@ -497,17 +506,13 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             traceback.print_exc()
 
     def onShowResultsTable(self):
-        tableNode = self._parameterNode.GetNodeReference("OutputResultsTable")
-        if tableNode:
-            self.logic.showTable(tableNode)
+        self.logic.showTable(self.logic.resultsTable)
 
     def onShowCovidResultsTable(self):
-        tableNode = self._parameterNode.GetNodeReference("OutputCovidResultsTable")
-        if tableNode:
-            self.logic.showTable(tableNode)
+        self.logic.showTable(self.logic.covidResultsTable)
 
-    def onToggleSegmentsVisibility(self):
-        segmentationDisplayNode = self._parameterNode.GetNodeReference("InputSegmentation").GetDisplayNode()
+    def toggleSegmentationVisibility2D(self, segmentationNode):
+        segmentationDisplayNode = segmentationNode.GetDisplayNode()
         if segmentationDisplayNode.GetVisibility2D():
             logging.info('Segments visibility off')
             segmentationDisplayNode.Visibility2DOff()
@@ -515,11 +520,29 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             logging.info('Segments visibility on')
             segmentationDisplayNode.Visibility2DOn()
 
-    def onShowSegmentsIn3D(self):
-        segmentationNode = self.logic.inputSegmentation
-        segmentationNode.CreateClosedSurfaceRepresentation()
+    def toggleSegmentationVisibility3D(self, segmentationNode):
+        if segmentationNode.GetDisplayNode().GetVisibility3D() and segmentationNode.GetSegmentation().ContainsRepresentation("Closed surface"):
+          segmentationNode.GetDisplayNode().SetVisibility3D(False)
+        else:
+          segmentationNode.CreateClosedSurfaceRepresentation()
+          segmentationNode.GetDisplayNode().SetVisibility3D(True)
 
-    def onToggleVolumeRendering(self, side):
+    def onToggleInputSegmentationVisibility2D(self):
+        self.toggleSegmentationVisibility2D(self.logic.inputSegmentation)
+
+    def onToggleInputSegmentationVisibility3D(self):
+        self.toggleSegmentationVisibility3D(self.logic.inputSegmentation)
+
+    def onToggleOutputSegmentationVisibility2D(self):
+        self.toggleSegmentationVisibility2D(self.logic.outputSegmentation)
+
+    def onToggleOutputSegmentationVisibility3D(self):
+        self.toggleSegmentationVisibility3D(self.logic.outputSegmentation)
+
+    def onMaskedVolumeDisplay3D(self):
+        # Make sure the masked volume is up-to-date
+        self.logic.createMaskedVolume()
+
         volumeRenderingPropertyNode = self.logic.volumeRenderingPropertyNode
         if not volumeRenderingPropertyNode:
             self.logic.volumeRenderingPropertyNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLVolumePropertyNode", "LungCT")
@@ -527,25 +550,36 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.updateVolumeRenderingProperty()
 
         volRenLogic = slicer.modules.volumerendering.logic()
-        volumeNode = self.logic.rightLungMaskedVolume if side=="right" else self.logic.leftLungMaskedVolume
+        volumeNode = self.logic.lungMaskedVolume
         displayNode = volRenLogic.GetFirstVolumeRenderingDisplayNode(volumeNode)
         if displayNode:
-          wasVisible = displayNode.GetVisibility()
+            wasVisible = displayNode.GetVisibility()
         else:
-          displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
-          wasVisible = False
+            displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
+            wasVisible = False
 
         displayNode.SetAndObserveVolumePropertyNodeID(volumeRenderingPropertyNode.GetID())
         displayNode.SetVisibility(not wasVisible)
-        # Makes the view displayed off-centered if multi-volume rendering is used
-        # if not wasVisible:
-        #     # center 3D view
-        #     layoutManager = slicer.app.layoutManager()
-        #     if layoutManager.threeDViewCount > 0:
-        #         threeDWidget = layoutManager.threeDWidget(0)
-        #         threeDView = threeDWidget.threeDView()
-        #         threeDView.resetFocalPoint()
 
+        if not wasVisible:
+            # center 3D view
+            layoutManager = slicer.app.layoutManager()
+            if layoutManager.threeDViewCount > 0:
+                threeDWidget = layoutManager.threeDWidget(0)
+                threeDView = threeDWidget.threeDView()
+                threeDView.resetFocalPoint()
+
+    def onMaskedVolumeDisplay2D(self):
+        self.logic.showLungMaskedVolumeIn2D = not self.logic.showLungMaskedVolumeIn2D
+
+        if self.logic.showLungMaskedVolumeIn2D:
+            # Make sure the masked volume is up-to-date
+            self.logic.createMaskedVolume()
+            self.logic.updateMaskedVolumeColors()
+            slicer.util.setSliceViewerLayers(background=self.logic.inputVolume,
+                foreground=self.logic.lungMaskedVolume, foregroundOpacity=0.5)
+        else:
+          slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
 
 #
 # CTLungAnalyzerLogic
@@ -614,81 +648,46 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("ComputeCovid"):
             parameterNode.SetParameter("ComputeCovid", "false")
 
-    def createMaskedVolume(self, side, segmentID):
-        # Get output volume
-        volumesLogic = slicer.modules.volumes.logic()
-        if side == "right":
-            if not self.rightLungMaskedVolume:
-                self.rightLungMaskedVolume = volumesLogic.CloneVolumeGeneric(self.inputVolume.GetScene(), self.inputVolume,
-                    "Right lung masked volume", False)
-            outputVolume = self.rightLungMaskedVolume
-        else:
-            if not self.leftLungMaskedVolume:
-                self.leftLungMaskedVolume = volumesLogic.CloneVolumeGeneric(self.inputVolume.GetScene(), self.inputVolume,
-                    "Left lung masked volume", False)
-            outputVolume = self.leftLungMaskedVolume
-
-        # Mask segment
-        try:
-            import SegmentEditorMaskVolumeLib
-        except ImportError:
-            raise ValueError("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
-
-        fillValue = self.inputVolume.GetImageData().GetScalarRange()[0]  # volume's minimum value
-        SegmentEditorMaskVolumeLib.SegmentEditorEffect.maskVolumeWithSegment(self.inputSegmentation, segmentID,
-            "FILL_OUTSIDE", [fillValue], self.inputVolume, outputVolume)
-
-    def createThresholdedSegments(self, side, maskSegmentId):
-        # Create temporary segment editor to get access to effects
-        logging.info('Create temporary segment editor ....')
-        segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
-        segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-        segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
-        segmentEditorWidget.setSegmentationNode(self.inputSegmentation)
-        segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
-
-        segmentationDisplayNode = self.inputSegmentation.GetDisplayNode()
-        segmentation = self.inputSegmentation.GetSegmentation()
+    def updateMaskedVolumeColors(self):
+        if not self.lungMaskedVolume:
+            return
+        #colorNode = slicer.mrmlScene.GetNodeByID(self.lungMaskedVolume.GetDisplayNode().GetColorNodeID())
+        colorNode = self.lungMaskedVolume.GetDisplayNode().GetColorNode()
+        if colorNode.GetAttribute("Category") != "LungCT":
+            colorNode = slicer.vtkMRMLProceduralColorNode()
+            colorNode.SetAttribute("Category", "LungCT")
+            colorNode.SetType(slicer.vtkMRMLColorTableNode.User)
+            colorNode.SetHideFromEditors(False)
+            slicer.mrmlScene.AddNode(colorNode)
+            self.lungMaskedVolume.GetDisplayNode().SetAndObserveColorNodeID(colorNode.GetID())
 
         thresholds = self.thresholds
-        # Create segments by thresholding
+
+        self.lungMaskedVolume.GetDisplayNode().AutoWindowLevelOff()
+        self.lungMaskedVolume.GetDisplayNode().SetWindowLevelMinMax(
+            thresholds[self.segmentProperties[0]['thresholds'][0]],
+            thresholds[self.segmentProperties[-1]['thresholds'][1]])
+
+        colorTransferFunction = vtk.vtkDiscretizableColorTransferFunction()
+        #colorTransferFunction.AddRGBPoint(-3000.0, 0.0, 0.0, 0.0)
+        colorTransferFunction.AddRGBPoint(0.0, 0.0, 0.0, 0.0)
+        first = True
+        offset = -self.lungMaskedVolume.GetDisplayNode().GetWindowLevelMin()
+        scale = 255.0/(self.lungMaskedVolume.GetDisplayNode().GetWindowLevelMax()-self.lungMaskedVolume.GetDisplayNode().GetWindowLevelMin())
         for segmentProperty in self.segmentProperties:
-            segmentName = f"{segmentProperty['name']} {side}"
-            segmentId = segmentation.GetSegmentIdBySegmentName(segmentName)
-            if not segmentId:
-                # Create segment
-                logging.info('Creating segment '+segmentName)
-                segmentId = self.inputSegmentation.GetSegmentation().AddEmptySegment(segmentName)
-                # Set color
-                segmentId = segmentation.GetSegmentIdBySegmentName(segmentName)
-                segmentationDisplayNode.SetSegmentOpacity3D(segmentId, 0.2)
-                #segmentationDisplayNode.SetSegmentOpacity(segmentId,1.)
-                segmentationDisplayNode.SetSegmentOpacity2DFill(segmentId, 0.5)
-                segmentationDisplayNode.SetSegmentOpacity2DOutline(segmentId, 0.2)
-                r, g, b = segmentProperty['color']
-                segmentation.GetSegment(segmentId).SetColor(r,g,b)  # color should be set in segmentation node
-            else:
-                logging.info('Updating segment '+segmentName)
-                slicer.modules.segmentations.logic().ClearSegment(self.inputSegmentation, segmentId)
-
-            # Fill by thresholding
-            #logging.info('Thresholding '+segmentName)
-            logging.info('Thresholding using mask segment id '+maskSegmentId)
-            segmentEditorNode.SetMaskSegmentID(maskSegmentId)
-            segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone)
-            segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedInsideSingleSegment)
-            segmentEditorNode.SetSelectedSegmentID(segmentId)
-            segmentEditorWidget.setActiveEffectByName("Threshold")
-            effect = segmentEditorWidget.activeEffect()
             lowerThresholdName, upperThresholdName = segmentProperty["thresholds"]
-            effect.setParameter("MinimumThreshold", str(thresholds[lowerThresholdName]))
-            effect.setParameter("MaximumThreshold", str(thresholds[upperThresholdName]))
-            effect.self().onApply()
-
-        # Delete temporary segment editor
-        segmentEditorWidget = None
-        slicer.mrmlScene.RemoveNode(segmentEditorNode)
+            lowerThreshold = (thresholds[lowerThresholdName]+offset)*scale
+            upperThreshold = (thresholds[upperThresholdName]-0.1+offset)*scale
+            if first:
+              colorTransferFunction.AddRGBPoint(lowerThreshold-0.1, 0.0, 0.0, 0.0)
+              first = False
+            color = segmentProperty["color"]
+            colorTransferFunction.AddRGBPoint(lowerThreshold, *color)
+            colorTransferFunction.AddRGBPoint(upperThreshold, *color)
+        colorTransferFunction.AddRGBPoint(upperThreshold+0.1, 0.0, 0.0, 0.0)
+        #colorTransferFunction.AddRGBPoint(5000, 0.0, 0.0, 0.0)
+        colorTransferFunction.AddRGBPoint(255, 0.0, 0.0, 0.0)
+        colorNode.SetAndObserveColorTransferFunction(colorTransferFunction)
 
     def createResultsTable(self):
         logging.info('Create results table')
@@ -700,7 +699,7 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         import SegmentStatistics
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
-        segStatLogic.getParameterNode().SetParameter("Segmentation", self.inputSegmentation.GetID())
+        segStatLogic.getParameterNode().SetParameter("Segmentation", self.outputSegmentation.GetID())
         segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
         segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True" if self.generateStatistics else "False")
         segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
@@ -910,20 +909,28 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetParameter("IncludeCovidEvaluation", "true" if on else "false")
 
     @property
-    def rightLungMaskedVolume(self):
-        return self.getParameterNode().GetNodeReference("RightLungMaskedVolume")
+    def lungMaskedVolume(self):
+        return self.getParameterNode().GetNodeReference("LungMaskedVolume")
 
-    @rightLungMaskedVolume.setter
-    def rightLungMaskedVolume(self, node):
-        self.getParameterNode().SetNodeReferenceID("RightLungMaskedVolume", node.GetID() if node else None)
+    @lungMaskedVolume.setter
+    def lungMaskedVolume(self, node):
+        self.getParameterNode().SetNodeReferenceID("LungMaskedVolume", node.GetID() if node else None)
 
     @property
-    def leftLungMaskedVolume(self):
-        return self.getParameterNode().GetNodeReference("LeftLungMaskedVolume")
+    def showLungMaskedVolumeIn2D(self):
+        return self.getParameterNode().GetParameter("ShowLungMaskedVolumeIn2D") == "true"
 
-    @leftLungMaskedVolume.setter
-    def leftLungMaskedVolume(self, node):
-        self.getParameterNode().SetNodeReferenceID("LeftLungMaskedVolume", node.GetID() if node else None)
+    @showLungMaskedVolumeIn2D.setter
+    def showLungMaskedVolumeIn2D(self, on):
+        self.getParameterNode().SetParameter("ShowLungMaskedVolumeIn2D", "true" if on else "false")
+
+    @property
+    def outputSegmentation(self):
+        return self.getParameterNode().GetNodeReference("OutputSegmentation")
+
+    @outputSegmentation.setter
+    def outputSegmentation(self, node):
+        self.getParameterNode().SetNodeReferenceID("OutputSegmentation", node.GetID() if node else None)
 
     @property
     def thresholds(self):
@@ -962,27 +969,23 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         if not segmentationNode:
             raise ValueError("Input lung segmentation node is invalid")
 
-        rightLungMaskSegmentID = self.rightLungMaskSegmentID
-        leftLungMaskSegmentID = self.leftLungMaskSegmentID
-        rightMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(rightLungMaskSegmentID).GetName().upper()
-        leftMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(leftLungMaskSegmentID).GetName().upper()
+        rightMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
+        leftMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
         if ( (rightMaskSegmentName != "RIGHT LUNG" and rightMaskSegmentName != "RIGHT LUNG MASK") or
             (leftMaskSegmentName != "LEFT LUNG" and leftMaskSegmentName != "LEFT LUNG MASK") ):
             if not slicer.util.confirmYesNoDisplay("Warning: segment names are expected to be 'left/right lung' ('left/right lung mask'). Are you sure you want to continue?"):
               raise UserWarning("User cancelled the analysis")
 
-        # Closed surface representation computation can take a long time - disable it (can be enabled later)
-        segmentationNode.RemoveClosedSurfaceRepresentation()
+        maskLabelVolume = self.createMaskedVolume()
 
-        # Create masked volumes
-        self.createMaskedVolume("right", rightLungMaskSegmentID)
-        self.createMaskedVolume("left", leftLungMaskSegmentID)
+        self.createThresholdedSegments(maskLabelVolume)
 
-        # Create thresholded segments
-        self.createThresholdedSegments("right", rightLungMaskSegmentID)
-        self.createThresholdedSegments("left", leftLungMaskSegmentID)
+        # Cleanup
+        maskLabelColorTable = maskLabelVolume.GetDisplayNode().GetColorNode()
+        slicer.mrmlScene.RemoveNode(maskLabelVolume)
+        slicer.mrmlScene.RemoveNode(maskLabelColorTable)
 
-        # Compute analysis results table
+
         self.createResultsTable()
 
         # Compute Covid analysis results table
@@ -992,8 +995,90 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
-        self.rightLungMaskSegmentID = rightLungMaskSegmentID
-        self.leftLungMaskSegmentID = leftLungMaskSegmentID
+    def createMaskedVolume(self):
+        maskLabelVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLLabelMapVolumeNode')
+
+        rightLeftLungSegmentIds = vtk.vtkStringArray()
+        rightLeftLungSegmentIds.InsertNextValue(self.rightLungMaskSegmentID)
+        rightLeftLungSegmentIds.InsertNextValue(self.leftLungMaskSegmentID)
+        slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode(self.inputSegmentation, rightLeftLungSegmentIds, maskLabelVolume, self.inputVolume)
+
+        fillValue = -3000  # self.inputVolume.GetImageData().GetScalarRange()[0]  # volume's minimum value
+        maskVolumeArray = slicer.util.arrayFromVolume(maskLabelVolume)
+
+        if not self.lungMaskedVolume:
+            self.lungMaskedVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Lung masked volume")
+            self.lungMaskedVolume.CreateDefaultDisplayNodes()
+
+        ijkToRas = vtk.vtkMatrix4x4()
+        self.inputVolume.GetIJKToRASMatrix(ijkToRas)
+        self.lungMaskedVolume.SetIJKToRASMatrix(ijkToRas)
+        self.lungMaskedVolume.GetDisplayNode().CopyContent(self.inputVolume.GetDisplayNode())
+
+        import numpy as np
+        inputVolumeArray = slicer.util.arrayFromVolume(self.inputVolume)
+        maskedVolumeArray = np.copy(inputVolumeArray)
+        maskedVolumeArray[maskVolumeArray==0] = fillValue
+        slicer.util.updateVolumeFromArray(self.lungMaskedVolume, maskedVolumeArray)
+
+        return maskLabelVolume
+
+    def createThresholdedSegments(self, maskLabelVolume):
+        # Create color table to store segment names and colors
+        segmentLabelColorTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLColorTableNode')
+        segmentLabelColorTable.SetTypeToUser()
+        segmentLabelColorTable.NamesInitialisedOn()
+        segmentLabelColorTable.SetAttribute("Category", "Segmentations")
+        numberOfSegments = len(self.segmentProperties)*2
+        segmentLabelColorTable.SetNumberOfColors(numberOfSegments+1)
+        segmentLabelColorTable.GetLookupTable().SetRange(0, numberOfSegments)
+        segmentLabelColorTable.GetLookupTable().SetNumberOfTableValues(numberOfSegments+1)
+        segmentLabelColorTable.SetColor(0, "Background", 0.0, 0.0, 0.0, 0.0)
+
+        # Create numpy array to store segments
+        import numpy as np
+        maskVolumeArray = slicer.util.arrayFromVolume(maskLabelVolume)
+        inputVolumeArray = slicer.util.arrayFromVolume(self.inputVolume)
+        segmentArray = np.zeros(inputVolumeArray.shape, np.uint8)
+        thresholds = self.thresholds
+        segmentLabelValue = 0
+        for side in ["right", "left"]:
+            maskLabelValue = 1 if side == "right" else 2
+            for segmentProperty in self.segmentProperties:
+                segmentLabelValue += 1
+                segmentName = f"{segmentProperty['name']} {side}"
+                r, g, b = segmentProperty['color']
+                segmentLabelColorTable.SetColor(segmentLabelValue, segmentName, r, g, b, 1.0)
+                lowerThresholdName, upperThresholdName = segmentProperty["thresholds"]
+                segmentArray[np.logical_and(
+                    maskVolumeArray == maskLabelValue,
+                    inputVolumeArray >= thresholds[lowerThresholdName],
+                    inputVolumeArray < thresholds[upperThresholdName])] = segmentLabelValue
+
+        # Create temporary labelmap volume from numpy array
+        segmentLabelVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLLabelMapVolumeNode')
+        slicer.util.updateVolumeFromArray(segmentLabelVolume, segmentArray)
+        ijkToRas = vtk.vtkMatrix4x4()
+        self.inputVolume.GetIJKToRASMatrix(ijkToRas)
+        segmentLabelVolume.SetIJKToRASMatrix(ijkToRas)
+        segmentLabelVolume.CreateDefaultDisplayNodes()
+        segmentLabelVolume.GetDisplayNode().SetAndObserveColorNodeID(segmentLabelColorTable.GetID())
+
+        # Import labelmap volume to segmentation
+        if not self.outputSegmentation:
+            self.outputSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Lung analysis segmentation")
+            self.outputSegmentation.CreateDefaultDisplayNodes()
+            segmentationDisplayNode = self.outputSegmentation.GetDisplayNode()
+            segmentationDisplayNode.SetOpacity3D(0.2)
+            segmentationDisplayNode.SetOpacity2DFill(0.5)
+            segmentationDisplayNode.SetOpacity2DOutline(0.2)
+        else:
+            self.outputSegmentation.GetSegmentation().RemoveAllSegments()
+        slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(segmentLabelVolume, self.outputSegmentation)
+
+        # Cleanup
+        slicer.mrmlScene.RemoveNode(segmentLabelVolume)
+        slicer.mrmlScene.RemoveNode(segmentLabelColorTable)
 
     def showTable(self, tableNode):
         currentLayout = slicer.app.layoutManager().layout
