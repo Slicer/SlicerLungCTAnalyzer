@@ -6,7 +6,7 @@ Lung CT Analyzer is a new 3D Slicer extension for segmentation and spatial recon
 In CT scans, pulmonary infiltrations as well as non-ventilated areas like emphysema or bullae are usually analyzed visually. 
 Up to now, the extend of these abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
 This especially crucial in the light of the current COVID-19 pandemia, where there are high case loads of patients with severe lung infiltrations, which additionally need meticulous follow up over time.   
-The aim of this project was to develop a software program that enables threedimensional segmentation of the CT data and calculate their individual volumes. 
+The aim of this project was to develop a software program that enables three-dimensional segmentation of the CT data and calculate their individual volumes. 
 3D Slicer (1) is an established an freely available 3D imaging platform for scientific use. Therefore, we chose 3DSlicer and Python as our main developing tool.  
 <br>
 <b>Tutorial</b><br>
@@ -17,28 +17,10 @@ Step 1: Start 3D Slicer
 <li>Load a DICOM chest CT dataset</li>
 </ul>
 
-Step 2: Create lung masks by using the Segment Editor's 'Fill between Slices' function
+Step 2: Create lung masks 
+https://github.com/rbumm/SlicerLungMaskGenerator
 
-<ul>
-  <li>Open 3D Slicer's 'Segment Editor'</li>
-  <li>Create a new segmentation node</li>
-  <li>In this segmentation node, create two new segments. Call one 'Right lung mask', the other one 'Left lung mask'. Please enter the names with exactly one space between words, because the presence of these segments will later be checked using their names.</li>  
-  <li>In the Segment Editor:  select 'Right lung mask' </li>
-  <li>In the Segment Editor:  press 'Draw' </li>
-  <li>Draw a few complete slices around the right lung in axial CT view (red slice) - top to down </li>
-  <li>In the Segment Editor:  select 'Left lung mask' </li>
-  <li>In the Segment Editor:  press 'Draw' </li>
-  <li>Draw a few complete slices around the left lung in axial CT view (red slice) - top to down</li>
-  <li>Then press 'Fill between Slices' in the Segment Editor. </li>
-  <li>Press 'Initialize'</li>
-  <li>Check the segmentation results, improve the results by maybe drawing a few more slices on the lungs if needed, finally press 'Apply'</li>
-  <li>Ready. You have now created two lung masks and may proceed to step 3 </li>
-</ul>
-<br>  
-Step 2 (alternate procedure): Create lung masks by using the Nvidea AIAA in the Segment editor
-<ul>
-  <li>description will follow</li>
-</ul>
+Alternate ways to create lung masks see -> Appendix.  
   
 Step 3: Run Lung CT Analyzer
 
@@ -126,4 +108,29 @@ Image from COVID-19 patient under surveillance, published with patient's permiss
 <br>
 ![screen3](https://user-images.githubusercontent.com/18140094/98555178-e6ab5800-22a1-11eb-8cbf-7dfa3e346b43.jpg)
 
+<br>
+<b>Appendix</b> 
+<br>
+<br>
+Step 2: Create lung masks by using the Segment Editor's 'Fill between Slices' function
 
+<ul>
+  <li>Open 3D Slicer's 'Segment Editor'</li>
+  <li>Create a new segmentation node</li>
+  <li>In this segmentation node, create two new segments. Call one 'Right lung mask', the other one 'Left lung mask'. Please enter the names with exactly one space between words, because the presence of these segments will later be checked using their names.</li>  
+  <li>In the Segment Editor:  select 'Right lung mask' </li>
+  <li>In the Segment Editor:  press 'Draw' </li>
+  <li>Draw a few complete slices around the right lung in axial CT view (red slice) - top to down </li>
+  <li>In the Segment Editor:  select 'Left lung mask' </li>
+  <li>In the Segment Editor:  press 'Draw' </li>
+  <li>Draw a few complete slices around the left lung in axial CT view (red slice) - top to down</li>
+  <li>Then press 'Fill between Slices' in the Segment Editor. </li>
+  <li>Press 'Initialize'</li>
+  <li>Check the segmentation results, improve the results by maybe drawing a few more slices on the lungs if needed, finally press 'Apply'</li>
+  <li>Ready. You have now created two lung masks and may proceed to step 3 </li>
+</ul>
+<br>  
+Step 2 (alternate procedure): Create lung masks by using the Nvidea AIAA in the Segment editor
+<ul>
+  <li>description will follow</li>
+</ul>
