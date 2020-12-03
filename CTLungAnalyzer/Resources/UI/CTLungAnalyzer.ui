@@ -6,111 +6,49 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>507</width>
-    <height>844</height>
+    <width>329</width>
+    <height>715</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>Lung CT Analyzer V 1.2</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
-     <property name="text">
-      <string>Advanced</string>
-     </property>
-     <property name="collapsed">
-      <bool>false</bool>
-     </property>
-     <layout class="QFormLayout" name="formLayout_3">
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="generateStatisticsCheckBox">
-        <property name="toolTip">
-         <string>Check this to generate a statistics table. </string>
-        </property>
-        <property name="text">
-         <string>generate statistics</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="deletePreviousSegmentationsCheckBox">
-        <property name="toolTip">
-         <string>Check this if you want to always delete the previous segmentations to avoid cluttering of your storage node. </string>
-        </property>
-        <property name="text">
-         <string>delete previous segmentations</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="show3DCheckBox">
-        <property name="toolTip">
-         <string>Check this to display the final results as a spatial reconstruction. This will prolong the calculations to about 1-2 minutes. </string>
-        </property>
-        <property name="text">
-         <string>Show result in 3D (longer waiting time)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>BETA, do not use for clinical decision making: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0" colspan="2">
-       <widget class="QCheckBox" name="includeCovidEvaluationCheckBox">
-        <property name="toolTip">
-         <string>Check this to include an extended result table. </string>
-        </property>
-        <property name="text">
-         <string>include COVID-19 evaluation </string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Lung CT Analyzer V 1.2</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="downloadCovidDataButton">
+       <property name="toolTip">
+        <string>Pressing this button will download a COVID-19 demo dataset. All currently loaded data will be erased. </string>
+       </property>
+       <property name="text">
+        <string>Load demo COVID-19 data</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
      <property name="text">
-      <string>Inputs</string>
+      <string>Input image and segmentation</string>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
-      <item row="1" column="0">
+      <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="toolTip">
+         <string>Lung CT volume that will be analyzed. Required.</string>
+        </property>
         <property name="text">
-         <string>Input volume (*)</string>
+         <string>Input lung CT:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="0" column="1">
        <widget class="qMRMLNodeComboBox" name="inputVolumeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -127,7 +65,44 @@
          <bool>false</bool>
         </property>
         <property name="noneEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_17">
+        <property name="toolTip">
+         <string>Lung CT volume that will be analyzed. Required.</string>
+        </property>
+        <property name="text">
+         <string>Input segmentation:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="qMRMLNodeComboBox" name="inputSegmentationSelector">
+        <property name="enabled">
          <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Pick a previously created lung segmentation here.</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLSegmentationNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>false</bool>
         </property>
         <property name="addEnabled">
          <bool>false</bool>
@@ -140,7 +115,10 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
-         <string>Right lung mask (*)</string>
+         <string>Right Lung</string>
+        </property>
+        <property name="indent">
+         <number>20</number>
         </property>
        </widget>
       </item>
@@ -150,7 +128,7 @@
          <string>Pick a previously created right lung mask here. </string>
         </property>
         <property name="segmentationNodeSelectorVisible">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="selectNodeUponCreation">
          <bool>true</bool>
@@ -160,7 +138,10 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>Left lung mask (*)</string>
+         <string>Left Lung</string>
+        </property>
+        <property name="indent">
+         <number>20</number>
         </property>
        </widget>
       </item>
@@ -169,44 +150,93 @@
         <property name="toolTip">
          <string>Pick a previously created left lung mask here</string>
         </property>
+        <property name="segmentationNodeSelectorVisible">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QLabel" name="label_12">
+       <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>(*) = mandatory</string>
+         <string>Density statistics: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="generateStatisticsCheckBox">
+        <property name="toolTip">
+         <string>Check this to generate a statistics table. </string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
       <item row="5" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>COVID-19 evaluation: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QCheckBox" name="includeCovidEvaluationCheckBox">
+        <property name="toolTip">
+         <string>Check this to include an extended result table. </string>
+        </property>
+        <property name="text">
+         <string>Not for clinical decision making!</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
        <widget class="Line" name="line_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="Line" name="line_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
+      <item row="6" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QPushButton" name="toggleInputSegmentationVisibility2DPushButton">
+          <property name="text">
+           <string>Show/hide segments in 2D</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="toggleInputSegmentationVisibility3DPushButton">
+          <property name="text">
+           <string>Show/hide segments in 3D</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Thresholds</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="thresholdsCollapsibleButton">
+     <property name="text">
+      <string>Thresholds</string>
+     </property>
+     <property name="collapsed">
+      <bool>false</bool>
+     </property>
+     <layout class="QFormLayout" name="formLayout_4">
+      <item row="0" column="0">
        <widget class="QLabel" name="label_7">
         <property name="text">
          <string>Bulla / Pneu</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="1">
+      <item row="0" column="1">
        <widget class="ctkRangeWidget" name="BullaRangeWidget">
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -225,14 +255,14 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>Ventilated</string>
         </property>
        </widget>
       </item>
-      <item row="8" column="1">
+      <item row="1" column="1">
        <widget class="ctkRangeWidget" name="VentilatedRangeWidget">
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -251,14 +281,14 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Infiltrated</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="1">
+      <item row="2" column="1">
        <widget class="ctkRangeWidget" name="InfiltratedRangeWidget">
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -277,14 +307,14 @@
         </property>
        </widget>
       </item>
-      <item row="11" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Collapsed</string>
         </property>
        </widget>
       </item>
-      <item row="11" column="1">
+      <item row="3" column="1">
        <widget class="ctkRangeWidget" name="CollapsedRangeWidget">
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -303,14 +333,14 @@
         </property>
        </widget>
       </item>
-      <item row="12" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>Vessels</string>
         </property>
        </widget>
       </item>
-      <item row="12" column="1">
+      <item row="4" column="1">
        <widget class="ctkRangeWidget" name="VesselsRangeWidget">
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -329,72 +359,280 @@
         </property>
        </widget>
       </item>
-      <item row="13" column="0">
-       <widget class="QPushButton" name="restoreDefaultsButton">
-        <property name="toolTip">
-         <string>Press this button to restore the threshold sliders to their default positions. </string>
+      <item row="5" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="loadThresholdsButton">
+          <property name="toolTip">
+           <string>Press this button to load the previously saved  positions of the threshold buttons. </string>
+          </property>
+          <property name="text">
+           <string>Load preset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="saveThresholdsButton">
+          <property name="toolTip">
+           <string>Press this button to save the current position of the threshold buttons. </string>
+          </property>
+          <property name="text">
+           <string>Save preset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="restoreDefaultsButton">
+          <property name="toolTip">
+           <string>Press this button to reset the threshold sliders to their default positions.</string>
+          </property>
+          <property name="text">
+           <string>Reset to default</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="6" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="toggleMaskedVolumeDisplay2DPushButton">
+          <property name="text">
+           <string>Show/hide preview in 2D</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="toggleMaskedVolumeDisplay3DPushButton">
+          <property name="text">
+           <string>Show/hide preview in 3D</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="7" column="0" colspan="2">
+       <widget class="ctkCollapsibleGroupBox" name="CollapsibleGroupBox_2">
+        <property name="title">
+         <string>Volume rendering opacities</string>
         </property>
+        <property name="collapsed">
+         <bool>true</bool>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Bulla / Pneu</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="ctkSliderWidget" name="bullaOpacityWidget">
+           <property name="toolTip">
+            <string>Volume rendering opacity</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="pageStep">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>20.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_19">
+           <property name="text">
+            <string>Ventilated</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="ctkSliderWidget" name="ventilatedOpacityWidget">
+           <property name="toolTip">
+            <string>Volume rendering opacity</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="pageStep">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>20.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.500000000000000</double>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_20">
+           <property name="text">
+            <string>Infiltrated</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="ctkSliderWidget" name="infiltratedOpacityWidget">
+           <property name="toolTip">
+            <string>Volume rendering opacity</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="pageStep">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>20.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_21">
+           <property name="text">
+            <string>Collapsed</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="ctkSliderWidget" name="collapsedOpacityWidget">
+           <property name="toolTip">
+            <string>Volume rendering opacity</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="pageStep">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>20.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_22">
+           <property name="text">
+            <string>Vessels</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="ctkSliderWidget" name="vesselsOpacityWidget">
+           <property name="toolTip">
+            <string>Volume rendering opacity</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="pageStep">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>20.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
+     <property name="text">
+      <string>Statistics</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="showCovidResultsTableButton">
         <property name="text">
-         <string>Restore defaults</string>
+         <string>Show COVID-19 results table</string>
         </property>
        </widget>
       </item>
-      <item row="14" column="0">
-       <widget class="QPushButton" name="saveThresholdsButton">
-        <property name="toolTip">
-         <string>Press this button to save the current position of the threshold buttons. </string>
-        </property>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="showResultsTablePushButton">
         <property name="text">
-         <string>Save Thresholds</string>
+         <string>Show results table</string>
         </property>
        </widget>
       </item>
-      <item row="15" column="0">
-       <widget class="QPushButton" name="loadThresholdsButton">
+      <item row="0" column="0" colspan="2">
+       <widget class="QPushButton" name="applyButton">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="toolTip">
-         <string>Press this button to load the previously saved  positions of the threshold buttons. </string>
+         <string>Run the algorithm.</string>
         </property>
         <property name="text">
-         <string>Load Thresholds</string>
+         <string>Compute results</string>
         </property>
        </widget>
       </item>
-      <item row="17" column="0">
-       <widget class="QPushButton" name="segmentsOnOffButton">
+      <item row="2" column="0">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
         <property name="toolTip">
          <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
         </property>
         <property name="text">
-         <string>Segments on/off</string>
+         <string>Show/hide segments in 2D</string>
         </property>
        </widget>
       </item>
-      <item row="18" column="0">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="13" column="1">
-       <widget class="QPushButton" name="dwnlCOVIDDataButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Ignored">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Pressing this button will download a COVID-19 demo dataset. All currently loaded data will be erased. </string>
-        </property>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
         <property name="text">
-         <string>Demo COVID Data</string>
+         <string>Show/hide segments in 3D</string>
         </property>
        </widget>
       </item>
@@ -402,32 +640,248 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="applyButton">
-     <property name="enabled">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="otutputOptionsCollapsibleButton">
+     <property name="text">
+      <string>Advanced</string>
+     </property>
+     <property name="collapsed">
       <bool>true</bool>
      </property>
-     <property name="toolTip">
-      <string>Run the algorithm.</string>
-     </property>
-     <property name="text">
-      <string>Apply</string>
-     </property>
+     <layout class="QFormLayout" name="formLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>Masked lung CT:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="qMRMLNodeComboBox" name="lungMaskedVolumeSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Node that stores the masked CT (where areas outside the lungs are blanked out)</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLScalarVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new volume</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_23">
+        <property name="text">
+         <string>Volume rendering property:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="qMRMLNodeComboBox" name="volumeRenderingPropertyNodeSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Stores volume rendering settings for 3D preview.</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLVolumePropertyNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new property</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>Output segmentation:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Segmentation node that stores the created segmentation</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLSegmentationNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new volume</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Results table:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputResultsTableSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Table node that stores volumetric analysis results</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLTableNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new table</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>COVID-19 results table:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Table that stores COVID-19 analysis results</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLTableNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new table</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>ctkCollapsibleButton</class>
-   <extends>QWidget</extends>
-   <header>ctkCollapsibleButton.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ctkRangeWidget</class>
-   <extends>QWidget</extends>
-   <header>ctkRangeWidget.h</header>
-  </customwidget>
   <customwidget>
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
@@ -444,6 +898,28 @@
    <extends>qMRMLWidget</extends>
    <header>qMRMLSegmentSelectorWidget.h</header>
   </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleButton</class>
+   <extends>QWidget</extends>
+   <header>ctkCollapsibleButton.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>ctkCollapsibleGroupBox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkRangeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ctkSliderWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkSliderWidget.h</header>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
@@ -458,8 +934,8 @@
      <y>132</y>
     </hint>
     <hint type="destinationlabel">
-     <x>384</x>
-     <y>313</y>
+     <x>316</x>
+     <y>84</y>
     </hint>
    </hints>
   </connection>
@@ -474,8 +950,8 @@
      <y>382</y>
     </hint>
     <hint type="destinationlabel">
-     <x>310</x>
-     <y>340</y>
+     <x>316</x>
+     <y>123</y>
     </hint>
    </hints>
   </connection>
@@ -490,8 +966,104 @@
      <y>402</y>
     </hint>
     <hint type="destinationlabel">
-     <x>310</x>
-     <y>387</y>
+     <x>316</x>
+     <y>143</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>inputSegmentationSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>176</x>
+     <y>9</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>312</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>lungMaskedVolumeSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>233</x>
+     <y>5</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>596</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>outputSegmentationSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>366</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>646</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>outputResultsTableSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>398</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>671</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>volumeRenderingPropertyNodeSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>341</x>
+     <y>300</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>621</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>outputCovidResultsTableSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>327</x>
+     <y>687</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
