@@ -485,8 +485,8 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Run processing when user clicks "Apply" button.
         """
+        qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
         try:
-
             # Compute output
             logging.info('Apply')
             self.logic.process()
@@ -494,13 +494,18 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.onShowResultsTable()
 
             # ensure user sees the new segments
-            segmentationDisplayNode = self._parameterNode.GetNodeReference("InputSegmentation").GetDisplayNode()
-            segmentationDisplayNode.Visibility2DOn()
-            # hide input segments to make results better visible
-            segmentationDisplayNode.SetSegmentVisibility(self.logic.rightLungMaskSegmentID, False)
-            segmentationDisplayNode.SetSegmentVisibility(self.logic.leftLungMaskSegmentID, False)
+            self.logic.outputSegmentation.GetDisplayNode().Visibility2DOn()
 
+            # hide input segments to make results better visible
+            self.logic.inputSegmentation.GetDisplayNode().Visibility2DOff()
+            self.logic.inputSegmentation.GetDisplayNode().Visibility3DOff()
+
+            # hide preview in slice view
+            slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
+
+            qt.QApplication.restoreOverrideCursor()
         except Exception as e:
+            qt.QApplication.restoreOverrideCursor()
             slicer.util.errorDisplay("Failed to compute results: "+str(e))
             import traceback
             traceback.print_exc()
@@ -547,6 +552,7 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if not volumeRenderingPropertyNode:
             self.logic.volumeRenderingPropertyNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLVolumePropertyNode", "LungCT")
             volumeRenderingPropertyNode = self.logic.volumeRenderingPropertyNode
+            volumeRenderingPropertyNode.GetVolumeProperty().ShadeOn()
             self.updateVolumeRenderingProperty()
 
         volRenLogic = slicer.modules.volumerendering.logic()
@@ -560,6 +566,8 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         displayNode.SetAndObserveVolumePropertyNodeID(volumeRenderingPropertyNode.GetID())
         displayNode.SetVisibility(not wasVisible)
+
+        self.logic.updateMaskedVolumeColors()
 
         if not wasVisible:
             # center 3D view
@@ -728,113 +736,109 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
 
     def createCovidResultsTable(self):
 
+        resultsTableNode = self.resultsTable
+        # Add a new column
+        # Compute segment volumes
+
+        bulRightLung = round(float(resultsTableNode.GetCellText(0,3)))
+        venRightLung = round(float(resultsTableNode.GetCellText(1,3)))
+        infRightLung = round(float(resultsTableNode.GetCellText(2,3)))
+        colRightLung = round(float(resultsTableNode.GetCellText(3,3)))
+        vesRightLung = round(float(resultsTableNode.GetCellText(4,3)))
+        bulLeftLung = round(float(resultsTableNode.GetCellText(5,3)))
+        venLeftLung = round(float(resultsTableNode.GetCellText(6,3)))
+        infLeftLung = round(float(resultsTableNode.GetCellText(7,3)))
+        colLeftLung = round(float(resultsTableNode.GetCellText(8,3)))
+        vesLeftLung = round(float(resultsTableNode.GetCellText(9,3)))
+
+        rightLungVolume = bulRightLung + venRightLung + infRightLung + colRightLung - vesRightLung
+        leftLungVolume = bulLeftLung + venLeftLung + infLeftLung + colLeftLung - vesLeftLung
+        totalLungVolume = rightLungVolume + leftLungVolume
+
+        functionalRightVolume = venRightLung
+        functionalLeftVolume = venLeftLung
+        functionalTotalVolume = venRightLung + venLeftLung
+
+        affectedRightVolume = infRightLung + colRightLung + bulRightLung
+        affectedLeftVolume = infLeftLung + colLeftLung + bulLeftLung
+        affectedTotalVolume = infRightLung + colRightLung + infLeftLung + colLeftLung + bulRightLung+ bulLeftLung
+
+        rightLungVolumePerc = round(rightLungVolume * 100. / totalLungVolume)
+        leftLungVolumePerc = round(leftLungVolume * 100. / totalLungVolume)
+        totalLungVolumePerc = 100.
+
+        functionalRightVolumePerc = round(functionalRightVolume * 100. / rightLungVolume)
+        functionalLeftVolumePerc = round(functionalLeftVolume * 100. / leftLungVolume)
+        functionalTotalVolumePerc = round(functionalTotalVolume * 100. / totalLungVolume)
+
+        affectedRightVolumePerc = round(affectedRightVolume * 100. / rightLungVolume)
+        affectedLeftVolumePerc = round(affectedLeftVolume * 100. / leftLungVolume)
+        affectedTotalVolumePerc = round(affectedTotalVolume * 100. / totalLungVolume)
+
+        covidQRight = round(affectedRightVolume / functionalRightVolume,2)
+        covidQLeft = round(affectedLeftVolume / functionalLeftVolume,2)
+        covidQTotal = round(affectedTotalVolume / functionalTotalVolume,2)
+
         if not self.covidResultsTable:
             self.covidResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT COVID-19 analysis results')
         else:
             self.covidResultsTable.RemoveAllColumns()
 
-        resultsTableNode = self.covidResultsTable
-        # Add a new column
-        # Compute segment volumes
+        labelArray = vtk.vtkStringArray()
+        labelArray.SetName("Results")
 
-        _bulRightLung = round(float(resultsTableNode.GetCellText(0,3)))
-        _venRightLung = round(float(resultsTableNode.GetCellText(1,3)))
-        _infRightLung = round(float(resultsTableNode.GetCellText(2,3)))
-        _colRightLung = round(float(resultsTableNode.GetCellText(3,3)))
-        _vesRightLung = round(float(resultsTableNode.GetCellText(4,3)))
-        _bulLeftLung = round(float(resultsTableNode.GetCellText(5,3)))
-        _venLeftLung = round(float(resultsTableNode.GetCellText(6,3)))
-        _infLeftLung = round(float(resultsTableNode.GetCellText(7,3)))
-        _colLeftLung = round(float(resultsTableNode.GetCellText(8,3)))
-        _vesLeftLung = round(float(resultsTableNode.GetCellText(9,3)))
+        rightMlArray = vtk.vtkDoubleArray()
+        rightMlArray.SetName("right (ml)")
+        rightPercentArray = vtk.vtkDoubleArray()
+        rightPercentArray.SetName("right (%)")
 
-        _rightLungVolume = _bulRightLung + _venRightLung + _infRightLung + _colRightLung - _vesRightLung
-        _leftLungVolume = _bulLeftLung + _venLeftLung + _infLeftLung + _colLeftLung - _vesLeftLung
-        _totalLungVolume = _rightLungVolume + _leftLungVolume
+        leftMlArray = vtk.vtkDoubleArray()
+        leftMlArray.SetName("left (ml)")
+        leftPercentArray = vtk.vtkDoubleArray()
+        leftPercentArray.SetName("left (%)")
 
-        _functionalRightVolume = _venRightLung
-        _functionalLeftVolume = _venLeftLung
-        _functionalTotalVolume = _venRightLung + _venLeftLung
+        totalMlArray = vtk.vtkDoubleArray()
+        totalMlArray.SetName("total (ml)")
+        totalPercentArray = vtk.vtkDoubleArray()
+        totalPercentArray.SetName("total (%)")
 
-        _affectedRightVolume = _infRightLung + _colRightLung + _bulRightLung
-        _affectedLeftVolume = _infLeftLung + _colLeftLung + _bulLeftLung
-        _affectedTotalVolume = _infRightLung + _colRightLung + _infLeftLung + _colLeftLung + _bulRightLung+ _bulLeftLung
+        labelArray.InsertNextValue("Lung volume")
+        rightMlArray.InsertNextValue(rightLungVolume)
+        rightPercentArray.InsertNextValue(rightLungVolumePerc)
+        leftMlArray.InsertNextValue(leftLungVolume)
+        leftPercentArray.InsertNextValue(leftLungVolumePerc)
+        totalMlArray.InsertNextValue(totalLungVolume)
+        totalPercentArray.InsertNextValue(totalLungVolumePerc)
+        labelArray.InsertNextValue("Functional volume")
+        rightMlArray.InsertNextValue(functionalRightVolume)
+        rightPercentArray.InsertNextValue(functionalRightVolumePerc)
+        leftMlArray.InsertNextValue(functionalLeftVolume)
+        leftPercentArray.InsertNextValue(functionalLeftVolumePerc)
+        totalMlArray.InsertNextValue(functionalTotalVolume)
+        totalPercentArray.InsertNextValue(functionalTotalVolumePerc)
+        labelArray.InsertNextValue("Affected volume")
+        rightMlArray.InsertNextValue(affectedRightVolume)
+        rightPercentArray.InsertNextValue(affectedRightVolumePerc)
+        leftMlArray.InsertNextValue(affectedLeftVolume)
+        leftPercentArray.InsertNextValue(affectedLeftVolumePerc)
+        totalMlArray.InsertNextValue(affectedTotalVolume)
+        totalPercentArray.InsertNextValue(affectedTotalVolumePerc)
 
-        _rightLungVolumePerc = round(_rightLungVolume * 100. / _totalLungVolume)
-        _leftLungVolumePerc = round(_leftLungVolume * 100. / _totalLungVolume)
-        _totalLungVolumePerc = 100.
+        labelArray.InsertNextValue("CovidQ (affected / functional)")
+        rightMlArray.InsertNextValue(-1)
+        rightPercentArray.InsertNextValue(covidQRight)
+        leftMlArray.InsertNextValue(-1)
+        leftPercentArray.InsertNextValue(covidQLeft)
+        totalMlArray.InsertNextValue(-1)
+        totalPercentArray.InsertNextValue(covidQTotal)
 
-        _functionalRightVolumePerc = round(_functionalRightVolume * 100. / _rightLungVolume)
-        _functionalLeftVolumePerc = round(_functionalLeftVolume * 100. / _leftLungVolume)
-        _functionalTotalVolumePerc = round(_functionalTotalVolume * 100. / _totalLungVolume)
-
-        _affectedRightVolumePerc = round(_affectedRightVolume * 100. / _rightLungVolume)
-        _affectedLeftVolumePerc = round(_affectedLeftVolume * 100. / _leftLungVolume)
-        _affectedTotalVolumePerc = round(_affectedTotalVolume * 100. / _totalLungVolume)
-
-
-        _CovidQ = round(_affectedTotalVolume / _totalLungVolume,2)
-
-        covidResultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode')
-        resTableNode = covidResultsTableNode
-
-        column = resTableNode.AddColumn()
-        column.SetName("Results")
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        resTableNode.AddEmptyRow()
-        col=0
-        resTableNode.SetCellText(0,col,"Right lung volume")
-        resTableNode.SetCellText(1,col,"Left lung volume")
-        resTableNode.SetCellText(2,col,"Total lung volume")
-        resTableNode.SetCellText(4,col,"Functional right volume")
-        resTableNode.SetCellText(5,col,"Functional left volume")
-        resTableNode.SetCellText(6,col,"Functional total volume")
-        resTableNode.SetCellText(8,col,"Affected right volume")
-        resTableNode.SetCellText(9,col,"Affected left volume")
-        resTableNode.SetCellText(10,col,"Affected total volume")
-        resTableNode.SetCellText(12,col,"CovidQ (affected / functional)")
-        column2 = resTableNode.AddColumn()
-        column2.SetName("ml")
-        #covidTableNode.SetCellText(1,1,"Test")
-        col=1
-        resTableNode.SetCellText(0,col,str(_rightLungVolume))
-        resTableNode.SetCellText(1,col,str(_leftLungVolume))
-        resTableNode.SetCellText(2,col,str(_totalLungVolume))
-        resTableNode.SetCellText(4,col,str(_functionalRightVolume))
-        resTableNode.SetCellText(5,col,str(_functionalLeftVolume))
-        resTableNode.SetCellText(6,col,str(_functionalTotalVolume))
-        resTableNode.SetCellText(8,col,str(_affectedRightVolume))
-        resTableNode.SetCellText(9,col,str(_affectedLeftVolume))
-        resTableNode.SetCellText(10,col,str(_affectedTotalVolume))
-        resTableNode.SetCellText(12,col,str(_CovidQ))
-
-        column3 = resTableNode.AddColumn()
-        column3.SetName("%")
-        col=2
-        resTableNode.SetCellText(0,col,str(_rightLungVolumePerc))
-        resTableNode.SetCellText(1,col,str(_leftLungVolumePerc))
-        resTableNode.SetCellText(2,col,str(_totalLungVolumePerc))
-        resTableNode.SetCellText(4,col,str(_functionalRightVolumePerc))
-        resTableNode.SetCellText(5,col,str(_functionalLeftVolumePerc))
-        resTableNode.SetCellText(6,col,str(_functionalTotalVolumePerc))
-        resTableNode.SetCellText(8,col,str(_affectedRightVolumePerc))
-        resTableNode.SetCellText(9,col,str(_affectedLeftVolumePerc))
-        resTableNode.SetCellText(10,col,str(_affectedTotalVolumePerc))
-
-        resTableNode.Modified()
-
-        return covidResultsTableNode
+        self.covidResultsTable.AddColumn(labelArray)
+        self.covidResultsTable.AddColumn(rightMlArray)
+        self.covidResultsTable.AddColumn(rightPercentArray)
+        self.covidResultsTable.AddColumn(leftMlArray)
+        self.covidResultsTable.AddColumn(leftPercentArray)
+        self.covidResultsTable.AddColumn(totalMlArray)
+        self.covidResultsTable.AddColumn(totalPercentArray)
 
     @property
     def inputVolume(self):
@@ -976,7 +980,7 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
             if not slicer.util.confirmYesNoDisplay("Warning: segment names are expected to be 'left/right lung' ('left/right lung mask'). Are you sure you want to continue?"):
               raise UserWarning("User cancelled the analysis")
 
-        maskLabelVolume = self.createMaskedVolume()
+        maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
 
         self.createThresholdedSegments(maskLabelVolume)
 
@@ -984,7 +988,6 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         maskLabelColorTable = maskLabelVolume.GetDisplayNode().GetColorNode()
         slicer.mrmlScene.RemoveNode(maskLabelVolume)
         slicer.mrmlScene.RemoveNode(maskLabelColorTable)
-
 
         self.createResultsTable()
 
@@ -995,7 +998,7 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
-    def createMaskedVolume(self):
+    def createMaskedVolume(self, keepMaskLabelVolume=False):
         maskLabelVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLLabelMapVolumeNode')
 
         rightLeftLungSegmentIds = vtk.vtkStringArray()
@@ -1021,7 +1024,12 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         maskedVolumeArray[maskVolumeArray==0] = fillValue
         slicer.util.updateVolumeFromArray(self.lungMaskedVolume, maskedVolumeArray)
 
-        return maskLabelVolume
+        if keepMaskLabelVolume:
+            return maskLabelVolume
+        else:
+            maskLabelColorTable = maskLabelVolume.GetDisplayNode().GetColorNode()
+            slicer.mrmlScene.RemoveNode(maskLabelVolume)
+            slicer.mrmlScene.RemoveNode(maskLabelColorTable)
 
     def createThresholdedSegments(self, maskLabelVolume):
         # Create color table to store segment names and colors

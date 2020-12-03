@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>335</width>
+    <width>329</width>
     <height>715</height>
    </rect>
   </property>
@@ -674,7 +674,7 @@
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Pick the input volume (the chest CT volume) to the algorithm.</string>
+         <string>Node that stores the masked CT (where areas outside the lungs are blanked out)</string>
         </property>
         <property name="nodeTypes">
          <stringlist>
@@ -705,141 +705,19 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_14">
+       <widget class="QLabel" name="label_23">
         <property name="text">
-         <string>Output segmentation:</string>
+         <string>Volume rendering property:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="toolTip">
-         <string>Pick the input volume (the chest CT volume) to the algorithm.</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLSegmentationNode</string>
-         </stringlist>
-        </property>
-        <property name="showChildNodeTypes">
-         <bool>false</bool>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="editEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="noneDisplay">
-         <string>Create new volume</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_15">
-        <property name="text">
-         <string>Results table:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="qMRMLNodeComboBox" name="outputResultsTableSelector">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="toolTip">
-         <string>Pick the input volume (the chest CT volume) to the algorithm.</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLTableNode</string>
-         </stringlist>
-        </property>
-        <property name="showChildNodeTypes">
-         <bool>false</bool>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="editEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="noneDisplay">
-         <string>Create new table</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_16">
-        <property name="text">
-         <string>COVID-19 results table:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Pick the input volume (the chest CT volume) to the algorithm.</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLTableNode</string>
-         </stringlist>
-        </property>
-        <property name="showChildNodeTypes">
-         <bool>false</bool>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="editEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="noneDisplay">
-         <string>Create new table</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
        <widget class="qMRMLNodeComboBox" name="volumeRenderingPropertyNodeSelector">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Pick the input volume (the chest CT volume) to the algorithm.</string>
+         <string>Stores volume rendering settings for 3D preview.</string>
         </property>
         <property name="nodeTypes">
          <stringlist>
@@ -869,10 +747,132 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_23">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_14">
         <property name="text">
-         <string>Volume rendering property:</string>
+         <string>Output segmentation:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Segmentation node that stores the created segmentation</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLSegmentationNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new volume</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Results table:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputResultsTableSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Table node that stores volumetric analysis results</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLTableNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new table</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>COVID-19 results table:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Table that stores COVID-19 analysis results</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLTableNode</string>
+         </stringlist>
+        </property>
+        <property name="showChildNodeTypes">
+         <bool>false</bool>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="noneDisplay">
+         <string>Create new table</string>
         </property>
        </widget>
       </item>
@@ -882,6 +882,22 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>qMRMLNodeComboBox</class>
+   <extends>QWidget</extends>
+   <header>qMRMLNodeComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLWidget</class>
+   <extends>QWidget</extends>
+   <header>qMRMLWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLSegmentSelectorWidget</class>
+   <extends>qMRMLWidget</extends>
+   <header>qMRMLSegmentSelectorWidget.h</header>
+  </customwidget>
   <customwidget>
    <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
@@ -904,22 +920,6 @@
    <extends>QWidget</extends>
    <header>ctkSliderWidget.h</header>
   </customwidget>
-  <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLWidget</class>
-   <extends>QWidget</extends>
-   <header>qMRMLWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLSegmentSelectorWidget</class>
-   <extends>qMRMLWidget</extends>
-   <header>qMRMLSegmentSelectorWidget.h</header>
-  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
@@ -934,8 +934,8 @@
      <y>132</y>
     </hint>
     <hint type="destinationlabel">
-     <x>327</x>
-     <y>81</y>
+     <x>316</x>
+     <y>84</y>
     </hint>
    </hints>
   </connection>
@@ -950,8 +950,8 @@
      <y>382</y>
     </hint>
     <hint type="destinationlabel">
-     <x>327</x>
-     <y>139</y>
+     <x>316</x>
+     <y>123</y>
     </hint>
    </hints>
   </connection>
@@ -966,24 +966,8 @@
      <y>402</y>
     </hint>
     <hint type="destinationlabel">
-     <x>327</x>
-     <y>159</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>includeCovidEvaluationCheckBox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>outputCovidResultsTableSelector</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>261</x>
-     <y>198</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>327</x>
-     <y>688</y>
+     <x>316</x>
+     <y>143</y>
     </hint>
    </hints>
   </connection>
@@ -998,8 +982,8 @@
      <y>9</y>
     </hint>
     <hint type="destinationlabel">
-     <x>179</x>
-     <y>109</y>
+     <x>312</x>
+     <y>104</y>
     </hint>
    </hints>
   </connection>
@@ -1014,8 +998,8 @@
      <y>5</y>
     </hint>
     <hint type="destinationlabel">
-     <x>179</x>
-     <y>678</y>
+     <x>316</x>
+     <y>596</y>
     </hint>
    </hints>
   </connection>
@@ -1030,8 +1014,8 @@
      <y>366</y>
     </hint>
     <hint type="destinationlabel">
-     <x>287</x>
-     <y>679</y>
+     <x>316</x>
+     <y>646</y>
     </hint>
    </hints>
   </connection>
@@ -1046,8 +1030,8 @@
      <y>398</y>
     </hint>
     <hint type="destinationlabel">
-     <x>287</x>
-     <y>681</y>
+     <x>316</x>
+     <y>671</y>
     </hint>
    </hints>
   </connection>
@@ -1062,8 +1046,24 @@
      <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>261</x>
-     <y>682</y>
+     <x>316</x>
+     <y>621</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>CTLungAnalyzer</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>outputCovidResultsTableSelector</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>327</x>
+     <y>687</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
