@@ -76,26 +76,35 @@ Serial examinations<br>
 (semi) automated lung masks<br>
 <br>
 <b>Version history</b><br>
-V1.0 <br>
-is what you see here. <br>
-V1.1 <br>
+<br>
+V 1.0 <br>
+First version. <br>
+<br>
+V 1.1 <br>
 - right and left lung mask drop down segment selectors added.    <br>
 - processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'<br>
-
 <br>
+<br>
+V 2.0 <br>
+- Code made more efficient and modular - thanks Andras Lasso (PERK) <br>
+
+- Better GUI<br>
+<br>
+
 (1) https://www.slicer.org/
 <br>
 <br>
 Idea and realization :<br> 
-Prof. Rudolf Bumm<br>
-Department of Surgery<br>
-Kantonsspital Graubünden<br>
-Chur, Switzerland<br>
+Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden, Chur, Switzerland<br>
 <br>
-(c) 2020 by R. Bumm, Munich / Chur.<br> 
-All rights reserved. The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
+The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
-Development and marketing: c/o Scientific-Networks Munich<br>
+Contact: <br>
+<br>
+Rudolf Bumm<br>
+rudolf.bumm@ksgr.ch<br>
+<br>
+Scientific-Networks Munich<br>
 info@scientific-networks.com<br>
 
 Images: <br>
