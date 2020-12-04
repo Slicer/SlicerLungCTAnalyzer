@@ -76,7 +76,6 @@ Fiduical placements in trachea, normal lung, COVID lung, vessel and calculating 
 Compensate for the "vessel infiltrate" error <br>
 Compensate for the "lung airway volume " error <br>
 Serial examinations<br>
-(semi) automated lung masks<br>
 <br>
 <b>Version history</b><br>
 <br>
