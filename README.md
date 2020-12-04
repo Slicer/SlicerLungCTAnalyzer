@@ -106,10 +106,8 @@ V 2.0 <br>
 (1) https://www.slicer.org/
 <br>
 <br>
-Idea and realization :<br> 
-Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden, Chur, Switzerland<br>
-Source code optimizations:<br> 
-Andras Lasso (PERK)<br>
+Idea and realization: Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Chur, Switzerland<br>
+Source code optimizations: Andras Lasso (PERK)<br>
 <br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
