@@ -77,7 +77,7 @@ Serial examinations<br>
 <br>
 <b>Version history</b><br>
 <br>
-V 1.0 <br>
+V 1.0<br>
 <ul>
 <li>First version.</li>
 </ul>
