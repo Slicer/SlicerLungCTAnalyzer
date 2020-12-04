@@ -78,8 +78,10 @@ Serial examinations<br>
 <b>Version history</b><br>
 <br>
 V 1.0 <br>
+<ul>
+<li>First version.</li>
+</ul>
 <br>
-First version. <br>
 <br>
 V 1.1<br>
 <ul>
