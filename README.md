@@ -78,9 +78,10 @@ Serial examinations<br>
 <b>Version history</b><br>
 <br>
 V 1.0 <br>
+<br>
 First version. <br>
 <br>
-V 1.1 <br>
+V 1.1<br>
 <ul>
 <li>right and left lung mask drop down segment selectors added.</li>
 <li>processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'</li>
