@@ -66,7 +66,7 @@ def registerSampleData():
         uris='http://scientific-networks.com/slicerdata/LungCTAnalyzerMaskSegmentation.seg.nrrd',
         fileNames='DemoLungMasks.seg.nrrd',
         nodeNames='DemoLungMasks',
-        thumbnailFileName=os.path.join(iconsPath, 'DemoChestCT.png'),
+        thumbnailFileName=os.path.join(iconsPath, 'DemoLungMasks.png'),
         loadFileType='SegmentationFile',
         checksums='SHA256:76312929a5a17dc5188b268d0cd43dabe9f2e10c4496e71d56ee0be959077bc4'
         )
