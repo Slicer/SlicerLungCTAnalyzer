@@ -1,11 +1,11 @@
 # Lung CT Analyzer
 
-Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated, emphysematic and collapsed areas in lung CT examinations. 
+Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated, emphysematic and collapsed lung areas in CT examinations. 
 
 <b>Aim </b><br>
-In CT scans, pulmonary infiltrations as well as non-ventilated areas like emphysema or bullae are usually analyzed visually. 
-Up to now, the extend of these abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
-This especially crucial in the light of the current COVID-19 pandemia, where there are high case loads of patients with severe lung infiltrations, which additionally need meticulous follow up over time.   
+In CT scans, the extent of pulmonary infiltrations as well as the presence of non-ventilated areas like emphysema or bullae are usually analyzed visually. 
+Abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
+This especially crucial in the light of the current COVID-19 pandemia, where we face high case loads of patients with severe lung infiltrations, who need meticulous follow up over time.   
 The aim of this project was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established an freely available 3D imaging platform for scientific use. Therefore, we chose 3D Slicer as our development platform and the inbuild Python as script language.   
 <br>
