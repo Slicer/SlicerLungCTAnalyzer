@@ -64,7 +64,7 @@ If used with sensible thresholds, LCTA is feasible, easy to use and reproducible
 Lung volumes represent areas within the lung masks only. This induces a marginal volume error. 
 Lung vessels have a thin infiltration-like parenchyma cover around them. This induces a small volume error.  
 CovidQ has not been clinically evaluated yet. Do nut base treatment decisions on that value.  
-3DSlicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
+3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse
 
 <b>Discussion</b><br>
@@ -109,13 +109,6 @@ Source code optimizations: Andras Lasso (PERK)<br>
 <br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
-Contact: <br>
-<br>
-Rudolf Bumm<br>
-rudolf.bumm@ksgr.ch<br>
-<br>
-Scientific-Networks Munich<br>
-info@scientific-networks.com<br>
 
 Images: <br>
 <br>
