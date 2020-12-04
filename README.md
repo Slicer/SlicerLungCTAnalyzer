@@ -33,10 +33,9 @@ Step 3: Run Lung CT Analyzer
 <li>Pick the input volume (required): Select a high resolution lung images series of the presently loaded DICOM CT data set  </li>
 <li>Pick the 'Right lung mask' segmentation (required) </li>
 <li>Pick the 'Left lung mask' segmentation (required)</li>
-<li>Check 'generate statistics' if you want to do so. </li>
-<li>Check 'delete previous segmentations' if you want to automatically delete older segmentations including the name string 'Segmentation_'. This will ensure that you always see the most recent segmentation results and that your storage node will not get cluttered with outdated segmentations.</li> 
-<li>Check 'Include COVID-19 evaluation' if you want to do this and understand, that (1) 3D Slicer and it's extensions are not FDA approved and (2) that you do not intend to base clinical decisions on that values alone.  </li>
-<li>Check 'Show results in 3D' if you want to create a spatial reconstruction of the newly created lung segments. The reconstruction will appear in the 3D window and use opacity presets which make the image more instructive. You can change opacities later using 3D Slicer's 'Segmentations' -> 'Advanced' -> '3D'. Checking this option prolongs the time of analysis to about 1-2 minutes.  </li>
+<li>Adjust the thresholds for areas of interest.</li>
+<li>Check 'Include COVID-19 evaluation' if you want to do produce an affected / funtional volume (CovidQ) evaluation. Evaluation phase. Not for clinical decision making.</li>
+<li>Press 'Compute results'</li>
 </ul>
 
 <b>Details</b><br>
@@ -54,7 +53,7 @@ Functional total lung volume (ventilated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-CovidQ (COVID-19 quotient: total affected lung volume [ml] /  total lung volume [ml]) <br></i><br>
+CovidQ (COVID-19 quotient: total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by CTLA and are not compensated for in the results. <br>
 <br>
