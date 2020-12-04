@@ -81,18 +81,17 @@ V 1.0 <br>
 First version. <br>
 <br>
 V 1.1 <br>
-- right and left lung mask drop down segment selectors added.    <br>
+- right and left lung mask drop down segment selectors added.<br>
 - processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'<br>
 <br>
 <br>
 V 2.0 <br>
-- code made more efficient and modular - thanks Andras Lasso (PERK) <br>
+- code made efficient and modular - thanks Andras Lasso (PERK) <br>
 - real-time volume rendering<br>
 - immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)<br>
 - better GUI<br>
 <br>
 <br>
-
 (1) https://www.slicer.org/
 <br>
 <br>
