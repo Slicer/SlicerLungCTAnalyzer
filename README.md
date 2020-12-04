@@ -86,9 +86,11 @@ V 1.1 <br>
 <br>
 <br>
 V 2.0 <br>
-- Code made more efficient and modular - thanks Andras Lasso (PERK) <br>
-
-- Better GUI<br>
+- code made more efficient and modular - thanks Andras Lasso (PERK) <br>
+- real-time volume rendering<br>
+- immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)<br>
+- better GUI<br>
+<br>
 <br>
 
 (1) https://www.slicer.org/
