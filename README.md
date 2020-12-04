@@ -7,7 +7,7 @@ In CT scans, pulmonary infiltrations as well as non-ventilated areas like emphys
 Up to now, the extend of these abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
 This especially crucial in the light of the current COVID-19 pandemia, where there are high case loads of patients with severe lung infiltrations, which additionally need meticulous follow up over time.   
 The aim of this project was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
-3D Slicer (1) is an established an freely available 3D imaging platform for scientific use. Therefore, we chose 3DSlicer and Python as our main developing tool.  
+3D Slicer (1) is an established an freely available 3D imaging platform for scientific use. Therefore, we chose 3D Slicer as our development platform and the inbuild Python as script language.   
 <br>
 <b>Tutorial</b><br>
 
