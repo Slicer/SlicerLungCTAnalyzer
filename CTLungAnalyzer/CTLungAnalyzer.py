@@ -739,17 +739,17 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         resultsTableNode = self.resultsTable
         # Add a new column
         # Compute segment volumes
-
-        bulRightLung = round(float(resultsTableNode.GetCellText(0,3)))
-        venRightLung = round(float(resultsTableNode.GetCellText(1,3)))
-        infRightLung = round(float(resultsTableNode.GetCellText(2,3)))
-        colRightLung = round(float(resultsTableNode.GetCellText(3,3)))
-        vesRightLung = round(float(resultsTableNode.GetCellText(4,3)))
-        bulLeftLung = round(float(resultsTableNode.GetCellText(5,3)))
-        venLeftLung = round(float(resultsTableNode.GetCellText(6,3)))
-        infLeftLung = round(float(resultsTableNode.GetCellText(7,3)))
-        colLeftLung = round(float(resultsTableNode.GetCellText(8,3)))
-        vesLeftLung = round(float(resultsTableNode.GetCellText(9,3)))
+        col = 1
+        bulRightLung = round(float(resultsTableNode.GetCellText(0,col)))
+        venRightLung = round(float(resultsTableNode.GetCellText(1,col)))
+        infRightLung = round(float(resultsTableNode.GetCellText(2,col)))
+        colRightLung = round(float(resultsTableNode.GetCellText(3,col)))
+        vesRightLung = round(float(resultsTableNode.GetCellText(4,col)))
+        bulLeftLung = round(float(resultsTableNode.GetCellText(5,col)))
+        venLeftLung = round(float(resultsTableNode.GetCellText(6,col)))
+        infLeftLung = round(float(resultsTableNode.GetCellText(7,col)))
+        colLeftLung = round(float(resultsTableNode.GetCellText(8,col)))
+        vesLeftLung = round(float(resultsTableNode.GetCellText(9,col)))
 
         rightLungVolume = bulRightLung + venRightLung + infRightLung + colRightLung - vesRightLung
         leftLungVolume = bulLeftLung + venLeftLung + infLeftLung + colLeftLung - vesLeftLung
@@ -825,12 +825,12 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         totalPercentArray.InsertNextValue(affectedTotalVolumePerc)
 
         labelArray.InsertNextValue("CovidQ (affected / functional)")
-        rightMlArray.InsertNextValue(-1)
-        rightPercentArray.InsertNextValue(covidQRight)
-        leftMlArray.InsertNextValue(-1)
-        leftPercentArray.InsertNextValue(covidQLeft)
-        totalMlArray.InsertNextValue(-1)
-        totalPercentArray.InsertNextValue(covidQTotal)
+        rightMlArray.InsertNextValue(covidQRight)
+        rightPercentArray.InsertNextValue(-1)
+        leftMlArray.InsertNextValue(covidQLeft)
+        leftPercentArray.InsertNextValue(-1)
+        totalMlArray.InsertNextValue(covidQTotal)
+        totalPercentArray.InsertNextValue(-1)
 
         self.covidResultsTable.AddColumn(labelArray)
         self.covidResultsTable.AddColumn(rightMlArray)
