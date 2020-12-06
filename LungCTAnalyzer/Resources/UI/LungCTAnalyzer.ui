@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CTLungAnalyzer</class>
- <widget class="qMRMLWidget" name="CTLungAnalyzer">
+ <class>LungCTAnalyzer</class>
+ <widget class="qMRMLWidget" name="LungCTAnalyzer">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -924,7 +924,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>inputVolumeSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -940,7 +940,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>rightLungMaskSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -956,7 +956,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>leftLungMaskSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -972,7 +972,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>inputSegmentationSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -988,7 +988,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>lungMaskedVolumeSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -1004,7 +1004,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>outputSegmentationSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -1020,7 +1020,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>outputResultsTableSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -1036,7 +1036,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>volumeRenderingPropertyNodeSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -1052,7 +1052,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>CTLungAnalyzer</sender>
+   <sender>LungCTAnalyzer</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>outputCovidResultsTableSelector</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>

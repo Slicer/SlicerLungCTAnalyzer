@@ -6,10 +6,10 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
 #
-# CTLungAnalyzer
+# LungCTAnalyzer
 #
 
-class CTLungAnalyzer(ScriptedLoadableModule):
+class LungCTAnalyzer(ScriptedLoadableModule):
     """Uses ScriptedLoadableModule base class, available at:
     https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
     """
@@ -20,9 +20,10 @@ class CTLungAnalyzer(ScriptedLoadableModule):
         self.parent.categories = ["Chest Imaging Platform"]
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
         self.parent.contributors = ["Rudolf Bumm (KSGR Switzerland)"]
-        self.parent.helpText = """
-The CT Lung Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated and collapsed areas in chest CT examinations.
-See more information in <a href="https://github.com/rbumm/SlicerCTLungAnalyzer">module documentation</a>.
+        self.parent.helpText = """Lung analysis consists of producing five different segmentations of lungs based on Hounsfield unit range:
+Bulla / emphysema, ventilated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
+as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ -
+for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.
 """
         self.parent.acknowledgementText = """
 This file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Parts of this code were inspired by a code snippet (https://gist.github.com/lassoan/5ad51c89521d3cd9c5faf65767506b37) of Andras Lasso, PerkLab.
@@ -72,10 +73,10 @@ def registerSampleData():
         )
 
 #
-# CTLungAnalyzerWidget
+# LungCTAnalyzerWidget
 #
 
-class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
+class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     """Uses ScriptedLoadableModuleWidget base class, available at:
     https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
     """
@@ -98,7 +99,7 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
-        uiWidget = slicer.util.loadUI(self.resourcePath('UI/CTLungAnalyzer.ui'))
+        uiWidget = slicer.util.loadUI(self.resourcePath('UI/LungCTAnalyzer.ui'))
         self.layout.addWidget(uiWidget)
         self.ui = slicer.util.childWidgetVariables(uiWidget)
 
@@ -109,7 +110,7 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Create logic class. Logic implements all computations that should be possible to run
         # in batch mode, without a graphical user interface.
-        self.logic = CTLungAnalyzerLogic()
+        self.logic = LungCTAnalyzerLogic()
 
         self.volumeRenderingPropertyUpdateTimer = qt.QTimer()
         self.volumeRenderingPropertyUpdateTimer.setInterval(1000)
@@ -590,10 +591,10 @@ class CTLungAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
 
 #
-# CTLungAnalyzerLogic
+# LungCTAnalyzerLogic
 #
 
-class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
+class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     """This class should implement all the actual
     computation done by your module.  The interface
     should be such that other python code can import
@@ -638,11 +639,11 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         thresholds = {}
         for parameterName in self.defaultThresholds:
             thresholds[parameterName] = float(parameterNode.GetParameter(parameterName))
-        slicer.app.settings().setValue("CTLungAnalyzer/CustomThresholds",str(thresholds))
+        slicer.app.settings().setValue("LungCTAnalyzer/CustomThresholds",str(thresholds))
 
     def loadCustomThresholds(self):
         import ast
-        thresholds = ast.literal_eval(slicer.app.settings().value("CTLungAnalyzer/CustomThresholds", "{}"))
+        thresholds = ast.literal_eval(slicer.app.settings().value("LungCTAnalyzer/CustomThresholds", "{}"))
         self.setThresholds(self.getParameterNode(), thresholds)
 
     def setDefaultParameters(self, parameterNode):
@@ -1096,10 +1097,10 @@ class CTLungAnalyzerLogic(ScriptedLoadableModuleLogic):
         slicer.app.applicationLogic().PropagateTableSelection()
 
 #
-# CTLungAnalyzerTest
+# LungCTAnalyzerTest
 #
 
-class CTLungAnalyzerTest(ScriptedLoadableModuleTest):
+class LungCTAnalyzerTest(ScriptedLoadableModuleTest):
     """
     This is the test case for your scripted module.
     Uses ScriptedLoadableModuleTest base class, available at:
@@ -1115,9 +1116,9 @@ class CTLungAnalyzerTest(ScriptedLoadableModuleTest):
         """Run as few or as many tests as needed here.
         """
         self.setUp()
-        self.test_CTLungAnalyzer1()
+        self.test_LungCTAnalyzer1()
 
-    def test_CTLungAnalyzer1(self):
+    def test_LungCTAnalyzer1(self):
         """ Ideally you should have several levels of tests.  At the lowest level
         tests should exercise the functionality of the logic with different inputs
         (both valid and invalid).  At higher levels your tests should emulate the
@@ -1141,7 +1142,7 @@ class CTLungAnalyzerTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Loaded demo lung masks.')
 
         # Test the module logic
-        logic = CTLungAnalyzerLogic()
+        logic = LungCTAnalyzerLogic()
         logic.inputVolume = inputVolume
         logic.inputSegmentation = lungMaskSegmentation
         logic.rightLungMaskSegmentID = lungMaskSegmentation.GetSegmentation().GetSegmentIdBySegmentName("Right Lung Mask")
