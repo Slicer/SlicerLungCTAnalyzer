@@ -124,7 +124,7 @@ Image from COVID-19 patient under surveillance, published with patient's permiss
 <b>Citations</b><br>
 <br>
 For publications please include this text (modifying the initial part to describe your use case):<br>
-"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerCTLungAnalyzer/)"
+"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
 <b>Appendix</b> 
