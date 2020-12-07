@@ -108,7 +108,7 @@ Ideas and realization: Rudolf Bumm (KSGR) and Andras Lasso (PERK)<br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
 
-Images: <br>
+<b>Screenshots:</b> <br>
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
 <br>
