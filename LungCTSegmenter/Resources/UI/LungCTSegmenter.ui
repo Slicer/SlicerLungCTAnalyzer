@@ -55,7 +55,7 @@
       <item row="1" column="1">
        <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
         <property name="toolTip">
-         <string>Pick the input (CT Lung) to the algorithm.</string>
+         <string>Pick the output segmentatioon or create a new one.</string>
         </property>
         <property name="nodeTypes">
          <stringlist>
@@ -98,7 +98,11 @@
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0" colspan="2">
-       <widget class="ctkFittedTextBrowser" name="instructionsLabel"/>
+       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
+        <property name="toolTip">
+         <string>Find instructzions here during the segmentation procedure.  </string>
+        </property>
+       </widget>
       </item>
       <item row="6" column="0" colspan="2">
        <widget class="ctkCollapsibleGroupBox" name="adjustPointsGroupBox">
@@ -122,7 +126,7 @@
             <bool>true</bool>
            </property>
            <property name="toolTip">
-            <string>Place a marker somewhere on the right lung. </string>
+            <string>Add additional or adjust existing right lung markers. </string>
            </property>
            <property name="buttonsVisible">
             <bool>true</bool>
@@ -153,6 +157,9 @@
          </item>
          <item row="1" column="1">
           <widget class="qSlicerMarkupsPlaceWidget" name="leftLungPlaceWidget">
+           <property name="toolTip">
+            <string>Add additional or adjust existing left lung markers. </string>
+           </property>
            <property name="statusTip">
             <string>Place a marker somewhere on the left lung. </string>
            </property>
@@ -174,7 +181,7 @@
          <item row="2" column="1">
           <widget class="qSlicerMarkupsPlaceWidget" name="tracheaPlaceWidget">
            <property name="toolTip">
-            <string>Place a marker on the upper trachea (above upper thoracic aperture) </string>
+            <string>Add additional or adjust existing trachea markers. </string>
            </property>
            <property name="placeMultipleMarkups">
             <enum>qSlicerMarkupsPlaceWidget::ForcePlaceMultipleMarkups</enum>
@@ -205,6 +212,9 @@
       </item>
       <item row="1" column="0" colspan="2">
        <widget class="QPushButton" name="startButton">
+        <property name="toolTip">
+         <string>Press this button to start the segmentation process. </string>
+        </property>
         <property name="text">
          <string>Start</string>
         </property>
@@ -215,6 +225,9 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>Cancel the current segmentation process.</string>
+        </property>
         <property name="text">
          <string>Cancel</string>
         </property>
@@ -222,6 +235,9 @@
       </item>
       <item row="5" column="0" colspan="2">
        <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
+        <property name="toolTip">
+         <string>Toggle segments visibility of segments</string>
+        </property>
         <property name="text">
          <string>Toggle segments visibility</string>
         </property>
