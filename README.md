@@ -78,13 +78,6 @@ CovidQ has not been clinically evaluated yet. Do nut base treatment decisions on
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse<br>
 <br>
-<b>Upcoming features:</b><br> 
-Quantitative ventrodorsal lung infiltrate analysis (effect of patient positioning)<br>
-Fiduical placements in trachea, normal lung, COVID lung, vessel and calculating autothresholds<br>
-Compensate for the "vessel infiltrate" error <br>
-Compensate for the "lung airway volume " error <br>
-Serial examinations<br>
-<br>
 <b>Version history</b><br>
 V 1.0<br>
 <ul>
