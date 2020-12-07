@@ -112,11 +112,11 @@ Images: <br>
 <br>
 Image from COVID-19 patient under surveillance, published with patient's permission.<br>
 <br>
-![screen1](https://user-images.githubusercontent.com/18140094/98554410-f5ddd600-22a0-11eb-9196-b9223c8ada3f.jpg)
+
 <br>
-![screen2](https://user-images.githubusercontent.com/18140094/98554914-9207dd00-22a1-11eb-9bae-7f537a765cc3.jpg)
+
 <br>
-![screen3](https://user-images.githubusercontent.com/18140094/98555178-e6ab5800-22a1-11eb-8cbf-7dfa3e346b43.jpg)
+
 <br>
 <br>
 <b>Citations</b><br>
