@@ -122,8 +122,7 @@ V 2.1 <br>
 (1) https://www.slicer.org/
 <br>
 <br>
-Idea and realization: Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Chur, Switzerland. <br>
-Source code optimizations: Andras Lasso (PERK)<br>
+Ideas and realization: Rudolf Bumm (KSGR) and Andras Lasso (PERK)<br>
 <br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
@@ -144,4 +143,7 @@ Image from COVID-19 patient under surveillance, published with patient's permiss
 For publications please include this text (modifying the initial part to describe your use case):<br>
 "We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
+<br>
+<br>
+Impressum: Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Chur, Switzerland
 <br>
