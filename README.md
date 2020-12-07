@@ -9,7 +9,7 @@ This especially crucial in the light of the current COVID-19 pandemia with high 
 The aim of this project was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, we chose 3D Slicer as our development platform and the inbuild Python as script language.   
 <br>
-<b>Video (Overview):</b> <br>
+<b>Video (Overview Lung CT Analyzer):</b> <br>
 https://www.youtube.com/watch?v=0plsoy94hFE<br>
 <br>
 <br>
@@ -21,9 +21,20 @@ Step 1: Start 3D Slicer
 <li>Load a DICOM chest CT dataset</li>
 </ul>
 
-Step 2: Create lung masks
-
-# Lung CT Segmenter
+Step 2: Run Lung CT Segmenter to create lung masks
+<ul>
+<li>Select the 'Lung CT Segmenter' extension. It can be found in 3D Slicer under the 'Chest Imaging Platform' category </li>
+<li>Pick the input volume (required): Select a high resolution lung images series of the presently loaded DICOM CT data set  </li>
+<li>Press the "Start" button</li>
+<li>Follow the instructions on the screen, the manual procedures needed are simple and straightforward</li>
+<li>Place three markers on the right lung, axial view (red slice)</li>
+<li>Place three markers on the right lung, coronar view</li>
+<li>Place three markers on the left lung axial view (red slice)</li>
+<li>Place three markers on the left lung, coronar view</li>
+<li>Place one marker on the trachea, axial view</li>
+<li>Watch temporary lung masks that will be created on the display</li>
+<li>If the temporary masks fit well, ress 'Apply" and make the masks permanent.</li>
+</ul>
 
 Step 3: Run Lung CT Analyzer
 
@@ -97,6 +108,13 @@ V 2.0 <br>
 <li>real-time volume rendering</li>
 <li>immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)</li>
 <li>better GUI</li>
+</ul>
+<br>
+<br>
+V 2.1 <br>
+<ul>
+<li>New extension "Lung CT Segmenter" created from https://github.com/rbumm/SlicerLungMaskGenerator</li>
+<li>Improvements of lung segmenter module by Andras Lasso (PERK)</li>
 </ul>
 <br>
 <br>
