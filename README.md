@@ -86,7 +86,6 @@ Compensate for the "lung airway volume " error <br>
 Serial examinations<br>
 <br>
 <b>Version history</b><br>
-<br>
 V 1.0<br>
 <ul>
 <li>Initial version</li>
