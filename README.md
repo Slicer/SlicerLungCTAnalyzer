@@ -145,5 +145,5 @@ For publications please include this text (modifying the initial part to describ
 <br>
 <br>
 <br>
-Impressum: Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
+Impressum: Prof. Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
 <br>
