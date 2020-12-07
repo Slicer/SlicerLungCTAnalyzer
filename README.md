@@ -21,11 +21,10 @@ Step 1: Start 3D Slicer
 <li>Load a DICOM chest CT dataset</li>
 </ul>
 
-Step 2: Create lung masks 
-https://github.com/rbumm/SlicerLungMaskGenerator
+Step 2: Create lung masks
 
-Alternate ways to create lung masks see -> Appendix.  
-  
+# Lung CT Segmenter
+
 Step 3: Run Lung CT Analyzer
 
 <ul>
@@ -127,28 +126,3 @@ For publications please include this text (modifying the initial part to describ
 "We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
-<b>Appendix</b> 
-<br>
-<br>
-Step 2: Create lung masks by using the Segment Editor's 'Fill between Slices' function
-
-<ul>
-  <li>Open 3D Slicer's 'Segment Editor'</li>
-  <li>Create a new segmentation node</li>
-  <li>In this segmentation node, create two new segments. Call one 'Right lung mask', the other one 'Left lung mask'. Please enter the names with exactly one space between words, because the presence of these segments will later be checked using their names.</li>  
-  <li>In the Segment Editor:  select 'Right lung mask' </li>
-  <li>In the Segment Editor:  press 'Draw' </li>
-  <li>Draw a few complete slices around the right lung in axial CT view (red slice) - top to down </li>
-  <li>In the Segment Editor:  select 'Left lung mask' </li>
-  <li>In the Segment Editor:  press 'Draw' </li>
-  <li>Draw a few complete slices around the left lung in axial CT view (red slice) - top to down</li>
-  <li>Then press 'Fill between Slices' in the Segment Editor. </li>
-  <li>Press 'Initialize'</li>
-  <li>Check the segmentation results, improve the results by maybe drawing a few more slices on the lungs if needed, finally press 'Apply'</li>
-  <li>Ready. You have now created two lung masks and may proceed to step 3 </li>
-</ul>
-<br>  
-Step 2 (alternate procedure): Create lung masks by using the Nvidea AIAA in the Segment editor
-<ul>
-  <li>description will follow</li>
-</ul>
