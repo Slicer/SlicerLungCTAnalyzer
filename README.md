@@ -26,14 +26,15 @@ Step 2: Run Lung CT Segmenter to create lung masks
 <li>Select the 'Lung CT Segmenter' extension. It can be found in 3D Slicer under the 'Chest Imaging Platform' category </li>
 <li>Pick the input volume (required): Select a high resolution lung images series of the presently loaded DICOM CT data set  </li>
 <li>Press the "Start" button</li>
-<li>Follow the instructions on the screen, the manual procedures needed are simple and straightforward</li>
+<li>Follow the instructions on the screen, the manual procedures are simple and straightforward</li>
 <li>Place three markers on the right lung, axial view (red slice)</li>
 <li>Place three markers on the right lung, coronar view</li>
 <li>Place three markers on the left lung axial view (red slice)</li>
 <li>Place three markers on the left lung, coronar view</li>
 <li>Place one marker on the trachea, axial view</li>
-<li>Watch temporary lung masks that will be created on the display</li>
-<li>If the temporary masks fit well, ress 'Apply" and make the masks permanent.</li>
+<li>Watch temporary lung masks being on the display</li>
+<li>Place additional markers if needed</li>
+<li>If the temporary masks fit well, press 'Apply" and produce permanent mask segmentations.</li>
 </ul>
 
 Step 3: Run Lung CT Analyzer
