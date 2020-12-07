@@ -110,15 +110,19 @@ The code presented here is distributed under the Apache license (https://www.apa
 
 Images: <br>
 <br>
-Image from COVID-19 patient under surveillance, published with patient's permission.<br>
-<br>
-Graphical user interface
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
 <br>
-CT Lung Analyzer with COVID-19 result table
+Graphical user interface
+<br>
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerCovid19Result.jpg?raw=true)
+<br>
+<br>
+CT Lung Analyzer with COVID-19 result table
+<br>
+Image reference: from COVID-19 patient under surveillance, published with patient's permission.<br>
+<br>
 <br>
 <b>Citations</b><br>
 <br>
