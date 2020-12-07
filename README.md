@@ -92,17 +92,13 @@ Serial examinations<br>
 <br>
 V 1.0<br>
 <ul>
-<li>First version.</li>
+<li>Initial version</li>
 </ul>
-<br>
-<br>
 V 1.1<br>
 <ul>
-<li>right and left lung mask drop down segment selectors added.</li>
+<li>right and left lung mask drop down segment selectors added</li>
 <li>processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'</li>
 </ul>
-<br>
-<br>
 V 2.0 <br>
 <ul>
 <li>code made efficient and modular - thanks Andras Lasso (PERK)</li>
@@ -110,15 +106,11 @@ V 2.0 <br>
 <li>immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)</li>
 <li>better GUI</li>
 </ul>
-<br>
-<br>
 V 2.1 <br>
 <ul>
 <li>New extension "Lung CT Segmenter" created from https://github.com/rbumm/SlicerLungMaskGenerator</li>
 <li>Improvements of lung segmenter module by Andras Lasso (PERK)</li>
 </ul>
-<br>
-<br>
 (1) https://www.slicer.org/
 <br>
 <br>
