@@ -115,6 +115,7 @@ Image from COVID-19 patient under surveillance, published with patient's permiss
 Graphical user interface
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
+<br>
 CT Lung Analyzer with COVID-19 result table
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerCovid19Result.jpg?raw=true)
