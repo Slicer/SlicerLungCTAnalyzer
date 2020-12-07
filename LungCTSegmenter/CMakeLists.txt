@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME CTLungMaskGenerator)
+set(MODULE_NAME LungCTSegmenter)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
