@@ -77,11 +77,8 @@ Lung vessels have a thin infiltration-like parenchyma cover around them. This in
 CovidQ has not been clinically evaluated yet. Do nut base treatment decisions on that value.  
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse
-
-<b>Discussion</b><br>
-
-<b>Upcoming features:</b><br> 
 <br>
+<b>Upcoming features:</b><br> 
 Quantitative ventrodorsal lung infiltrate analysis (effect of patient positioning)<br>
 Fiduical placements in trachea, normal lung, COVID lung, vessel and calculating autothresholds<br>
 Compensate for the "vessel infiltrate" error <br>
