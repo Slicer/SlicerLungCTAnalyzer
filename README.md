@@ -2,7 +2,7 @@
 
 Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated, emphysematic and collapsed lung areas in CT scans. 
 
-<b>Aim </b><br>
+<b>Introduction</b><br>
 The extent of pulmonary infiltrations as well as the presence of non-ventilated areas like emphysema or bullae are usually analyzed visually in CT scans. 
 Abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
 This especially crucial in the light of the current COVID-19 pandemia with high case loads of patients with severe lung infiltrations, who need meticulous follow up over time.   
