@@ -110,8 +110,8 @@ The code presented here is distributed under the Apache license (https://www.apa
 
 Images: <br>
 <br>
-<br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
+<br>
 <br>
 Graphical user interface
 <br>
