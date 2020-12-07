@@ -105,6 +105,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       self.removeFiducialObservers()
       self.removeObservers()
+      self.logic = None
 
   def enter(self):
       """
@@ -291,7 +292,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
       """
 
-      if self._parameterNode is None or self._updatingGUIFromParameterNode:
+      if self._parameterNode is None or self.logic is None or self._updatingGUIFromParameterNode:
           return
 
       wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
@@ -319,6 +320,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
+          self.setInstructions("Initializing segmentation...")
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
@@ -386,6 +388,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.tracheaColor = (0.71, 0.89, 1.0)
         self.segmentEditorWidget = None
         self.segmentationStarted = False
+
+    def __del__(self):
+        self.removeTemporaryObjects()
 
     def setDefaultParameters(self, parameterNode):
         """
@@ -472,9 +477,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if self.segmentationStarted:
           # Already started
           return
+        self.segmentationStarted = True
 
         import time
         startTime = time.time()
+
+        # Clear previous segmentation
+        if self.outputSegmentation:
+            self.outputSegmentation.GetSegmentation().RemoveAllSegments()
 
         if not self.rightLungFiducials:
             self.rightLungFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "R")
@@ -501,7 +511,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.outputSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Lung segmentation")
             self.outputSegmentation.CreateDefaultDisplayNodes()
         # We show the current segmentation using markups, so let's hide the display node (seeds)
-        self.outputSegmentation.GetSegmentation().RemoveAllSegments()
         self.rightLungSegmentId = None
         self.leftLungSegmentId = None
         self.tracheaSegmentId = None
@@ -518,8 +527,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
-
-        self.segmentationStarted = True
 
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
@@ -574,9 +581,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     def removeTemporaryObjects(self):
         if self.resampledVolume:
-            self.resampledVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Resampled Volume")
+            slicer.mrmlScene.RemoveNode(self.resampledVolume)
         if self.segmentEditorWidget:
             segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+            # Cancel "Grow from seeds" (deletes preview segmentation)
+            self.segmentEditorWidget.setActiveEffectByName("Grow from seeds")
+            effect = self.segmentEditorWidget.activeEffect()
+            if effect:
+                effect.self().reset()
+            # Deactivates all effects
             self.segmentEditorWidget.setActiveEffect(None)
             self.segmentEditorWidget = None
             slicer.mrmlScene.RemoveNode(segmentEditorNode)
@@ -604,13 +617,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         startTime = time.time()
 
         self.showStatusMessage('Finalize region growing...')
+        # Ensure closed surface representation is not present (would slow down computations)
+        self.outputSegmentation.RemoveClosedSurfaceRepresentation()
+
         effect = self.segmentEditorWidget.activeEffect()
         effect.self().onApply()
 
         segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
 
-        # Ensure closed surface representation is not present (would slow down computations)
-        self.outputSegmentation.RemoveClosedSurfaceRepresentation()
 
         # disable intensity masking, otherwise vessels do not fill
         segmentEditorNode.SetMasterVolumeIntensityMask(False)
@@ -630,13 +644,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             effect.setParameter("KernelSizeMm","12")
             effect.self().onApply()
 
-        # switch to full-resolution segmentation
+        # switch to full-resolution segmentation (this is quick, there is no need for progress message)
         self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
         referenceGeometryString = self.outputSegmentation.GetSegmentation().GetConversionParameter(slicer.vtkSegmentationConverter.GetReferenceImageGeometryParameterName())
         referenceGeometryImageData = slicer.vtkOrientedImageData()
         slicer.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImageData, False)
         wasModified = self.outputSegmentation.StartModify()
-        self.showStatusMessage('High-resolution resampling...')
         for i, segmentId in enumerate(segmentIds):
             currentSegment = self.outputSegmentation.GetSegmentation().GetSegment(segmentId)
             # Get master labelmap from segment
