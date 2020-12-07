@@ -6,7 +6,7 @@ Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstru
 The extent of pulmonary infiltrations as well as the presence of non-ventilated areas like emphysema or bullae are usually analyzed visually in CT scans. 
 Abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
 This especially crucial in the light of the current COVID-19 pandemia with high case loads of patients with severe lung infiltrations, who need meticulous follow up over time.   
-The aim of this project was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
+The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, we chose 3D Slicer as our development platform and the inbuild Python as script language.   
 <br>
 <b>Video (Overview Lung CT Analyzer):</b> <br>
@@ -66,7 +66,7 @@ Affected left lung volume (infiltrated + collapsed left volume, % of left lung v
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
 CovidQ (COVID-19 quotient: total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
-Intrapulmonary airways are not yet measured by CTLA and are not compensated for in the results. <br>
+Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
 <b>First Results</b><br>
 If used with sensible thresholds, LCTA is feasible, easy to use and reproducible. Spacial reconstruction of the segments yield impressive visual results.  Running LCTA only takes 5-6 seconds, running LCTA with 3D reconstruction takes about 1-2  minutes. LCTA has been developed and tested with 3D Slicer V 4.11.200930. 
