@@ -1,0 +1,44 @@
+#
+# First token of each non-comment line is the keyword and the rest of the line
+# (including spaces) is the value.
+# - the value can be blank
+#
+
+# This is source code manager (i.e. svn)
+scm git
+scmurl git://github.com/rbumm/SlicerCTLungAnalyzer
+scmrevision master
+
+# list dependencies
+# - These should be names of other modules that have .s4ext files
+# - The dependencies will be built first
+depends NA
+
+# Inner build directory (default is ".")
+build_subdirectory inner-build
+
+# homepage
+homepage https://github.com/rbumm/SlicerCTLungAnalyzer
+
+# Firstname1 Lastname1 ([SubOrg1, ]Org1), Firstname2 Lastname2 ([SubOrg2, ]Org2)
+# For example: Jane Roe (Superware), John Doe (Lab1, Nowhere), Joe Bloggs (Noware)
+contributors Rudolf Bumm (KSGR)
+
+# Match category in the xml description of the module (where it shows up in Modules menu)
+category Lung
+
+# url to icon (png, size 128x128 pixels)
+iconurl https://github.com/rbumm/SlicerCTLungAnalyzer/blob/main/CTLungAnalyzer/Resources/Icons/CTLungAnalyzer.png
+
+# Give people an idea what to expect from this code
+#  - Is it just a test or something you stand behind?
+Under development, but usable
+
+# One line stating what the module does
+description This extension performs segmentation and 2D / 3D display of a chest CT into non-ventilated, ventilated, infiltrated and collapsed lung tissue as well as vessels. 
+
+# Space separated list of urls
+screenshoturls https://user-images.githubusercontent.com/18140094/98554410-f5ddd600-22a0-11eb-9196-b9223c8ada3f.jpg
+
+# 0 or 1: Define if the extension should be enabled after its installation.
+enabled 1

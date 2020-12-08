@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>329</width>
+    <width>332</width>
     <height>715</height>
    </rect>
   </property>
@@ -203,6 +203,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QPushButton" name="toggleInputSegmentationVisibility2DPushButton">
+          <property name="toolTip">
+           <string>Press this button to show or hide the segments in 2D view. </string>
+          </property>
           <property name="text">
            <string>Show/hide segments in 2D</string>
           </property>
@@ -210,6 +213,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="toggleInputSegmentationVisibility3DPushButton">
+          <property name="toolTip">
+           <string>Press this button to show or hide the segments in 3D view. </string>
+          </property>
           <property name="text">
            <string>Show/hide segments in 3D</string>
           </property>
@@ -238,6 +244,9 @@
       </item>
       <item row="0" column="1">
        <widget class="ctkRangeWidget" name="BullaRangeWidget">
+        <property name="toolTip">
+         <string>Set the threshold range for Bullae / Pneu here. </string>
+        </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
         </property>
@@ -264,6 +273,9 @@
       </item>
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="VentilatedRangeWidget">
+        <property name="toolTip">
+         <string>Set the threshold range for ventilated lung tissue here. </string>
+        </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
         </property>
@@ -290,6 +302,9 @@
       </item>
       <item row="2" column="1">
        <widget class="ctkRangeWidget" name="InfiltratedRangeWidget">
+        <property name="toolTip">
+         <string>Set the threshold range for infiltrated lung tissue here. </string>
+        </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
         </property>
@@ -316,6 +331,9 @@
       </item>
       <item row="3" column="1">
        <widget class="ctkRangeWidget" name="CollapsedRangeWidget">
+        <property name="toolTip">
+         <string>Set the threshold range for collapsed lung tissue. </string>
+        </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
         </property>
@@ -342,6 +360,9 @@
       </item>
       <item row="4" column="1">
        <widget class="ctkRangeWidget" name="VesselsRangeWidget">
+        <property name="toolTip">
+         <string>Set the threshold range for intrapulmonary vessels here. </string>
+        </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
         </property>
@@ -397,6 +418,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QPushButton" name="toggleMaskedVolumeDisplay2DPushButton">
+          <property name="toolTip">
+           <string>Press this button to show or hide the preview in 2D. </string>
+          </property>
           <property name="text">
            <string>Show/hide preview in 2D</string>
           </property>
@@ -404,6 +428,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="toggleMaskedVolumeDisplay3DPushButton">
+          <property name="toolTip">
+           <string>Press this button to show or hide the preview in 3D. </string>
+          </property>
           <property name="text">
            <string>Show/hide preview in 3D</string>
           </property>
@@ -594,6 +621,9 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="1" column="1">
        <widget class="QPushButton" name="showCovidResultsTableButton">
+        <property name="toolTip">
+         <string>Show the extended results table. </string>
+        </property>
         <property name="text">
          <string>Show COVID-19 results table</string>
         </property>
@@ -601,6 +631,9 @@
       </item>
       <item row="1" column="0">
        <widget class="QPushButton" name="showResultsTablePushButton">
+        <property name="toolTip">
+         <string>Show the volumetry results table. </string>
+        </property>
         <property name="text">
          <string>Show results table</string>
         </property>
@@ -631,6 +664,9 @@
       </item>
       <item row="2" column="1">
        <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
+        <property name="toolTip">
+         <string>Press this button to show or hide the segments in 3D view. </string>
+        </property>
         <property name="text">
          <string>Show/hide segments in 3D</string>
         </property>
@@ -883,22 +919,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLWidget</class>
-   <extends>QWidget</extends>
-   <header>qMRMLWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLSegmentSelectorWidget</class>
-   <extends>qMRMLWidget</extends>
-   <header>qMRMLSegmentSelectorWidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
    <header>ctkCollapsibleButton.h</header>
@@ -919,6 +939,22 @@
    <class>ctkSliderWidget</class>
    <extends>QWidget</extends>
    <header>ctkSliderWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLNodeComboBox</class>
+   <extends>QWidget</extends>
+   <header>qMRMLNodeComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLWidget</class>
+   <extends>QWidget</extends>
+   <header>qMRMLWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLSegmentSelectorWidget</class>
+   <extends>qMRMLWidget</extends>
+   <header>qMRMLSegmentSelectorWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
