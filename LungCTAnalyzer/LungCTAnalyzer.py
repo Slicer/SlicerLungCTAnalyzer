@@ -152,6 +152,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.restoreDefaultsButton.connect('clicked(bool)', self.onRestoreDefaultsButton)
         self.ui.saveThresholdsButton.connect('clicked(bool)', self.onSaveThresholdsButton)
         self.ui.loadThresholdsButton.connect('clicked(bool)', self.onLoadThresholdsButton)
+        self.ui.createPDFReportButton.connect('clicked(bool)', self.onCreatePDFReportButton)
 
         # Opacities
         self.opacitySliders = {
@@ -315,9 +316,17 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
             self.ui.applyButton.toolTip = "Select input volume and right and left lung masks"
             self.ui.applyButton.enabled = False
-
+        
+        self.ui.createPDFReportButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showResultsTablePushButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        # why again and again ?
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        
         self.ui.toggleInputSegmentationVisibility2DPushButton.enabled = (self.logic.inputSegmentation is not None)
         self.ui.toggleInputSegmentationVisibility3DPushButton.enabled = (self.logic.inputSegmentation is not None)
         self.ui.toggleOutputSegmentationVisibility2DPushButton.enabled = (self.logic.outputSegmentation is not None)
@@ -481,6 +490,190 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         threeDView = threeDWidget.threeDView()
         threeDView.resetFocalPoint()
         logging.info('Normal end of loading procedure.')
+
+    def onCreatePDFReportButton(self):
+        
+        printer = qt.QPrinter(qt.QPrinter.PrinterResolution)
+        printer.setOutputFormat(qt.QPrinter.PdfFormat)
+        printer.setPaperSize(qt.QPrinter.A4)
+        _userfolder = os.path.expandvars('%userprofile%\\LungCTAnalyzerReports\\')
+        _reportfolder = _userfolder.replace('\\','/')
+        from pathlib import Path
+        Path(_reportfolder).mkdir(parents=True, exist_ok=True)
+        _reportpath = _reportfolder+"output.pdf"
+        printer.setOutputFileName(_reportpath)
+
+        doc = qt.QTextDocument()
+        _html = """
+        <h1>Lung CT Analyzer Results</h1>\n
+        <br>
+        <table>
+        <tr>
+        <td>Patient last name:</td>
+        <td>.................................................</td>
+        </tr>
+        <tr>
+        <td>Patient first name:</td>
+        <td>.................................................</td>
+        </tr>
+        <tr>
+        <td>Date of birth:</td>
+        <td>.................................................</td>
+        </tr>
+        <tr>
+        <td>Date of examination:</td>
+        <td>.................................................</td>
+        </tr>
+        </table>
+        
+        
+        <p>The following tables contain the analysis of the CT scan. The segments are created according to their Hounsfield units using predefined threshold ranges (Table 1). Functional versus affected lung volumes are shown in Table 2. </p>
+        <br>
+        <h2>Volumetric analysis result table (Table 1)</h2>
+        <br>
+        """
+        _table=""
+        _table+="<table>\n"
+        _table+="<tr>\n"
+        for col in range(self.logic.resultsTable.GetNumberOfColumns()): 
+          _table+="<th>"+self.logic.resultsTable.GetColumnName(col)+"</th>\n"
+        _table+="</tr>\n"
+        for row in range(self.logic.resultsTable.GetNumberOfRows()): 
+            _table+="<tr>\n"
+            for col in range(self.logic.resultsTable.GetNumberOfColumns()): 
+              _table+="<td>"+self.logic.resultsTable.GetCellText(row,col)+"</td>\n"
+            _table+="</tr>\n"
+        _table+="</table>\n"
+        _html+=_table
+        _html+="""
+        <br>
+        <h2>Extended result table (Table 2)</h2>
+        <br>
+        """
+        _table=""
+        _table+="<table>\n"
+        _table+="<tr>\n"
+        for col in range(self.logic.covidResultsTable.GetNumberOfColumns()): 
+          _table+="<th>"+self.logic.covidResultsTable.GetColumnName(col)+"</th>\n"
+        _table+="</tr>\n"
+        for row in range(self.logic.covidResultsTable.GetNumberOfRows()): 
+            _table+="<tr>\n"
+            for col in range(self.logic.covidResultsTable.GetNumberOfColumns()): 
+              _table+="<td>"+self.logic.covidResultsTable.GetCellText(row,col)+"</td>\n"
+            _table+="</tr>\n"
+        _table+="</table>\n"
+        _html+=_table
+        _html+="""
+        <br>
+        <h2>Lightbox axial view</h2>
+        <br>
+        """
+        viewName = "Red"
+        rows = 6
+        columns = 4
+
+        sliceWidget = slicer.app.layoutManager().sliceWidget(viewName)
+
+        sliceBounds = [0,0,0,0,0,0]
+        sliceWidget.sliceLogic().GetLowestVolumeSliceBounds(sliceBounds)
+        slicePositionRange = [sliceBounds[4], sliceBounds[5]]
+
+        # Capture red slice view, 30 images, from position -125.0 to 75.0
+        # into current folder, with name image_00001.png, image_00002.png, ...
+        import ScreenCapture
+        screenCaptureLogic = ScreenCapture.ScreenCaptureLogic()
+        viewNodeID = 'vtkMRMLSliceNodeRed'
+        destinationFolder = _reportfolder
+        numberOfFrames = rows*columns
+        filenamePattern = "_lightbox_tmp_image_red_%05d.png"
+        viewNode = sliceWidget.mrmlSliceNode()
+        # Suppress log messages
+        def noLog(msg):
+            pass
+        screenCaptureLogic.addLog=noLog
+        # Capture images
+        screenCaptureLogic.captureSliceSweep(viewNode, slicePositionRange[0], slicePositionRange[1],
+                                             numberOfFrames, destinationFolder, filenamePattern)
+        # Create lightbox image
+        resultImageFilename = filenamePattern % numberOfFrames
+        screenCaptureLogic.createLightboxImage(columns, destinationFolder, filenamePattern, numberOfFrames, resultImageFilename)
+
+        # Save result
+        with open(destinationFolder+"/"+resultImageFilename, "rb") as file:
+          self.dataValue = file.read()
+          self.dataType = "image/png"
+          # This could be used to create an image widget: img = Image(value=image, format='png')
+
+        # Clean up
+
+        screenCaptureLogic.deleteTemporaryFiles(destinationFolder, filenamePattern, numberOfFrames)
+        #Red slices views are wrong way round, should slice down from neck to abdomen
+
+
+        viewName = "Green"
+        rows = 6
+        columns = 4
+
+        sliceWidget = slicer.app.layoutManager().sliceWidget(viewName)
+
+        sliceBounds = [0,0,0,0,0,0]
+        sliceWidget.sliceLogic().GetLowestVolumeSliceBounds(sliceBounds)
+        slicePositionRange = [sliceBounds[4], sliceBounds[5]]
+
+        # Capture red slice view, 30 images, from position -125.0 to 75.0
+        # into current folder, with name image_00001.png, image_00002.png, ...
+        import ScreenCapture
+        screenCaptureLogic = ScreenCapture.ScreenCaptureLogic()
+        viewNodeID = 'vtkMRMLSliceNodeGreen'
+        destinationFolder = _reportfolder
+        numberOfFrames = rows*columns
+        filenamePattern = "_lightbox_tmp_image_green_%05d.png"
+        viewNode = sliceWidget.mrmlSliceNode()
+        # Suppress log messages
+        def noLog(msg):
+            pass
+        screenCaptureLogic.addLog=noLog
+        # Capture images
+        screenCaptureLogic.captureSliceSweep(viewNode, slicePositionRange[0], slicePositionRange[1],
+                                             numberOfFrames, destinationFolder, filenamePattern)
+        # Create lightbox image
+        resultImageFilename = filenamePattern % numberOfFrames
+        screenCaptureLogic.createLightboxImage(columns, destinationFolder, filenamePattern, numberOfFrames, resultImageFilename)
+
+        # Save result
+        with open(destinationFolder+"/"+resultImageFilename, "rb") as file:
+          self.dataValue = file.read()
+          self.dataType = "image/png"
+          # This could be used to create an image widget: img = Image(value=image, format='png')
+
+        # Clean up
+
+        screenCaptureLogic.deleteTemporaryFiles(destinationFolder, filenamePattern, numberOfFrames)
+
+        #adding image does not work yet
+        
+        # _html+="<img src=':_lightbox_tmp_image_red_00024.png'>"
+        
+        _html+="""
+        <br>
+        <h2>Assessment</h2>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
+        <br>
+        <p>Date  ...................&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Signature   ................................</p>
+        """
+
+        doc.setHtml(_html)
+        doc.setPageSize(qt.QSizeF(printer.pageRect().size()))  # hide the page number
+        doc.print(printer)
+
+        os.startfile(_reportpath)
 
     def onApplyButton(self):
         """
