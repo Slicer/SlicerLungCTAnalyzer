@@ -140,7 +140,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-        self.ui.includeCovidEvaluationCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.outputCovidResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
         # Thresholds
@@ -306,7 +305,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.outputCovidResultsTableSelector.setCurrentNode(self.logic.covidResultsTable)
 
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
-        self.ui.includeCovidEvaluationCheckBox.checked = self.logic.includeCovidEvaluation
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -316,17 +314,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
             self.ui.applyButton.toolTip = "Select input volume and right and left lung masks"
             self.ui.applyButton.enabled = False
-        
+
         self.ui.createPDFReportButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showResultsTablePushButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        # why again and again ?
-        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
-        
+
         self.ui.toggleInputSegmentationVisibility2DPushButton.enabled = (self.logic.inputSegmentation is not None)
         self.ui.toggleInputSegmentationVisibility3DPushButton.enabled = (self.logic.inputSegmentation is not None)
         self.ui.toggleOutputSegmentationVisibility2DPushButton.enabled = (self.logic.outputSegmentation is not None)
@@ -373,7 +365,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
 
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
-        self.logic.includeCovidEvaluation = self.ui.includeCovidEvaluationCheckBox.checked
 
         self._parameterNode.EndModify(wasModified)
 
@@ -491,38 +482,86 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         threeDView.resetFocalPoint()
         logging.info('Normal end of loading procedure.')
 
+    def createLightboxImage(self, viewName, destinationFolder, resultImageFilename, reverseOrder=False, rows=6, columns=4):
+        sliceWidget = slicer.app.layoutManager().sliceWidget(viewName)
+        sliceBounds = [0,0,0,0,0,0]
+        sliceWidget.sliceLogic().GetLowestVolumeSliceBounds(sliceBounds)
+        if reverseOrder:
+            slicePositionRange = [sliceBounds[5], sliceBounds[4]]
+        else:
+            slicePositionRange = [sliceBounds[4], sliceBounds[5]]
+
+        # Capture slice images, from minimum to maximum position
+        # into destinationFolder, with name _lightbox_tmp_image_00001.png, _lightbox_tmp_image_00002.png, ...
+        import ScreenCapture
+        screenCaptureLogic = ScreenCapture.ScreenCaptureLogic()
+        numberOfFrames = rows*columns
+        filenamePattern = "_lightbox_tmp_image_%05d.png"
+        viewNode = sliceWidget.mrmlSliceNode()
+        # Suppress log messages
+        def noLog(msg):
+            pass
+        screenCaptureLogic.addLog=noLog
+        # Capture images
+        screenCaptureLogic.captureSliceSweep(viewNode, slicePositionRange[0], slicePositionRange[1],
+                                             numberOfFrames, destinationFolder, filenamePattern)
+        # Create lightbox image
+        screenCaptureLogic.createLightboxImage(columns, destinationFolder, filenamePattern, numberOfFrames, resultImageFilename)
+
+        # Clean up
+        screenCaptureLogic.deleteTemporaryFiles(destinationFolder, filenamePattern, numberOfFrames)
+
     def onCreatePDFReportButton(self):
-        
+
+        # Switch to four-up view to have approximately square shaped viewers
+        slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+
         printer = qt.QPrinter(qt.QPrinter.PrinterResolution)
         printer.setOutputFormat(qt.QPrinter.PdfFormat)
         printer.setPaperSize(qt.QPrinter.A4)
-        _userfolder = os.path.expandvars('%userprofile%\\LungCTAnalyzerReports\\')
-        _reportfolder = _userfolder.replace('\\','/')
+        reportFolder = f"{slicer.app.defaultScenePath}/LungCTAnalyzerReports/"
         from pathlib import Path
-        Path(_reportfolder).mkdir(parents=True, exist_ok=True)
-        _reportpath = _reportfolder+"output.pdf"
-        printer.setOutputFileName(_reportpath)
+        Path(reportFolder).mkdir(parents=True, exist_ok=True)
+
+        from time import gmtime, strftime
+        timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
+        reportPath = f"{reportFolder}/LungCT-Report-{timestampString}.pdf"
+        printer.setOutputFileName(reportPath)
+
+        familyName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientFamilyName")
+        givenName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientGivenName")
+        birthDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientBirthDate")
+        examDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.examDate")
+        userFillString = "................................................."
+        if not familyName:
+            familyName = userFillString
+        if not givenName:
+            givenName = userFillString
+        if not birthDate:
+            birthDate = userFillString
+        if not examDate:
+            examDate = userFillString
 
         doc = qt.QTextDocument()
-        _html = """
+        _html = f"""
         <h1>Lung CT Analyzer Results</h1>\n
         <br>
         <table>
         <tr>
         <td>Patient last name:</td>
-        <td>.................................................</td>
+        <td>{familyName}</td>
         </tr>
         <tr>
         <td>Patient first name:</td>
-        <td>.................................................</td>
+        <td>{givenName}</td>
         </tr>
         <tr>
         <td>Date of birth:</td>
-        <td>.................................................</td>
+        <td>{birthDate}</td>
         </tr>
         <tr>
         <td>Date of examination:</td>
-        <td>.................................................</td>
+        <td>{examDate}</td>
         </tr>
         </table>
         
@@ -563,98 +602,28 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             _table+="</tr>\n"
         _table+="</table>\n"
         _html+=_table
+
+        axialLightboxImageFilename = "_tmp_axial_lightbox.png"
+        coronalLightboxImageFilename = "_tmp_coronal_lightbox.png"
+        self.createLightboxImage("Red", reportFolder, axialLightboxImageFilename, reverseOrder=True)
+        self.createLightboxImage("Green", reportFolder, coronalLightboxImageFilename)
+
         _html+="""
-        <br>
-        <h2>Lightbox axial view</h2>
+        <div id="page2" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
+        <h2>Axial</h2>
         <br>
         """
-        viewName = "Red"
-        rows = 6
-        columns = 4
+        _html += f'<img src="{reportFolder}/{axialLightboxImageFilename}" width="500" />'
 
-        sliceWidget = slicer.app.layoutManager().sliceWidget(viewName)
-
-        sliceBounds = [0,0,0,0,0,0]
-        sliceWidget.sliceLogic().GetLowestVolumeSliceBounds(sliceBounds)
-        slicePositionRange = [sliceBounds[4], sliceBounds[5]]
-
-        # Capture red slice view, 30 images, from position -125.0 to 75.0
-        # into current folder, with name image_00001.png, image_00002.png, ...
-        import ScreenCapture
-        screenCaptureLogic = ScreenCapture.ScreenCaptureLogic()
-        viewNodeID = 'vtkMRMLSliceNodeRed'
-        destinationFolder = _reportfolder
-        numberOfFrames = rows*columns
-        filenamePattern = "_lightbox_tmp_image_red_%05d.png"
-        viewNode = sliceWidget.mrmlSliceNode()
-        # Suppress log messages
-        def noLog(msg):
-            pass
-        screenCaptureLogic.addLog=noLog
-        # Capture images
-        screenCaptureLogic.captureSliceSweep(viewNode, slicePositionRange[0], slicePositionRange[1],
-                                             numberOfFrames, destinationFolder, filenamePattern)
-        # Create lightbox image
-        resultImageFilename = filenamePattern % numberOfFrames
-        screenCaptureLogic.createLightboxImage(columns, destinationFolder, filenamePattern, numberOfFrames, resultImageFilename)
-
-        # Save result
-        with open(destinationFolder+"/"+resultImageFilename, "rb") as file:
-          self.dataValue = file.read()
-          self.dataType = "image/png"
-          # This could be used to create an image widget: img = Image(value=image, format='png')
-
-        # Clean up
-
-        screenCaptureLogic.deleteTemporaryFiles(destinationFolder, filenamePattern, numberOfFrames)
-        #Red slices views are wrong way round, should slice down from neck to abdomen
-
-
-        viewName = "Green"
-        rows = 6
-        columns = 4
-
-        sliceWidget = slicer.app.layoutManager().sliceWidget(viewName)
-
-        sliceBounds = [0,0,0,0,0,0]
-        sliceWidget.sliceLogic().GetLowestVolumeSliceBounds(sliceBounds)
-        slicePositionRange = [sliceBounds[4], sliceBounds[5]]
-
-        # Capture red slice view, 30 images, from position -125.0 to 75.0
-        # into current folder, with name image_00001.png, image_00002.png, ...
-        import ScreenCapture
-        screenCaptureLogic = ScreenCapture.ScreenCaptureLogic()
-        viewNodeID = 'vtkMRMLSliceNodeGreen'
-        destinationFolder = _reportfolder
-        numberOfFrames = rows*columns
-        filenamePattern = "_lightbox_tmp_image_green_%05d.png"
-        viewNode = sliceWidget.mrmlSliceNode()
-        # Suppress log messages
-        def noLog(msg):
-            pass
-        screenCaptureLogic.addLog=noLog
-        # Capture images
-        screenCaptureLogic.captureSliceSweep(viewNode, slicePositionRange[0], slicePositionRange[1],
-                                             numberOfFrames, destinationFolder, filenamePattern)
-        # Create lightbox image
-        resultImageFilename = filenamePattern % numberOfFrames
-        screenCaptureLogic.createLightboxImage(columns, destinationFolder, filenamePattern, numberOfFrames, resultImageFilename)
-
-        # Save result
-        with open(destinationFolder+"/"+resultImageFilename, "rb") as file:
-          self.dataValue = file.read()
-          self.dataType = "image/png"
-          # This could be used to create an image widget: img = Image(value=image, format='png')
-
-        # Clean up
-
-        screenCaptureLogic.deleteTemporaryFiles(destinationFolder, filenamePattern, numberOfFrames)
-
-        #adding image does not work yet
-        
-        # _html+="<img src=':_lightbox_tmp_image_red_00024.png'>"
-        
         _html+="""
+        <div id="page3" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
+        <h2>Coronal</h2>
+        <br>
+        """
+        _html += f'<img src="{reportFolder}/{coronalLightboxImageFilename}" width="500" />'
+
+        _html+="""
+        <div id="page4" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
         <br>
         <h2>Assessment</h2>
         <p>................................................................................................</p>
@@ -673,7 +642,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         doc.setPageSize(qt.QSizeF(printer.pageRect().size()))  # hide the page number
         doc.print(printer)
 
-        os.startfile(_reportpath)
+        os.remove(f"{reportFolder}/{axialLightboxImageFilename}")
+        os.remove(f"{reportFolder}/{coronalLightboxImageFilename}")
+
+        # Open in PDF viewer
+        os.startfile(reportPath)
 
     def onApplyButton(self):
         """
@@ -708,6 +681,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.showTable(self.logic.resultsTable)
 
     def onShowCovidResultsTable(self):
+        slicer.util.messageBox("CovidQ has not been clinically evaluated yet. Do not base treatment decisions on that value.",
+            dontShowAgainSettingsKey="LungCTAnalyzer/DontShowCovidResultsWarning",
+            icon=qt.QMessageBox.Warning)
+
         self.logic.showTable(self.logic.covidResultsTable)
 
     def toggleSegmentationVisibility2D(self, segmentationNode):
@@ -847,8 +824,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.setThresholds(parameterNode, self.defaultThresholds, overwrite=False)
         if not parameterNode.GetParameter("ComputeImageIntensityStatistics"):
             parameterNode.SetParameter("ComputeImageIntensityStatistics", "true")
-        if not parameterNode.GetParameter("ComputeCovid"):
-            parameterNode.SetParameter("ComputeCovid", "false")
 
     def updateMaskedVolumeColors(self):
         if not self.lungMaskedVolume:
@@ -927,6 +902,25 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
                 maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
         self.resultsTable.GetTable().Modified()
+
+        # Add patient information as node metadata (available if volume is loaded from DICOM)
+        self.resultsTable.SetAttribute("LungCTAnalyzer.patientFamilyName", "")
+        self.resultsTable.SetAttribute("LungCTAnalyzer.patientGivenName", "")
+        self.resultsTable.SetAttribute("LungCTAnalyzer.patientBirthDate", "")
+        self.resultsTable.SetAttribute("LungCTAnalyzer.examDate", "")
+        try:
+            instUids = self.inputVolume.GetAttribute('DICOM.instanceUIDs').split()
+            filePath = slicer.dicomDatabase.fileForInstance(instUids[0])
+            import pydicom
+            ds = pydicom.read_file(filePath)
+            patientName = pydicom.valuerep.PersonName(ds.PatientName)
+            self.resultsTable.SetAttribute("LungCTAnalyzer.patientFamilyName", patientName.family_name)
+            self.resultsTable.SetAttribute("LungCTAnalyzer.patientGivenName", patientName.given_name)
+            self.resultsTable.SetAttribute("LungCTAnalyzer.patientBirthDate", ds.PatientBirthDate)
+            self.resultsTable.SetAttribute("LungCTAnalyzer.examDate", ds.StudyDate)
+        except:
+            pass
+
 
     def createCovidResultsTable(self):
 
@@ -1099,14 +1093,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetParameter("GenerateStatistics", "true" if on else "false")
 
     @property
-    def includeCovidEvaluation(self):
-      return self.getParameterNode().GetParameter("IncludeCovidEvaluation") == "true"
-
-    @includeCovidEvaluation.setter
-    def includeCovidEvaluation(self, on):
-        self.getParameterNode().SetParameter("IncludeCovidEvaluation", "true" if on else "false")
-
-    @property
     def lungMaskedVolume(self):
         return self.getParameterNode().GetNodeReference("LungMaskedVolume")
 
@@ -1183,11 +1169,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(maskLabelVolume)
         slicer.mrmlScene.RemoveNode(maskLabelColorTable)
 
+        # Compute quantitative results
         self.createResultsTable()
-
-        # Compute Covid analysis results table
-        if self.includeCovidEvaluation:
-            self.createCovidResultsTable()
+        self.createCovidResultsTable()
 
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
