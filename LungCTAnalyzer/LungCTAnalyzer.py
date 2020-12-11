@@ -553,10 +553,20 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         printer = qt.QPrinter(qt.QPrinter.PrinterResolution)
         printer.setOutputFormat(qt.QPrinter.PdfFormat)
         printer.setPaperSize(qt.QPrinter.A4)
+<<<<<<< HEAD
 
         from time import gmtime, strftime
         timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
         reportPath = f"{self.reportFolder}/LungCT-Report-{timestampString}.pdf"
+=======
+        reportFolder = f"{slicer.app.defaultScenePath}/LungCTAnalyzerReports/"
+        from pathlib import Path
+        Path(reportFolder).mkdir(parents=True, exist_ok=True)
+
+        from time import gmtime, strftime
+        timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
+        reportPath = f"{reportFolder}/LungCT-Report-{timestampString}.pdf"
+>>>>>>> 743ea879754e9e61435f0c1fc5d112268c8c4c18
         printer.setOutputFileName(reportPath)
 
         familyName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientFamilyName")
@@ -636,22 +646,35 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         axialLightboxImageFilename = "_tmp_axial_lightbox.png"
         coronalLightboxImageFilename = "_tmp_coronal_lightbox.png"
+<<<<<<< HEAD
         self.createLightboxImage("Red", self.reportFolder, axialLightboxImageFilename, reverseOrder=True)
         self.createLightboxImage("Green", self.reportFolder, coronalLightboxImageFilename)
+=======
+        self.createLightboxImage("Red", reportFolder, axialLightboxImageFilename, reverseOrder=True)
+        self.createLightboxImage("Green", reportFolder, coronalLightboxImageFilename)
+>>>>>>> 743ea879754e9e61435f0c1fc5d112268c8c4c18
 
         _html+="""
         <div id="page2" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
         <h2>Axial</h2>
         <br>
         """
+<<<<<<< HEAD
         _html += f'<img src="{self.reportFolder}/{axialLightboxImageFilename}" width="500" />'
+=======
+        _html += f'<img src="{reportFolder}/{axialLightboxImageFilename}" width="500" />'
+>>>>>>> 743ea879754e9e61435f0c1fc5d112268c8c4c18
 
         _html+="""
         <div id="page3" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
         <h2>Coronal</h2>
         <br>
         """
+<<<<<<< HEAD
         _html += f'<img src="{self.reportFolder}/{coronalLightboxImageFilename}" width="500" />'
+=======
+        _html += f'<img src="{reportFolder}/{coronalLightboxImageFilename}" width="500" />'
+>>>>>>> 743ea879754e9e61435f0c1fc5d112268c8c4c18
 
         _html+="""
         <div id="page4" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
@@ -673,8 +696,16 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         doc.setPageSize(qt.QSizeF(printer.pageRect().size()))  # hide the page number
         doc.print(printer)
 
+<<<<<<< HEAD
         os.remove(f"{self.reportFolder}/{axialLightboxImageFilename}")
         os.remove(f"{self.reportFolder}/{coronalLightboxImageFilename}")
+=======
+        os.remove(f"{reportFolder}/{axialLightboxImageFilename}")
+        os.remove(f"{reportFolder}/{coronalLightboxImageFilename}")
+
+        # Open in PDF viewer
+        os.startfile(reportPath)
+>>>>>>> 743ea879754e9e61435f0c1fc5d112268c8c4c18
 
         # Open in PDF viewer
         print("Starting '"+reportPath+"' ...")

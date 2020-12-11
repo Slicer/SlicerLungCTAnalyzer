@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>332</width>
-    <height>729</height>
+    <width>335</width>
+    <height>745</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -175,31 +175,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>COVID-19 evaluation: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QCheckBox" name="includeCovidEvaluationCheckBox">
-        <property name="toolTip">
-         <string>Check this to include an extended result table. </string>
-        </property>
-        <property name="text">
-         <string>Not for clinical decision making!</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="Line" name="line_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0" colspan="2">
+      <item row="5" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QPushButton" name="toggleInputSegmentationVisibility2DPushButton">
@@ -222,6 +198,13 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="6" column="0">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -672,7 +655,7 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="3" column="0" colspan="2">
        <widget class="QPushButton" name="createPDFReportButton">
         <property name="toolTip">
          <string>Press this button to create a PDF report.  </string>
