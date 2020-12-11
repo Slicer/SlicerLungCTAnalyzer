@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>392</width>
+    <width>506</width>
     <height>838</height>
    </rect>
   </property>
@@ -183,7 +183,7 @@
            <string>Press this button to show or hide the segments in 2D view. </string>
           </property>
           <property name="text">
-           <string>Show/hide segments in 2D</string>
+           <string>Show/hide mask segments in 2D</string>
           </property>
          </widget>
         </item>
@@ -193,7 +193,7 @@
            <string>Press this button to show or hide the segments in 3D view. </string>
           </property>
           <property name="text">
-           <string>Show/hide segments in 3D</string>
+           <string>Show/hide mask segments in 3D</string>
           </property>
          </widget>
         </item>
@@ -608,7 +608,7 @@
          <string>Press this button to show or hide the segments in 3D view. </string>
         </property>
         <property name="text">
-         <string>Show/hide segments in 3D</string>
+         <string>Show/hide final segments in 3D</string>
         </property>
        </widget>
       </item>
@@ -662,7 +662,7 @@
          <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
         </property>
         <property name="text">
-         <string>Show/hide segments in 2D</string>
+         <string>Show/hide final segments in 2D</string>
         </property>
        </widget>
       </item>
