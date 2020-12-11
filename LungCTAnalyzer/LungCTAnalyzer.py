@@ -96,6 +96,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
+        self.reportFolder = ""
 
         ScriptedLoadableModuleWidget.setup(self)
 
@@ -154,13 +155,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.VesselsRangeWidget.connect('valuesChanged(double,double)', self.onVesselsRangeWidgetChanged)
         self.ui.restoreDefaultsButton.connect('clicked(bool)', self.onRestoreDefaultsButton)
         self.ui.saveThresholdsButton.connect('clicked(bool)', self.onSaveThresholdsButton)
-        self.ui.saveThresholdsButton.connect('clicked(bool)', self.onSaveThresholdsButton)
         self.ui.loadThresholdsButton.connect('clicked(bool)', self.onLoadThresholdsButton)
         self.ui.createPDFReportButton.connect('clicked(bool)', self.onCreatePDFReportButton)
+        
         # Report Dir
         self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
         self.ui.selectReportDirectoryButton.directoryChanged.connect(self.onReportDirectoryChanged)
-        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)        
+        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
         self.ui.openReportDirectoryButton.connect('clicked(bool)', self.onOpenReportDirectoryButton)
         # Opacities
         self.opacitySliders = {
@@ -182,6 +183,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.toggleOutputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility3D)
         self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
         self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)
+        
 
 
         self.reportFolder = ""
@@ -202,11 +204,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
 
-
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+       
+       # Set initial button texts
+        self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+        self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D"         
         
-
     def cleanup(self):
         """
         Called when the application closes and the module widget is destroyed.
@@ -249,11 +253,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 return segmentation.GetNthSegmentID(segmentIndex)
         return None
 
-    def setReportFolder(self,path):
-        self.ui.selectReportDirectoryButton.directory = path
-        self._parameterNode.SetParameter("reportFolder", path)
-
-
     def initializeParameterNode(self):
         """
         Ensure parameter node exists and observed.
@@ -261,6 +260,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Parameter node stores all user choices in parameter values, node selections, etc.
         # so that when the scene is saved and reloaded, these settings are restored.
 
+        self.setParameterNode(self.logic.getParameterNode())
+       
         # Select default input nodes if nothing is selected yet to save a few clicks for the user
         if not self.logic.inputVolume:
             firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
@@ -272,6 +273,12 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.logic.inputSegmentation = firstSegmentationNode
                 self.logic.rightLungMaskSegmentID = self.findSegmentID(firstSegmentationNode, "right")
                 self.logic.leftLungMaskSegmentID = self.findSegmentID(firstSegmentationNode, "left")
+                #initial masks always on
+                segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
+                segmentationDisplayNode.Visibility2DOn()
+                self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+                segmentationDisplayNode.Visibility3DOff()
+                self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
 
     def setParameterNode(self, inputParameterNode):
         """
@@ -398,6 +405,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.resultsTable = self.ui.outputResultsTableSelector.currentNode()
         self.logic.volumeRenderingPropertyNode = self.ui.volumeRenderingPropertyNodeSelector.currentNode()
         self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
+        self.logic.resultDirectory = self.resultDirectory
         
 
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
@@ -433,7 +441,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             volumeProperty.GetRGBTransferFunction().DeepCopy(colorTransferFunction)
 
     def onInputSegmentationSelected(self, segmentationNode):
-        print("Input segmentation changed.")
         if segmentationNode == self.logic.inputSegmentation:
             # no change
             return
@@ -681,9 +688,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Open in PDF viewer
         print("Starting '"+reportPath+"' ...")
+        #slash/backlash replacements because of active directory
         os.startfile(reportPath.replace('/', '\\'))
-        
-    
+
     def onApplyButton(self):
         """
         Run processing when user clicks "Apply" button.
@@ -715,11 +722,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def onOpenReportDirectoryButton(self):
         # show file
+        print("Open Directory")
         import subprocess        
         subprocess.Popen(f'explorer {os.path.realpath(self.reportFolder)}')
-
+    
     def onReportDirectoryChanged(self):
-        # print("Directory changed")
+        
+        print("Directory changed")
         self.reportFolder = self.ui.selectReportDirectoryButton.directory
         # save new path locally
         import configparser
@@ -751,16 +760,20 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if segmentationDisplayNode.GetVisibility2D():
             logging.info('Segments visibility off')
             segmentationDisplayNode.Visibility2DOff()
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Show mask segments in 2D" 
         else :
             logging.info('Segments visibility on')
             segmentationDisplayNode.Visibility2DOn()
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
 
     def toggleSegmentationVisibility3D(self, segmentationNode):
         if segmentationNode.GetDisplayNode().GetVisibility3D() and segmentationNode.GetSegmentation().ContainsRepresentation("Closed surface"):
           segmentationNode.GetDisplayNode().SetVisibility3D(False)
+          self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
         else:
           segmentationNode.CreateClosedSurfaceRepresentation()
           segmentationNode.GetDisplayNode().SetVisibility3D(True)
+          self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
 
     def onToggleInputSegmentationVisibility2D(self):
         self.toggleSegmentationVisibility2D(self.logic.inputSegmentation)
