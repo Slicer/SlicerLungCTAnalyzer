@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>335</width>
-    <height>745</height>
+    <width>392</width>
+    <height>838</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -602,6 +602,50 @@
       <string>Statistics</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <item row="2" column="1">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
+        <property name="toolTip">
+         <string>Press this button to show or hide the segments in 3D view. </string>
+        </property>
+        <property name="text">
+         <string>Show/hide segments in 3D</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>PDF report directory:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QPushButton" name="createPDFReportButton">
+        <property name="toolTip">
+         <string>Press this button to create a PDF report.  </string>
+        </property>
+        <property name="text">
+         <string>Create PDF report</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="ctkDirectoryButton" name="selectReportDirectoryButton">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="showResultsTablePushButton">
+        <property name="toolTip">
+         <string>Show the volumetry results table. </string>
+        </property>
+        <property name="text">
+         <string>Show results table</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
        <widget class="QPushButton" name="showCovidResultsTableButton">
         <property name="toolTip">
@@ -609,6 +653,16 @@
         </property>
         <property name="text">
          <string>Show COVID-19 results table</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
+        <property name="toolTip">
+         <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
+        </property>
+        <property name="text">
+         <string>Show/hide segments in 2D</string>
         </property>
        </widget>
       </item>
@@ -625,43 +679,10 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="showResultsTablePushButton">
-        <property name="toolTip">
-         <string>Show the volumetry results table. </string>
-        </property>
+      <item row="5" column="1">
+       <widget class="QPushButton" name="openReportDirectoryButton">
         <property name="text">
-         <string>Show results table</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
-        <property name="toolTip">
-         <string>Press this button to show or hide the segments in 3D view. </string>
-        </property>
-        <property name="text">
-         <string>Show/hide segments in 3D</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
-        <property name="toolTip">
-         <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
-        </property>
-        <property name="text">
-         <string>Show/hide segments in 2D</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="2">
-       <widget class="QPushButton" name="createPDFReportButton">
-        <property name="toolTip">
-         <string>Press this button to create a PDF report.  </string>
-        </property>
-        <property name="text">
-         <string>Create PDF report</string>
+         <string>Open report directory</string>
         </property>
        </widget>
       </item>
@@ -922,6 +943,11 @@
    <extends>QGroupBox</extends>
    <header>ctkCollapsibleGroupBox.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkDirectoryButton</class>
+   <extends>QWidget</extends>
+   <header>ctkDirectoryButton.h</header>
   </customwidget>
   <customwidget>
    <class>ctkRangeWidget</class>
