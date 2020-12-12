@@ -208,8 +208,58 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.initializeParameterNode()
        
        # Set initial button texts
-        self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
-        self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D"         
+        
+        if hasattr(self.logic, "inputSegmentation"):
+            if self.logic.inputSegmentation: 
+                segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
+                if segmentationDisplayNode.GetVisibility2D():
+                    self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+                else: 
+                    self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Show mask segments in 2D" 
+                if self.logic.inputSegmentation.GetDisplayNode().GetVisibility3D() and self.logic.inputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
+                    self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Hide mask segments in 3D" 
+                else: 
+                    self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+        else: 
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Show mask segments in 2D" 
+            self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+        
+        if hasattr(self.logic, "outputSegmentation"):
+            if self.logic.outputSegmentation: 
+                segmentationDisplayNode = self.logic.outputSegmentation.GetDisplayNode()
+                if segmentationDisplayNode.GetVisibility2D():
+                    self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Hide output segments in 2D" 
+                else: 
+                    self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Show output segments in 2D" 
+
+                if self.logic.outputSegmentation.GetDisplayNode().GetVisibility3D() and self.logic.outputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
+                    self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Hide output segments in 3D" 
+                else: 
+                    self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Show output segments in 3D" 
+        else: 
+            self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Show output segments in 2D" 
+            self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Show output segments in 3D" 
+        
+        if hasattr(self.logic, "showLungMaskedVolumeIn2D"):
+            if self.logic.showLungMaskedVolumeIn2D:
+                self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Hide preview in 2D" 
+            else:
+                self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Show preview in 2D" 
+        else: 
+            self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Show preview in 2D" 
+        
+        if hasattr(self.logic, "wasVisible3D"):
+            if self.logic.wasVisible3D: 
+                self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
+            else:
+                self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Hide preview in 3D"
+        else:  
+            self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
+        
+        self.show3DWarning = True
+
+
+
         
     def cleanup(self):
         """
@@ -760,32 +810,49 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if segmentationDisplayNode.GetVisibility2D():
             logging.info('Segments visibility off')
             segmentationDisplayNode.Visibility2DOff()
-            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Show mask segments in 2D" 
         else :
             logging.info('Segments visibility on')
             segmentationDisplayNode.Visibility2DOn()
-            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
 
     def toggleSegmentationVisibility3D(self, segmentationNode):
         if segmentationNode.GetDisplayNode().GetVisibility3D() and segmentationNode.GetSegmentation().ContainsRepresentation("Closed surface"):
           segmentationNode.GetDisplayNode().SetVisibility3D(False)
-          self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
         else:
           segmentationNode.CreateClosedSurfaceRepresentation()
           segmentationNode.GetDisplayNode().SetVisibility3D(True)
-          self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
 
     def onToggleInputSegmentationVisibility2D(self):
         self.toggleSegmentationVisibility2D(self.logic.inputSegmentation)
+        segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
+        if segmentationDisplayNode.GetVisibility2D():
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+        else: 
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Show mask segments in 2D" 
 
     def onToggleInputSegmentationVisibility3D(self):
         self.toggleSegmentationVisibility3D(self.logic.inputSegmentation)
-
+        if self.logic.inputSegmentation.GetDisplayNode().GetVisibility3D() and self.logic.inputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
+            self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Hide mask segments in 3D" 
+        else: 
+            self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+        
     def onToggleOutputSegmentationVisibility2D(self):
         self.toggleSegmentationVisibility2D(self.logic.outputSegmentation)
+        segmentationDisplayNode = self.logic.outputSegmentation.GetDisplayNode()
+        if segmentationDisplayNode.GetVisibility2D():
+            self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Hide output segments in 2D" 
+        else: 
+            self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Show output segments in 2D" 
 
     def onToggleOutputSegmentationVisibility3D(self):
+        if not self.logic.outputSegmentation.GetDisplayNode().GetVisibility3D() and self.show3DWarning: 
+            slicer.util.delayDisplay('Expect up to a minute waiting time until 3D display becomes active.',3000)
+            self.show3DWarning = False
         self.toggleSegmentationVisibility3D(self.logic.outputSegmentation)
+        if self.logic.outputSegmentation.GetDisplayNode().GetVisibility3D() and self.logic.outputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
+            self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Hide output segments in 3D" 
+        else: 
+            self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Show output segments in 3D" 
 
     def onMaskedVolumeDisplay3D(self):
         # Make sure the masked volume is up-to-date
@@ -798,21 +865,29 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             volumeRenderingPropertyNode.GetVolumeProperty().ShadeOn()
             self.updateVolumeRenderingProperty()
 
+
         volRenLogic = slicer.modules.volumerendering.logic()
         volumeNode = self.logic.lungMaskedVolume
         displayNode = volRenLogic.GetFirstVolumeRenderingDisplayNode(volumeNode)
         if displayNode:
-            wasVisible = displayNode.GetVisibility()
+            self.logic.wasVisible3D = displayNode.GetVisibility()
+            self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
         else:
             displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
-            wasVisible = False
+            self.logic.wasVisible3D = False
 
         displayNode.SetAndObserveVolumePropertyNodeID(volumeRenderingPropertyNode.GetID())
-        displayNode.SetVisibility(not wasVisible)
+        displayNode.SetVisibility(not self.logic.wasVisible3D)
 
+        if self.logic.wasVisible3D: 
+            self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
+        else:
+            self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Hide preview in 3D"
+        
         self.logic.updateMaskedVolumeColors()
 
-        if not wasVisible:
+        
+        if not self.logic.wasVisible3D:
             # center 3D view
             layoutManager = slicer.app.layoutManager()
             if layoutManager.threeDViewCount > 0:
@@ -829,8 +904,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.updateMaskedVolumeColors()
             slicer.util.setSliceViewerLayers(background=self.logic.inputVolume,
                 foreground=self.logic.lungMaskedVolume, foregroundOpacity=0.5)
+            self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Hide preview in 2D" 
         else:
           slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
+          self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Show preview in 2D" 
 
 #
 # LungCTAnalyzerLogic
