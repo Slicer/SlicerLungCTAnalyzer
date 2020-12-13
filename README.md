@@ -14,7 +14,7 @@ https://www.youtube.com/watch?v=0plsoy94hFE<br>
 <br>
 <br>
 <b>Installation Tutorial</b><br>
-This is new 3D Slicer extension which needs to be manually installed. It´s an easy process. Please follow these steps:  
+This is new 3D Slicer extension which needs to be manually installed. It's an easy process. Please follow these steps:  
 <ul>
 <li>Start 3D Slicer</li>
 <li>From the "Welcome" page, select "Install Slicer Extensions" </li>
