@@ -14,18 +14,17 @@ https://www.youtube.com/watch?v=0plsoy94hFE<br>
 <br>
 <br>
 <b>Installation Tutorial</b><br>
-This is a very new extension. It is not yet included in the standard build of 3D Slicer. However, installation is easy. Please follow the following steps:  
+This is new 3D Slicer extension which needs to be manually installed. It´s an easy process. Please follow the following steps:  
 <ul>
-<li>Download the source files as ZIP from this website (https://github.com/rbumm/SlicerLungCTAnalyzer/archive/master.zip) </li>
-<li>Extract the downloaded file SlicerLungCTAnalyzer.zip to a folder of your choice</li>
 <li>Start 3D Slicer</li>
-<li>In the "Modules" dropdown, select "Developer Tools" -> "Extension Wizard"</li>
-<li>In "Extension Wizard", press "Select" and navigate to the folder where you extracted Lung CT Analyzer.</li>
-<li>In this folder, click on the folder "SlicerLungCTAnalyzer-master" and "Choose" that folder</li>
+<li>From the "Welcome" page, select "Install Slicer Extensions" </li>
+<li>The "Extension Manager" will open.</li>
+<li>Choose the "Install extensions" Tab of the "Extension Manager"</li>
+<li>Search and install the extension described here: "Lung CT Analyzer"</li>
 <li>Restart 3D Slicer</li>
 </ul>
 <br>
-Now you should have two new entries in your "Modules" dropdown under "Chest imaging platform": "Lung CT Segmenter" and "Lung CT Analyzer". If you want to update to the latest development versions of CT Lung Analyzer please redownload the and extract the sources again to the same extension directory.<br>   
+Now you should have two new entries in your "Modules" dropdown under "Chest imaging platform": "Lung CT Segmenter" and "Lung CT Analyzer". If you want to update to the latest development version of CT Lung Analyzer, please reinstall the extension from the "Extension Manager".<br>   
 <br>
 <br>
 <b>Operation Tutorial</b><br>
