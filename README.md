@@ -14,7 +14,6 @@ https://www.youtube.com/watch?v=0plsoy94hFE<br>
 <br>
 <br>
 <b>Installation Tutorial</b><br>
-<br>
 This is a very new extension. It is not yet included in the standard build of 3D Slicer. However, installation is easy. Please follow the following steps:  
 <ul>
 <li>Download the source files as ZIP from this website (https://github.com/rbumm/SlicerLungCTAnalyzer/archive/master.zip) </li>
@@ -26,10 +25,7 @@ This is a very new extension. It is not yet included in the standard build of 3D
 <li>Restart 3D Slicer</li>
 </ul>
 <br>
-Now you should have two new entries in your "Modules" dropdown under "Chest imaging platform": "Lung CT Segmenter" and "Lung CT Analyzer".<br> 
-If you want to update to the latest development versions of CT Lung Analyzer please redownload the and extract the sources again to the same extension directory.<br>   
-  
-
+Now you should have two new entries in your "Modules" dropdown under "Chest imaging platform": "Lung CT Segmenter" and "Lung CT Analyzer". If you want to update to the latest development versions of CT Lung Analyzer please redownload the and extract the sources again to the same extension directory.<br>   
 <br>
 <br>
 <b>Operation Tutorial</b><br>
