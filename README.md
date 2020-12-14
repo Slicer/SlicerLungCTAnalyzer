@@ -63,6 +63,11 @@ Step 3: Run <b>Lung CT Analyzer</b>
 <li>Press 'Compute results'</li>
 </ul>
 
+<b>Questions ? </b><br>
+The best way to ask questions is using the Slicer forum (https://discourse.slicer.org/), go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
+<br>
+<br>
+
 <b>Details</b><br>
 The software uses freely definable threshold ranges to identify five regions of interest: "Bulla/emphysema","Ventilated","Infiltrated", "Collapsed" and "Lung Vessel". 
 Segments are generated using 3DSlicer's segment editor "Threshold" function and the volume of each segment is calculated by using 3DSlicer's "Segment statistics" function. 
