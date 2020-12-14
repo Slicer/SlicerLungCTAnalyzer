@@ -845,9 +845,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.toggleOutputSegmentationVisibility2DPushButton.text = "Show output segments in 2D" 
 
     def onToggleOutputSegmentationVisibility3D(self):
-        if not self.logic.outputSegmentation.GetDisplayNode().GetVisibility3D() and self.show3DWarning: 
-            slicer.util.delayDisplay('Expect up to a minute waiting time until 3D display becomes active.',3000)
-            self.show3DWarning = False
+        if not self.logic.outputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
+            if self.show3DWarning: 
+                slicer.util.delayDisplay('Expect up to a minute waiting time until 3D display becomes active.',3000)
+                self.show3DWarning = False
         self.toggleSegmentationVisibility3D(self.logic.outputSegmentation)
         if self.logic.outputSegmentation.GetDisplayNode().GetVisibility3D() and self.logic.outputSegmentation.GetSegmentation().ContainsRepresentation("Closed surface"):
             self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Hide output segments in 3D" 
