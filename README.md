@@ -64,7 +64,7 @@ Step 3: Run <b>Lung CT Analyzer</b>
 </ul>
 
 <b>Questions ? </b><br>
-The best way to ask questions is using the Slicer forum, create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
+The best way to ask questions is using the Slicer forum (https://discourse.slicer.org/), go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
 <br>
 <br>
 
