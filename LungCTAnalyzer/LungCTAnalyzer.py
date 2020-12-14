@@ -455,7 +455,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.resultsTable = self.ui.outputResultsTableSelector.currentNode()
         self.logic.volumeRenderingPropertyNode = self.ui.volumeRenderingPropertyNodeSelector.currentNode()
         self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
-        self.logic.resultDirectory = self.resultDirectory
         
 
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
