@@ -670,9 +670,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <td>{examDate}</td>
         </tr>
         </table>
-        
-        
-        <p>The following tables contain the analysis of the CT scan. The segments are created according to their Hounsfield units using predefined threshold ranges (Table 1). Functional versus affected lung volumes are shown in Table 2. </p>
+        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 potentially functional versus affected lung volumes are shown.</p>
         <br>
         <h2>Volumetric analysis (Table 1)</h2>
         <br>
@@ -695,7 +693,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         _html+=_table
         _html+="""
         <br>
-        <h2>Extended results (Table 2)</h2>
+        <h2>Extended analysis (Table 2)</h2>
         <br>
         """
         _table=""
@@ -723,7 +721,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         _html+="""
         <div id="page2" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
-        <h2>Axial view lightbox</h2>
+        <h2>Lightbox (axial view)</h2>
         <br>
         <br>
         """
@@ -731,7 +729,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         _html+="""
         <div id="page3" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
-        <h2>Coronal view lightbox</h2>
+        <h2>Lightbox (coronal view) </h2>
         <br>
         <br>
         """
