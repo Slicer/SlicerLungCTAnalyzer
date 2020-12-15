@@ -613,15 +613,19 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         printer.setOutputFormat(qt.QPrinter.PdfFormat)
         printer.setPaperSize(qt.QPrinter.A4)
 
-        from time import gmtime, strftime
-        timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
-        reportPath = f"{self.reportFolder}/LungCT-Report-{timestampString}.pdf"
-        printer.setOutputFileName(reportPath)
-
         familyName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientFamilyName")
         givenName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientGivenName")
         birthDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientBirthDate")
         examDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.examDate")
+
+        from time import gmtime, strftime
+        timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
+        if familyName and givenName and birthDate and examDate:
+            reportPath = f"{self.reportFolder}/{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}.pdf"
+        else:  
+            reportPath = f"{self.reportFolder}/LungCT-Report-{timestampString}.pdf"
+        printer.setOutputFileName(reportPath)
+
         userFillString = "................................................."
         if not familyName:
             familyName = userFillString
@@ -634,6 +638,18 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         doc = qt.QTextDocument()
         _html = f"""
+        <head>
+        <title>Report</title>
+        <style>
+          td, th {{
+            text-align:center; 
+          }}
+          table {{
+            border: 1px solid black;
+          }}
+        </style>
+        </head>  
+        <body>
         <h1>Lung CT Analyzer Results</h1>\n
         <br>
         <table>
@@ -658,11 +674,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
         <p>The following tables contain the analysis of the CT scan. The segments are created according to their Hounsfield units using predefined threshold ranges (Table 1). Functional versus affected lung volumes are shown in Table 2. </p>
         <br>
-        <h2>Volumetric analysis result table (Table 1)</h2>
+        <h2>Volumetric analysis (Table 1)</h2>
         <br>
         """
         _table=""
-        _table+="<table>\n"
+        _table+="<table style=""color:black;font-size:10px;"">\n"
         _table+="<tr>\n"
         for col in range(self.logic.resultsTable.GetNumberOfColumns()): 
           _table+="<th>"+self.logic.resultsTable.GetColumnName(col)+"</th>\n"
@@ -670,17 +686,20 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for row in range(self.logic.resultsTable.GetNumberOfRows()): 
             _table+="<tr>\n"
             for col in range(self.logic.resultsTable.GetNumberOfColumns()): 
-              _table+="<td>"+self.logic.resultsTable.GetCellText(row,col)+"</td>\n"
+              if col==0: 
+                  _table+="<td style=""text-align:left"">"+self.logic.resultsTable.GetCellText(row,col)+"</td>\n"
+              else: 
+                  _table+="<td>"+self.logic.resultsTable.GetCellText(row,col)+"</td>\n"
             _table+="</tr>\n"
         _table+="</table>\n"
         _html+=_table
         _html+="""
         <br>
-        <h2>Extended result table (Table 2)</h2>
+        <h2>Extended results (Table 2)</h2>
         <br>
         """
         _table=""
-        _table+="<table>\n"
+        _table+="<table style=""color:black;font-size:10px;"">\n"
         _table+="<tr>\n"
         for col in range(self.logic.covidResultsTable.GetNumberOfColumns()): 
           _table+="<th>"+self.logic.covidResultsTable.GetColumnName(col)+"</th>\n"
@@ -688,7 +707,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for row in range(self.logic.covidResultsTable.GetNumberOfRows()): 
             _table+="<tr>\n"
             for col in range(self.logic.covidResultsTable.GetNumberOfColumns()): 
-              _table+="<td>"+self.logic.covidResultsTable.GetCellText(row,col)+"</td>\n"
+              if col==0: 
+                  _table+="<td style=""text-align:left"">"+self.logic.covidResultsTable.GetCellText(row,col)+"</td>\n"
+              else: 
+                  _table+="<td>"+self.logic.covidResultsTable.GetCellText(row,col)+"</td>\n"
+              
             _table+="</tr>\n"
         _table+="</table>\n"
         _html+=_table
@@ -700,14 +723,16 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         _html+="""
         <div id="page2" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
-        <h2>Axial</h2>
+        <h2>Axial view lightbox</h2>
+        <br>
         <br>
         """
         _html += f'<img src="{self.reportFolder}/{axialLightboxImageFilename}" width="500" />'
 
         _html+="""
         <div id="page3" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
-        <h2>Coronal</h2>
+        <h2>Coronal view lightbox</h2>
+        <br>
         <br>
         """
         _html += f'<img src="{self.reportFolder}/{coronalLightboxImageFilename}" width="500" />'
@@ -716,6 +741,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <div id="page4" class="page" style="height: 775px; width: 595px; page-break-before: always;"/>
         <br>
         <h2>Assessment</h2>
+        <br>
+        <p>................................................................................................</p>
+        <p>................................................................................................</p>
         <p>................................................................................................</p>
         <p>................................................................................................</p>
         <p>................................................................................................</p>
@@ -726,6 +754,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <p>................................................................................................</p>
         <br>
         <p>Date  ...................&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Signature   ................................</p>
+        </body>
+        </html>
         """
 
         doc.setHtml(_html)
