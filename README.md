@@ -42,9 +42,9 @@ Step 2: Run <b>Lung CT Segmenter</b> to create lung masks
 <li>Press the "Start" button</li>
 <li>Follow the instructions on the screen, the manual procedures are simple and straightforward</li>
 <li>Place three markers on the right lung, axial view (red slice)</li>
-<li>Place three markers on the right lung, coronar view</li>
+<li>Place three markers on the right lung, coronal view</li>
 <li>Place three markers on the left lung axial view (red slice)</li>
-<li>Place three markers on the left lung, coronar view</li>
+<li>Place three markers on the left lung, coronal view</li>
 <li>Place one marker on the trachea, axial view</li>
 <li>Watch temporary lung masks being created on the display</li>
 <li>Place additional markers if needed</li>
