@@ -86,6 +86,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
       # (in the selected parameter node).
       self.ui.inputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+      
+      # Connect threshhold range sliders 
+      self.ui.ThresholdRangeWidget.connect('valuesChanged(double,double)', self.onThresholdRangeWidgetChanged)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -138,6 +141,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._leftLungFiducials = None
       self._tracheaFiducials = None
 
+
+  def onThresholdRangeWidgetChanged(self):
+      self.updateParameterNodeFromGUI()
+      
   def onSceneEndClose(self, caller, event):
       """
       Called just after the scene is closed.
@@ -299,6 +306,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
+      self.logic.lungThresholdMin = self.ui.ThresholdRangeWidget.minimumValue
+      self.logic.lungThresholdMax = self.ui.ThresholdRangeWidget.maximumValue
     
       self._parameterNode.EndModify(wasModified)
 
@@ -408,7 +417,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     @lungThresholdMin.setter
     def lungThresholdMin(self, value):
-        self.getParameterNode().SetPrameter("LungThresholdMin", str(value))
+        self.getParameterNode().SetParameter("LungThresholdMin", str(value))
 
     @property
     def lungThresholdMax(self):
@@ -417,7 +426,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     @lungThresholdMax.setter
     def lungThresholdMax(self, value):
-        self.getParameterNode().SetPrameter("LungThresholdMax", str(value))
+        self.getParameterNode().SetParameter("LungThresholdMax", str(value))
 
     @property
     def inputVolume(self):
