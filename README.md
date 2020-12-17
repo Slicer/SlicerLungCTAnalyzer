@@ -3,7 +3,7 @@
 Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated, emphysematic and collapsed lung areas in CT scans. 
 
 <b>Introduction</b><br>
-The extent of pulmonary infiltrations as well as the presence of non-ventilated areas like emphysema or bullae are usually analyzed visually in CT scans. 
+The extent of pulmonary infiltrations as well as the presence of areas like emphysema or bullae are usually analyzed visually in CT scans. 
 Abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
 This especially crucial in the light of the current COVID-19 pandemia with high case loads of patients with severe lung infiltrations, who need meticulous follow up over time.   
 The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
@@ -77,9 +77,9 @@ In addition, spatial reconstruction (3D) of the diseased lung segments is availa
 <i>Total lung volume (100%)<br>
 Right lung volume (% of total lung volume)<br>
 Left lung volume (% of total lung volume)<br>
-Functional right lung volume (ventilated, % of right lung volume)<br>
-Functional left lung volume (ventilatzed, % of left lung volume)<br>
-Functional total lung volume (ventilated, % of total lung volume)<br>
+Functional right lung volume (inflated, % of right lung volume)<br>
+Functional left lung volume (inflated, % of left lung volume)<br>
+Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
