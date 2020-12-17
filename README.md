@@ -49,6 +49,8 @@ Step 2: Run <b>Lung CT Segmenter</b> to create lung masks
 <li>Watch temporary lung masks being created on the display</li>
 <li>Place additional markers if needed</li>
 <li>If the temporary masks fit well, press 'Apply" and produce permanent mask segmentations.</li>
+<li>In noisy or weak datasets you may want to adopt the volmetric threshold range (hidden in "Advanced"). If you get mask leakages please thst the maximum value down to -400. </li>
+  
 </ul>
 
 Step 3: Run <b>Lung CT Analyzer</b>
