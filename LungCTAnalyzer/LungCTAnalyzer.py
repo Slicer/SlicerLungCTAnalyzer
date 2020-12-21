@@ -21,7 +21,7 @@ class LungCTAnalyzer(ScriptedLoadableModule):
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
         self.parent.contributors = ["Rudolf Bumm (KSGR Switzerland)"]
         self.parent.helpText = """Lung analysis consists of producing five different segmentations of lungs based on Hounsfield unit range:
-Bulla / emphysema, ventilated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
+Bulla / emphysema, inflated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
 as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ -
 for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.
 """
@@ -149,7 +149,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Thresholds
         self.ui.BullaRangeWidget.connect('valuesChanged(double,double)', self.onBullaRangeWidgetChanged)
-        self.ui.VentilatedRangeWidget.connect('valuesChanged(double,double)', self.onVentilatedRangeWidgetChanged)
+        self.ui.InflatedRangeWidget.connect('valuesChanged(double,double)', self.onInflatedRangeWidgetChanged)
         self.ui.InfiltratedRangeWidget.connect('valuesChanged(double,double)', self.onInfiltratedRangeWidgetChanged)
         self.ui.CollapsedRangeWidget.connect('valuesChanged(double,double)', self.onCollapsedRangeWidgetChanged)
         self.ui.VesselsRangeWidget.connect('valuesChanged(double,double)', self.onVesselsRangeWidgetChanged)
@@ -166,7 +166,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Opacities
         self.opacitySliders = {
             "Emphysema": self.ui.bullaOpacityWidget,
-            "Ventilated": self.ui.ventilatedOpacityWidget,
+            "Inflated": self.ui.infiltratedOpacityWidget,
             "Infiltration": self.ui.infiltratedOpacityWidget,
             "Collapsed": self.ui.collapsedOpacityWidget,
             "Vessels": self.ui.vesselsOpacityWidget,
@@ -378,10 +378,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         thresholds = self.logic.thresholds
         self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-        self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaVentilated']
-        self.ui.VentilatedRangeWidget.minimumValue = thresholds['thresholdBullaVentilated']
-        self.ui.VentilatedRangeWidget.maximumValue = thresholds['thresholdVentilatedInfiltrated']
-        self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdVentilatedInfiltrated']
+        self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+        self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+        self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+        self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
         self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
         self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
         self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
@@ -443,8 +443,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         thresholds = {}
         thresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
-        thresholds['thresholdBullaVentilated'] = self.ui.BullaRangeWidget.maximumValue
-        thresholds['thresholdVentilatedInfiltrated'] = self.ui.VentilatedRangeWidget.maximumValue
+        thresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximumValue
+        thresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximumValue
         thresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximumValue
         thresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
         thresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
@@ -526,13 +526,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.updateMaskedVolumeColors()
 
     def onBullaRangeWidgetChanged(self):
-      self.adjustThresholdSliders(None, self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget)
+      self.adjustThresholdSliders(None, self.ui.BullaRangeWidget, self.ui.InflatedRangeWidget)
 
-    def onVentilatedRangeWidgetChanged(self):
-      self.adjustThresholdSliders(self.ui.BullaRangeWidget, self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget)
+    def onInflatedRangeWidgetChanged(self):
+      self.adjustThresholdSliders(self.ui.BullaRangeWidget, self.ui.InflatedRangeWidget, self.ui.InfiltratedRangeWidget)
 
     def onInfiltratedRangeWidgetChanged(self):
-      self.adjustThresholdSliders(self.ui.VentilatedRangeWidget, self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget)
+      self.adjustThresholdSliders(self.ui.InflatedRangeWidget, self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget)
 
     def onCollapsedRangeWidgetChanged(self):
       self.adjustThresholdSliders(self.ui.InfiltratedRangeWidget, self.ui.CollapsedRangeWidget, self.ui.VesselsRangeWidget)
@@ -958,17 +958,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         ScriptedLoadableModuleLogic.__init__(self)
         self.defaultThresholds = {
             'thresholdBullaLower': -1000.,
-            'thresholdBullaVentilated': -950.,
-            'thresholdVentilatedInfiltrated': -750.,
+            'thresholdBullaInflated': -950.,
+            'thresholdInflatedInfiltrated': -750.,
             'thresholdInfiltratedCollapsed': -400.,
             'thresholdCollapsedVessels': 0.,
             'thresholdVesselsUpper': 3000.,
             }
 
         self.segmentProperties = [
-            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaVentilated']},
-            {"name": "Ventilated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaVentilated', 'thresholdVentilatedInfiltrated']},
-            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdVentilatedInfiltrated', 'thresholdInfiltratedCollapsed']},
+            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated']},
+            {"name": "Inflated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaInflated', 'thresholdInflatedInfiltrated']},
+            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed']},
             {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels']},
             {"name": "Vessels", "color": [1.0,0.0,0.0], "thresholds": ['thresholdCollapsedVessels', 'thresholdVesselsUpper']},
             ]

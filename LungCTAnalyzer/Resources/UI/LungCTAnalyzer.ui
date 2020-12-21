@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>506</width>
+    <width>529</width>
     <height>838</height>
    </rect>
   </property>
@@ -250,12 +250,12 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Ventilated</string>
+         <string>Inflated</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="ctkRangeWidget" name="VentilatedRangeWidget">
+       <widget class="ctkRangeWidget" name="InflatedRangeWidget">
         <property name="toolTip">
          <string>Set the threshold range for ventilated lung tissue here. </string>
         </property>
@@ -427,7 +427,7 @@
          <string>Volume rendering opacities</string>
         </property>
         <property name="collapsed">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="1" column="0">
@@ -465,12 +465,12 @@
          <item row="2" column="0">
           <widget class="QLabel" name="label_19">
            <property name="text">
-            <string>Ventilated</string>
+            <string>Inflated</string>
            </property>
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="ctkSliderWidget" name="ventilatedOpacityWidget">
+          <widget class="ctkSliderWidget" name="inflatedOpacityWidget">
            <property name="toolTip">
             <string>Volume rendering opacity</string>
            </property>
