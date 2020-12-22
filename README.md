@@ -28,7 +28,7 @@ The best way to ask questions is using the Slicer forum (https://discourse.slice
 
 <b>Details</b><br>
 The software uses freely definable threshold ranges to identify five regions of interest: "Bulla/emphysema","Inflated","Infiltrated", "Collapsed" and "Lung Vessel". 
-Segments are generated using 3DSlicer's segment editor "Threshold" function and the volume of each segment is calculated by using 3DSlicer's "Segment statistics" function. 
+Segments are generated using 3DSlicer's segment editor "Threshold" and "Grow from Seeds" function. The volume of each segment is calculated by using 3DSlicer's "Segment statistics" function. 
 The results are then superimposed to the CT 2D views in standard colors: "Bulla" = black, "Inflated" = blue, "Infiltrated" = yellow, "Collapsed" = pink and "Vessel" = red. 
 In addition, spatial reconstruction (3D) of the diseased lung segments is available. The total results of the segmentation include:<br>
 <br>
