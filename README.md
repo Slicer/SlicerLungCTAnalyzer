@@ -12,12 +12,10 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <b>Video (Overview Lung CT Analyzer):</b> <br>
 https://www.youtube.com/watch?v=0plsoy94hFE<br>
 <br>
-Video (Lung CT Segmenter): 
-https://youtu.be/U9PUX-jLF0A <br>
+Video (Lung CT Segmenter): https://youtu.be/U9PUX-jLF0A <br>
 <br>
 <br>
-Video (Lung CT Analyzer): <br>
-https://youtu.be/JcgMnDhlknM
+Video (Lung CT Analyzer): https://youtu.be/JcgMnDhlknM <br>
 <br>
 <br>
 <b>Installation Tutorial<br>
