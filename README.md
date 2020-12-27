@@ -18,7 +18,7 @@ Video (Lung CT Segmenter): https://youtu.be/U9PUX-jLF0A <br>
 Video (Lung CT Analyzer): https://youtu.be/JcgMnDhlknM <br>
 <br>
 <br>
-<b>Installation Tutorial<br>
+<b>Installation Tutorial</b><br>
 https://github.com/rbumm/SlicerLungCTAnalyzer/wiki
 <br>
 <br>
