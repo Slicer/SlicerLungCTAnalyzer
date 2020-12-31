@@ -86,11 +86,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
+        self.version = 1.31
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
         self._parameterNode = None
         self._updatingGUIFromParameterNode = False
+
 
     def setup(self):
         """
@@ -257,7 +259,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
         
         self.show3DWarning = True
-
+        # show version on GUI 
+        self.versionText = "Lung CT Analyzer V %.2f" % self.version       
+        self.ui.versionLabel.text = self.versionText
 
 
         
@@ -752,6 +756,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <p>................................................................................................</p>
         <br>
         <p>Date  ...................&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Signature   ................................</p>
+        <p>""" + self.versionText + """</p>
         </body>
         </html>
         """
@@ -789,6 +794,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # hide preview in slice view
             slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
+            self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Show preview in 2D" 
+
 
             qt.QApplication.restoreOverrideCursor()
         except Exception as e:
@@ -923,6 +930,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 threeDView = threeDWidget.threeDView()
                 threeDView.resetFocalPoint()
 
+
     def onMaskedVolumeDisplay2D(self):
         self.logic.showLungMaskedVolumeIn2D = not self.logic.showLungMaskedVolumeIn2D
 
@@ -936,6 +944,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
           slicer.util.setSliceViewerLayers(background=self.logic.inputVolume, foreground=None)
           self.ui.toggleMaskedVolumeDisplay2DPushButton.text = "Show preview in 2D" 
+
 
 #
 # LungCTAnalyzerLogic
