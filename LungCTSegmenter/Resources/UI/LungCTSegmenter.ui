@@ -97,6 +97,32 @@
       <string>Segmentation</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="5" column="1">
+       <widget class="QPushButton" name="applyButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Run the algorithm.</string>
+        </property>
+        <property name="text">
+         <string>Apply</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QPushButton" name="cancelButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Cancel the current segmentation process.</string>
+        </property>
+        <property name="text">
+         <string>Cancel</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0" colspan="2">
        <widget class="ctkFittedTextBrowser" name="instructionsLabel">
         <property name="toolTip">
@@ -104,7 +130,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0" colspan="2">
+      <item row="7" column="0" colspan="2">
        <widget class="ctkCollapsibleGroupBox" name="adjustPointsGroupBox">
         <property name="title">
          <string>Adjust points </string>
@@ -165,7 +191,7 @@
             <string>Place a marker on the upper trachea (above upper thoracic aperture) </string>
            </property>
            <property name="text">
-            <string>Trachea:</string>
+            <string>Other:</string>
            </property>
           </widget>
          </item>
@@ -182,20 +208,17 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QPushButton" name="applyButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
+      <item row="6" column="0" colspan="2">
+       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
         <property name="toolTip">
-         <string>Run the algorithm.</string>
+         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
         </property>
         <property name="text">
-         <string>Apply</string>
+         <string>Toggle segments visibility</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
+      <item row="2" column="0" colspan="2">
        <widget class="QPushButton" name="startButton">
         <property name="toolTip">
          <string>Press this button to start the segmentation process. </string>
@@ -205,26 +228,13 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QPushButton" name="cancelButton">
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="detailedAirwaysCheckBox">
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="toolTip">
-         <string>Cancel the current segmentation process.</string>
-        </property>
         <property name="text">
-         <string>Cancel</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0" colspan="2">
-       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
-        <property name="toolTip">
-         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
-        </property>
-        <property name="text">
-         <string>Toggle segments visibility</string>
+         <string>Produce detailed airways</string>
         </property>
        </widget>
       </item>
@@ -237,7 +247,7 @@
       <string>Advanced</string>
      </property>
      <property name="collapsed">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
       <item row="0" column="0">
@@ -253,7 +263,7 @@
          <string>Select the threshold range to identify lung parenchyma here. Min will always be set to minimum voxel inbtensity in the algorithm. In doubt do not touch. </string>
         </property>
         <property name="minimum">
-         <double>-1000.000000000000000</double>
+         <double>-1500.000000000000000</double>
         </property>
         <property name="maximum">
          <double>1000.000000000000000</double>
