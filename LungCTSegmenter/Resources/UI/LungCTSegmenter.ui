@@ -260,7 +260,7 @@
       <item row="0" column="1">
        <widget class="ctkRangeWidget" name="ThresholdRangeWidget">
         <property name="toolTip">
-         <string>Select the threshold range to identify lung parenchyma here. Min will always be set to minimum voxel inbtensity in the algorithm. In doubt do not touch. </string>
+         <string>Select the threshold range to identify lung parenchyma.  In doubt do not touch. </string>
         </property>
         <property name="minimum">
          <double>-1500.000000000000000</double>
