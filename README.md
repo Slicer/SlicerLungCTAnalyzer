@@ -9,11 +9,7 @@ This especially crucial in the light of the current COVID-19 pandemia with high 
 The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, 3D Slicer was chosen as development platform and the inbuild Python as script language.   
 <br>
-<b>Video (Overview Lung CT Analyzer):</b> <br>
-https://www.youtube.com/watch?v=0plsoy94hFE<br>
-<br>
 Video (Lung CT Segmenter): https://youtu.be/U9PUX-jLF0A <br>
-<br>
 <br>
 Video (Lung CT Analyzer): https://youtu.be/JcgMnDhlknM <br>
 <br>
