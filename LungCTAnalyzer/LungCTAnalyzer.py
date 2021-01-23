@@ -86,7 +86,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 1.31
+        self.version = 1.32
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -966,7 +966,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         """
         ScriptedLoadableModuleLogic.__init__(self)
         self.defaultThresholds = {
-            'thresholdBullaLower': -1000.,
+            'thresholdBullaLower': -1050.,
             'thresholdBullaInflated': -950.,
             'thresholdInflatedInfiltrated': -750.,
             'thresholdInfiltratedCollapsed': -400.,
@@ -975,11 +975,11 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             }
 
         self.segmentProperties = [
-            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated']},
-            {"name": "Inflated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaInflated', 'thresholdInflatedInfiltrated']},
-            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed']},
-            {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels']},
-            {"name": "Vessels", "color": [1.0,0.0,0.0], "thresholds": ['thresholdCollapsedVessels', 'thresholdVesselsUpper']},
+            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated'],"removesmallislands":"no"},
+            {"name": "Inflated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaInflated', 'thresholdInflatedInfiltrated'],"removesmallislands":"no"},
+            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed'],"removesmallislands":"yes"},
+            {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels'],"removesmallislands":"yes"},
+            {"name": "Vessels", "color": [1.0,0.0,0.0], "thresholds": ['thresholdCollapsedVessels', 'thresholdVesselsUpper'],"removesmallislands":"no"},
             ]
 
     def setThresholds(self, parameterNode, thresholds, overwrite=True):
@@ -1447,6 +1447,35 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         else:
             self.outputSegmentation.GetSegmentation().RemoveAllSegments()
         slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(segmentLabelVolume, self.outputSegmentation)
+        
+        do_filters = True
+        if do_filters: 
+            # Remove small islands
+            # Create temporary segment editor to get access to effects
+            logging.info('Create temporary segment editor ... ')
+            segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+            segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+            segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+            segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+            segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+            segmentEditorWidget.setMasterVolumeNode(maskLabelVolume)
+            for side in ["right", "left"]:
+                  maskLabelValue = 1 if side == "right" else 2
+                  for segmentProperty in self.segmentProperties:
+                      segmentName = f"{segmentProperty['name']} {side}"
+                      if segmentProperty["removesmallislands"] == "yes":
+                          logging.info('Removing small islands in  ' + segmentName)
+                          segmentEditorNode.SetSelectedSegmentID(segmentName)
+                          segmentEditorWidget.setActiveEffectByName("Islands")
+                          effect = segmentEditorWidget.activeEffect()
+                          effect.setParameter("MinimumSize","1000")
+                          effect.setParameter("Operation","REMOVE_SMALL_ISLANDS")
+                          effect.self().onApply()
+            # Delete temporary segment editor
+            logging.info('Deleting temporary segment editor ... ')
+            segmentEditorWidget = None
+            slicer.mrmlScene.RemoveNode(segmentEditorNode)    
+
 
         # Cleanup
         slicer.mrmlScene.RemoveNode(segmentLabelVolume)
