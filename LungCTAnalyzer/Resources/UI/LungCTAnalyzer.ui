@@ -234,13 +234,13 @@
          <double>10.000000000000000</double>
         </property>
         <property name="minimum">
-         <double>-1000.000000000000000</double>
+         <double>-1050.000000000000000</double>
         </property>
         <property name="maximum">
          <double>1000.000000000000000</double>
         </property>
         <property name="minimumValue">
-         <double>-1000.000000000000000</double>
+         <double>-1030.000000000000000</double>
         </property>
         <property name="maximumValue">
          <double>-900.000000000000000</double>
