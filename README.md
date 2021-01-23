@@ -47,7 +47,7 @@ Vessel volume is subtracted from right lung volume, left lung volume and total l
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
 <b>First Results</b><br>
-If used with sensible thresholds, LCTA is feasible, easy to use and reproducible. Spacial reconstruction of the segments yield impressive visual results.  Running LCTA only takes 5-6 seconds, running LCTA with 3D reconstruction takes about 1-2  minutes. LCTA has been developed and tested with 3D Slicer V 4.11.200930. 
+If used with sensible thresholds, LCTA is feasible, easy to use and reproducible. Spacial reconstruction of the segments yield impressive visual results.  Production of lung masks in the "Lung Segmenter" is done in about 2 minutes after defining a few fiducials on the right and left lung and one additional on the tracea.  Running LCTA itself  only takes 5-6 seconds, running LCTA with 3D reconstruction takes about 1-2  minutes. LCTA has been developed and tested with 3D Slicer V 4.11.200930. 
 
 <b>Limitations</b><br>
 Lung volumes represent areas within the lung masks only. This induces a marginal volume error. 

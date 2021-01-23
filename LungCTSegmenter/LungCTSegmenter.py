@@ -19,7 +19,7 @@ class LungCTSegmenter(ScriptedLoadableModule):
     self.parent.title = "Lung CT Segmenter"
     self.parent.categories = ["Chest Imaging Platform"]
     self.parent.dependencies = []
-    self.parent.contributors = ["Rudolf Bumm (KSGR Switzerland)"]
+    self.parent.contributors = ["Rudolf Bumm (KSGR), Andras Lasso (PERK)"]
     self.parent.helpText = """
 This module can segment lungs from CT images from a few user-defined landmarks.
 See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.
@@ -50,6 +50,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._leftLungFiducials = None
       self._tracheaFiducials = None
       self._updatingGUIFromParameterNode = False
+      self.createDetailedAirways = False
 
   def setup(self):
       """
@@ -89,6 +90,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect threshhold range sliders 
       self.ui.ThresholdRangeWidget.connect('valuesChanged(double,double)', self.onThresholdRangeWidgetChanged)
+      
+      # Connect check boxes 
+      self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -264,6 +268,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.startButton.enabled = not self.logic.segmentationStarted
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
+      self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -308,6 +313,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
       self.logic.lungThresholdMin = self.ui.ThresholdRangeWidget.minimumValue
       self.logic.lungThresholdMax = self.ui.ThresholdRangeWidget.maximumValue
+      self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
+
     
       self._parameterNode.EndModify(wasModified)
 
@@ -330,6 +337,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
           self.setInstructions("Initializing segmentation...")
+          self.logic.detailedAirways = self.createDetailedAirways
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
@@ -346,6 +354,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
+          self.logic.detailedAirways = self.createDetailedAirways
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.applySegmentation()
           self.updateGUIFromParameterNode()
@@ -392,11 +401,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.rightLungSegmentId = None
         self.leftLungSegmentId = None
         self.tracheaSegmentId = None
+        
         self.rightLungColor = (0.5, 0.68, 0.5)
         self.leftLungColor = (0.95, 0.84, 0.57)
         self.tracheaColor = (0.71, 0.89, 1.0)
         self.segmentEditorWidget = None
         self.segmentationStarted = False
+        self.detailedAirways = False
 
     def __del__(self):
         self.removeTemporaryObjects()
@@ -487,7 +498,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           # Already started
           return
         self.segmentationStarted = True
-
+        print("Start ." + str(self.detailedAirways) + ".")
         import time
         startTime = time.time()
 
@@ -532,7 +543,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         self.segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-        self.segmentEditorWidget.setMasterVolumeNode(self.resampledVolume)
+        if self.detailedAirways: 
+            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+        else: 
+            self.segmentEditorWidget.setMasterVolumeNode(self.resampledVolume)
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
@@ -570,8 +584,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       self.showStatusMessage('Update segmentation...')
       self.rightLungSegmentId = self.updateSeedSegmentFromMarkups("right lung", self.rightLungFiducials, self.rightLungColor, 10.0, self.rightLungSegmentId)
       self.leftLungSegmentId = self.updateSeedSegmentFromMarkups("left lung", self.leftLungFiducials, self.leftLungColor, 10.0, self.leftLungSegmentId)
-      self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("trachea", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
-
+      if self.detailedAirways: 
+          self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("airways", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
+      else: 
+          self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("other", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
       # Activate region growing segmentation
       self.showStatusMessage('Region growing...')
       if not self.segmentEditorWidget.activeEffect():
@@ -642,8 +658,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         previousConfirmEditHiddenSegmentSetting = slicer.app.settings().value("Segmentations/ConfirmEditHiddenSegment")
         slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", qt.QMessageBox.No)
 
-        # fill holes
         segmentIds = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
+        
+        # fill holes
         for i, segmentId in enumerate(segmentIds):
             self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
             segmentEditorNode.SetSelectedSegmentID(segmentId)
@@ -674,13 +691,17 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         # Final smoothing
         for i, segmentId in enumerate(segmentIds):
-            self.showStatusMessage(f'Final smoothing ({i+1}/{len(segmentIds)})...')
-            segmentEditorNode.SetSelectedSegmentID(segmentId)
-            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("SmoothingMethod","GAUSSIAN")
-            effect.setParameter("KernelSizeMm","2")
-            effect.self().onApply()
+            if self.detailedAirways and segmentId == self.tracheaSegmentId:
+                print('Not smooth airways ...')
+                # do not smooth the airways       
+            else:             
+                self.showStatusMessage(f'Final smoothing ({i+1}/{len(segmentIds)})...')
+                segmentEditorNode.SetSelectedSegmentID(segmentId)
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("SmoothingMethod","GAUSSIAN")
+                effect.setParameter("KernelSizeMm","2")
+                effect.self().onApply()
 
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
