@@ -674,7 +674,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <td>{examDate}</td>
         </tr>
         </table>
-        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 potentially functional versus affected lung volumes are shown.</p>
+        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 potentially functional versus affected lung volumes are shown. "Emphysema" segment currently includes bronchi and will never be zero."Infiltration" and "Collapsed" currently include perivascular/-bronchial tissues and will also never be zero.</p>
         <br>
         <h2>Volumetric analysis (Table 1)</h2>
         <br>
@@ -975,7 +975,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             }
 
         self.segmentProperties = [
-            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated'],"removesmallislands":"no"},
+            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated'],"removesmallislands":"yes"},
             {"name": "Inflated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaInflated', 'thresholdInflatedInfiltrated'],"removesmallislands":"no"},
             {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed'],"removesmallislands":"yes"},
             {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels'],"removesmallislands":"yes"},
