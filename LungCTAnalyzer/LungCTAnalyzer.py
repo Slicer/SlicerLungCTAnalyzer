@@ -1414,6 +1414,13 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         segmentArray = np.zeros(inputVolumeArray.shape, np.uint8)
         thresholds = self.thresholds
         segmentLabelValue = 0
+
+        # set low emphysema threshold to lowest possible value in maskLabelVolume to avoid missing some very dark bullae
+        logging.info('Low emphysema threshold automatically adjusted to: ' + str(self.inputVolume.GetImageData().GetScalarRange()[0]))
+        thresholds['thresholdBullaLower'] = self.inputVolume.GetImageData().GetScalarRange()[0]
+       
+
+        
         for side in ["right", "left"]:
             maskLabelValue = 1 if side == "right" else 2
             for segmentProperty in self.segmentProperties:
