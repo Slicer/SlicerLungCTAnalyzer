@@ -78,6 +78,16 @@ V 2.1 <br>
 <li>New extension "Lung CT Segmenter" created from https://github.com/rbumm/SlicerLungMaskGenerator</li>
 <li>Improvements of lung segmenter module by Andras Lasso (PERK)</li>
 </ul>
+V 2.2 <br>
+<ul>
+<li>Show / hide 2D segments automatically</li>
+<li>implemented warning dialog before enabling 3D display </li>
+</ul>
+V 2.32 <br>
+<ul>
+<li>version</li>
+<li>PDF changes</li>
+</ul>
 (1) https://www.slicer.org/
 <br>
 <br>
