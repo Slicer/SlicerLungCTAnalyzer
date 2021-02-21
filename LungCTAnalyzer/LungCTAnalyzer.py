@@ -86,7 +86,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.32
+        self.version = 2.33
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -262,7 +262,26 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # show version on GUI 
         self.versionText = "Lung CT Analyzer V %.2f" % self.version       
         self.ui.versionLabel.text = self.versionText
-
+        
+        
+        from urllib.request import urlopen
+        import json
+        
+        link = "https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/version.json?raw=true"
+        try:
+            f = urlopen(link)
+            myfile = f.read()
+            #print(myfile)
+            dct = json.loads(myfile)
+            #print(dct["version"])
+            if self.version < float(dct["version"]): 
+                slicer.util.messageBox("There is a new version of Lung CT Analyzer available. \n Please consider updating via the extension manager.")
+            else:
+                print("Lung CT analyzer is up to date.")
+        except Exception as e:
+            qt.QApplication.restoreOverrideCursor()
+            slicer.util.errorDisplay("Failed to check current version: "+str(e))
+        
 
         
     def cleanup(self):
