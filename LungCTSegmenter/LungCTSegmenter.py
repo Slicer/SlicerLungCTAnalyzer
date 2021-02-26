@@ -98,6 +98,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
       self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
       self.ui.cancelButton.connect('clicked(bool)', self.onCancelButton)
+      self.ui.updateIntensityButton.connect('clicked(bool)', self.onUpdateIntensityButton)
+      
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
 
       # Make sure parameter node is initialized (needed for module reload)
@@ -267,6 +269,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.ui.startButton.enabled = not self.logic.segmentationStarted
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
+      self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
 
@@ -337,6 +340,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
           self.setInstructions("Initializing segmentation...")
+          self.ui.updateIntensityButton.enabled = True
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
@@ -353,6 +357,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Run processing when user clicks "Apply" button.
       """
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
+      self.ui.updateIntensityButton.enabled = False
+
       try:
           self.logic.detailedAirways = self.createDetailedAirways
           self.setInstructions('Finalizing the segmentation, please wait...')
@@ -378,6 +384,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           import traceback
           traceback.print_exc()
 
+  def onUpdateIntensityButton(self):
+      self.updateParameterNodeFromGUI()
+      self.logic.updateSegmentation()
 
 #
 # LungCTSegmenterLogic
@@ -579,6 +588,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           or not self.leftLungFiducials or self.leftLungFiducials.GetNumberOfControlPoints() < 6
           or not self.tracheaFiducials or self.tracheaFiducials.GetNumberOfControlPoints() < 1):
           # not yet ready for region growing
+          self.showStatusMessage('Not enough markups ...')
           return
 
       self.showStatusMessage('Update segmentation...')
@@ -588,21 +598,27 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("airways", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
       else: 
           self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("other", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
+
       # Activate region growing segmentation
       self.showStatusMessage('Region growing...')
-      if not self.segmentEditorWidget.activeEffect():
-          self.segmentEditorWidget.setActiveEffectByName("Grow from seeds")
-          effect = self.segmentEditorWidget.activeEffect()
-          # extent farther from control points than usual to capture lung edges
-          effect.self().extentGrowthRatio = 0.5
-          effect.self().onPreview()
-          #effect.self().setPreviewOpacity(0.5)
-          effect.self().setPreviewShow3D(True)
-          # center 3D view
-          layoutManager = slicer.app.layoutManager()
-          threeDWidget = layoutManager.threeDWidget(0)
-          threeDView = threeDWidget.threeDView()
-          threeDView.resetFocalPoint()
+
+      # Set intensity mask and thresholds again to reflect their possible changes and update button
+      self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
+      self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
+      # set effect
+      self.segmentEditorWidget.setActiveEffectByName("Grow from seeds")
+      effect = self.segmentEditorWidget.activeEffect()
+      # extent farther from control points than usual to capture lung edges
+      effect.self().extentGrowthRatio = 0.5
+      effect.self().onPreview()
+      #effect.self().setPreviewOpacity(0.5)
+      effect.self().setPreviewShow3D(True)
+      # center 3D view
+      layoutManager = slicer.app.layoutManager()
+      threeDWidget = layoutManager.threeDWidget(0)
+      threeDView = threeDWidget.threeDView()
+      threeDView.resetFocalPoint()
+
 
     def removeTemporaryObjects(self):
         if self.resampledVolume:
