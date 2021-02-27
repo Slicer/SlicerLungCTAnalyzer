@@ -270,6 +270,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.startButton.enabled = not self.logic.segmentationStarted
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
+      self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
       self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
 
@@ -416,6 +417,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.tracheaColor = (0.71, 0.89, 1.0)
         self.segmentEditorWidget = None
         self.segmentationStarted = False
+        self.segmentationFinished = False
         self.detailedAirways = False
 
     def __del__(self):
@@ -507,6 +509,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           # Already started
           return
         self.segmentationStarted = True
+        self.segmentationFinished = False
+        
         print("Start ." + str(self.detailedAirways) + ".")
         import time
         startTime = time.time()
@@ -642,6 +646,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.leftLungSegmentId = None
             self.tracheaSegmentId = None
         self.removeTemporaryObjects()
+        slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
+        slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
+        slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
+        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("Lung segmentation"))
+        
+        self.removeTemporaryObjects()
+
         self.segmentationStarted = False
 
     def showStatusMessage(self, msg, timeoutMsec=500):
@@ -656,6 +667,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         import time
         startTime = time.time()
+
 
         self.showStatusMessage('Finalize region growing...')
         # Ensure closed surface representation is not present (would slow down computations)
@@ -732,6 +744,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         self.removeTemporaryObjects()
         self.segmentationStarted = False
+        self.segmentationFinished = True
 
         stopTime = time.time()
         logging.info('ApplySegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
