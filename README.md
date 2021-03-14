@@ -88,6 +88,15 @@ V 2.32 <br>
 <li>version</li>
 <li>PDF changes</li>
 </ul>
+V 2.34 <br>
+<ul>
+<li>Segmenter: Resampled volume levels are now adjusted to what users select for their input volume (identical brightness and contrast after 'Start')  </li>
+</ul>
+V 2.35 <br>
+<ul>
+<li>Implementatioon of CSV export in CT Lung ANalyzer logic - can be (and has been) called via script</li>
+<li>Analyzer: CSV export button - will produce a file in the report directory</li>
+</ul>
 (1) https://www.slicer.org/
 <br>
 <br>
