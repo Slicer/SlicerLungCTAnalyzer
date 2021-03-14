@@ -86,7 +86,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.33
+        self.version = 2.35
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -161,6 +161,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.createPDFReportButton.connect('clicked(bool)', self.onCreatePDFReportButton)
         
         # Report Dir
+       
         self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
         self.ui.selectReportDirectoryButton.directoryChanged.connect(self.onReportDirectoryChanged)
         self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
@@ -180,6 +181,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.downloadCovidDataButton.connect('clicked()', self.onDownloadCovidData)
         self.ui.applyButton.connect('clicked()', self.onApplyButton)
         self.ui.showResultsTablePushButton.connect('clicked()', self.onShowResultsTable)
+        self.ui.saveResultsCSVButton.connect('clicked()', self.onSaveResultsCSV)
         self.ui.showCovidResultsTableButton.connect('clicked()', self.onShowCovidResultsTable)
         self.ui.toggleOutputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility2D)
         self.ui.toggleOutputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility3D)
@@ -380,7 +382,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         The module GUI is updated to show the current state of the parameter node.
         """
 
-        logging.info("updateGUIFromParameterNode")
+       #  logging.info("updateGUIFromParameterNode")
 
         if self._parameterNode is None or self._updatingGUIFromParameterNode:
             return
@@ -431,6 +433,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.applyButton.enabled = False
 
         self.ui.createPDFReportButton.enabled = (self.logic.resultsTable is not None)
+        self.ui.saveResultsCSVButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showResultsTablePushButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
 
@@ -851,6 +854,24 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onShowResultsTable(self):
         self.logic.showTable(self.logic.resultsTable)
 
+    def onSaveResultsCSV(self):
+        print("Saving CSV ...")
+        from time import gmtime, strftime
+        timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
+        familyName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientFamilyName")
+        givenName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientGivenName")
+        birthDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientBirthDate")
+        examDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.examDate")
+
+        if familyName and givenName and birthDate and examDate:
+            reportPath = f"{self.reportFolder}/{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}.csv"
+            descriptorString = f"{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}"
+        else:  
+            reportPath = f"{self.reportFolder}/LungCT-Report-{timestampString}.csv"
+            descriptorString = f"{timestampString}"
+        self.logic.saveDataToFile(reportPath,descriptorString,"","")
+        print("Done.")
+
     def onShowCovidResultsTable(self):
         slicer.util.messageBox("CovidQ has not been clinically evaluated yet. Do not base treatment decisions on that value.",
             dontShowAgainSettingsKey="LungCTAnalyzer/DontShowCovidResultsWarning",
@@ -1126,51 +1147,54 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         except:
             pass
 
+    def calculateStatistics(self):
+        resultsTableNode = self.resultsTable
+
+        col = 1
+        self.bulRightLung = round(float(resultsTableNode.GetCellText(0,col)))
+        self.venRightLung = round(float(resultsTableNode.GetCellText(1,col)))
+        self.infRightLung = round(float(resultsTableNode.GetCellText(2,col)))
+        self.colRightLung = round(float(resultsTableNode.GetCellText(3,col)))
+        self.vesRightLung = round(float(resultsTableNode.GetCellText(4,col)))
+        self.bulLeftLung = round(float(resultsTableNode.GetCellText(5,col)))
+        self.venLeftLung = round(float(resultsTableNode.GetCellText(6,col)))
+        self.infLeftLung = round(float(resultsTableNode.GetCellText(7,col)))
+        self.colLeftLung = round(float(resultsTableNode.GetCellText(8,col)))
+        self.vesLeftLung = round(float(resultsTableNode.GetCellText(9,col)))
+
+        self.rightLungVolume = self.bulRightLung + self.venRightLung + self.infRightLung + self.colRightLung - self.vesRightLung
+        self.leftLungVolume = self.bulLeftLung + self.venLeftLung + self.infLeftLung + self.colLeftLung - self.vesLeftLung
+        self.totalLungVolume = self.rightLungVolume + self.leftLungVolume
+
+        self.functionalRightVolume = self.venRightLung
+        self.functionalLeftVolume = self.venLeftLung
+        self.functionalTotalVolume = self.venRightLung + self.venLeftLung
+
+        self.affectedRightVolume = self.infRightLung + self.colRightLung + self.bulRightLung
+        self.affectedLeftVolume = self.infLeftLung + self.colLeftLung + self.bulLeftLung
+        self.affectedTotalVolume = self.infRightLung + self.colRightLung + self.infLeftLung + self.colLeftLung + self.bulRightLung + self.bulLeftLung
+
+        self.rightLungVolumePerc = round(self.rightLungVolume * 100. / self.totalLungVolume)
+        self.leftLungVolumePerc = round(self.leftLungVolume * 100. / self.totalLungVolume)
+        self.totalLungVolumePerc = 100.
+
+        self.functionalRightVolumePerc = round(self.functionalRightVolume * 100. / self.rightLungVolume)
+        self.functionalLeftVolumePerc = round(self.functionalLeftVolume * 100. / self.leftLungVolume)
+        self.functionalTotalVolumePerc = round(self.functionalTotalVolume * 100. / self.totalLungVolume)
+
+        self.affectedRightVolumePerc = round(self.affectedRightVolume * 100. / self.rightLungVolume)
+        self.affectedLeftVolumePerc = round(self.affectedLeftVolume * 100. / self.leftLungVolume)
+        self.affectedTotalVolumePerc = round(self.affectedTotalVolume * 100. / self.totalLungVolume)
+
+        self.covidQRight = round(self.affectedRightVolume / self.functionalRightVolume,2)
+        self.covidQLeft = round(self.affectedLeftVolume / self.functionalLeftVolume,2)
+        self.covidQTotal = round(self.affectedTotalVolume / self.functionalTotalVolume,2)
 
     def createCovidResultsTable(self):
+    
+        self.calculateStatistics()
 
-        resultsTableNode = self.resultsTable
-        # Add a new column
-        # Compute segment volumes
-        col = 1
-        bulRightLung = round(float(resultsTableNode.GetCellText(0,col)))
-        venRightLung = round(float(resultsTableNode.GetCellText(1,col)))
-        infRightLung = round(float(resultsTableNode.GetCellText(2,col)))
-        colRightLung = round(float(resultsTableNode.GetCellText(3,col)))
-        vesRightLung = round(float(resultsTableNode.GetCellText(4,col)))
-        bulLeftLung = round(float(resultsTableNode.GetCellText(5,col)))
-        venLeftLung = round(float(resultsTableNode.GetCellText(6,col)))
-        infLeftLung = round(float(resultsTableNode.GetCellText(7,col)))
-        colLeftLung = round(float(resultsTableNode.GetCellText(8,col)))
-        vesLeftLung = round(float(resultsTableNode.GetCellText(9,col)))
-
-        rightLungVolume = bulRightLung + venRightLung + infRightLung + colRightLung - vesRightLung
-        leftLungVolume = bulLeftLung + venLeftLung + infLeftLung + colLeftLung - vesLeftLung
-        totalLungVolume = rightLungVolume + leftLungVolume
-
-        functionalRightVolume = venRightLung
-        functionalLeftVolume = venLeftLung
-        functionalTotalVolume = venRightLung + venLeftLung
-
-        affectedRightVolume = infRightLung + colRightLung + bulRightLung
-        affectedLeftVolume = infLeftLung + colLeftLung + bulLeftLung
-        affectedTotalVolume = infRightLung + colRightLung + infLeftLung + colLeftLung + bulRightLung+ bulLeftLung
-
-        rightLungVolumePerc = round(rightLungVolume * 100. / totalLungVolume)
-        leftLungVolumePerc = round(leftLungVolume * 100. / totalLungVolume)
-        totalLungVolumePerc = 100.
-
-        functionalRightVolumePerc = round(functionalRightVolume * 100. / rightLungVolume)
-        functionalLeftVolumePerc = round(functionalLeftVolume * 100. / leftLungVolume)
-        functionalTotalVolumePerc = round(functionalTotalVolume * 100. / totalLungVolume)
-
-        affectedRightVolumePerc = round(affectedRightVolume * 100. / rightLungVolume)
-        affectedLeftVolumePerc = round(affectedLeftVolume * 100. / leftLungVolume)
-        affectedTotalVolumePerc = round(affectedTotalVolume * 100. / totalLungVolume)
-
-        covidQRight = round(affectedRightVolume / functionalRightVolume,2)
-        covidQLeft = round(affectedLeftVolume / functionalLeftVolume,2)
-        covidQTotal = round(affectedTotalVolume / functionalTotalVolume,2)
+        
 
         if not self.covidResultsTable:
             self.covidResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT COVID-19 analysis results')
@@ -1196,33 +1220,33 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         totalPercentArray.SetName("total (%)")
 
         labelArray.InsertNextValue("Lung volume")
-        rightMlArray.InsertNextValue(rightLungVolume)
-        rightPercentArray.InsertNextValue(rightLungVolumePerc)
-        leftMlArray.InsertNextValue(leftLungVolume)
-        leftPercentArray.InsertNextValue(leftLungVolumePerc)
-        totalMlArray.InsertNextValue(totalLungVolume)
-        totalPercentArray.InsertNextValue(totalLungVolumePerc)
+        rightMlArray.InsertNextValue(self.rightLungVolume)
+        rightPercentArray.InsertNextValue(self.rightLungVolumePerc)
+        leftMlArray.InsertNextValue(self.leftLungVolume)
+        leftPercentArray.InsertNextValue(self.leftLungVolumePerc)
+        totalMlArray.InsertNextValue(self.totalLungVolume)
+        totalPercentArray.InsertNextValue(self.totalLungVolumePerc)
         labelArray.InsertNextValue("Functional volume")
-        rightMlArray.InsertNextValue(functionalRightVolume)
-        rightPercentArray.InsertNextValue(functionalRightVolumePerc)
-        leftMlArray.InsertNextValue(functionalLeftVolume)
-        leftPercentArray.InsertNextValue(functionalLeftVolumePerc)
-        totalMlArray.InsertNextValue(functionalTotalVolume)
-        totalPercentArray.InsertNextValue(functionalTotalVolumePerc)
+        rightMlArray.InsertNextValue(self.functionalRightVolume)
+        rightPercentArray.InsertNextValue(self.functionalRightVolumePerc)
+        leftMlArray.InsertNextValue(self.functionalLeftVolume)
+        leftPercentArray.InsertNextValue(self.functionalLeftVolumePerc)
+        totalMlArray.InsertNextValue(self.functionalTotalVolume)
+        totalPercentArray.InsertNextValue(self.functionalTotalVolumePerc)
         labelArray.InsertNextValue("Affected volume")
-        rightMlArray.InsertNextValue(affectedRightVolume)
-        rightPercentArray.InsertNextValue(affectedRightVolumePerc)
-        leftMlArray.InsertNextValue(affectedLeftVolume)
-        leftPercentArray.InsertNextValue(affectedLeftVolumePerc)
-        totalMlArray.InsertNextValue(affectedTotalVolume)
-        totalPercentArray.InsertNextValue(affectedTotalVolumePerc)
+        rightMlArray.InsertNextValue(self.affectedRightVolume)
+        rightPercentArray.InsertNextValue(self.affectedRightVolumePerc)
+        leftMlArray.InsertNextValue(self.affectedLeftVolume)
+        leftPercentArray.InsertNextValue(self.affectedLeftVolumePerc)
+        totalMlArray.InsertNextValue(self.affectedTotalVolume)
+        totalPercentArray.InsertNextValue(self.affectedTotalVolumePerc)
 
         labelArray.InsertNextValue("CovidQ (affected / functional)")
-        rightMlArray.InsertNextValue(covidQRight)
+        rightMlArray.InsertNextValue(self.covidQRight)
         rightPercentArray.InsertNextValue(-1)
-        leftMlArray.InsertNextValue(covidQLeft)
+        leftMlArray.InsertNextValue(self.covidQLeft)
         leftPercentArray.InsertNextValue(-1)
-        totalMlArray.InsertNextValue(covidQTotal)
+        totalMlArray.InsertNextValue(self.covidQTotal)
         totalPercentArray.InsertNextValue(-1)
 
         self.covidResultsTable.AddColumn(labelArray)
@@ -1232,6 +1256,110 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.covidResultsTable.AddColumn(leftPercentArray)
         self.covidResultsTable.AddColumn(totalMlArray)
         self.covidResultsTable.AddColumn(totalPercentArray)
+
+
+    def saveDataToFile(self, filename,user_str1,user_str2,user_str3):
+    
+        import os.path
+
+
+        file_exists = os.path.isfile(filename)
+        
+        self.calculateStatistics()
+        
+        import csv
+        
+        header = [
+        'user1',
+        'user2',
+        'user3',
+        'bulRL',
+        'venRL',
+        'infRL',
+        'colRL',
+        'vesRL',
+        'bulLL',
+        'venLL',
+        'infLL',
+        'colLL',
+        'vesLL',
+        'rLV',
+        'lLV',
+        'tLV',
+        'fRV',
+        'fLV',
+        'fTV',
+        'aRV',
+        'aLV',
+        'aTV',
+        'rLVPerc',
+        'lLVPerc',
+        'tLVPerc',
+        'fRVPerc',
+        'fLVPerc',
+        'fTVPerc',
+        'aRVPerc',
+        'aLVPerc',
+        'aTVPerc',
+        'covidQR',
+        'covidQL',
+        'covidQT',
+        ]
+        
+        data = [
+        
+        user_str1,
+        user_str2,
+        user_str3,
+        self.bulRightLung,
+        self.venRightLung,
+        self.infRightLung,
+        self.colRightLung,
+        self.vesRightLung,
+        self.bulLeftLung,
+        self.venLeftLung,
+        self.infLeftLung,
+        self.colLeftLung,
+        self.vesLeftLung,
+        self.rightLungVolume,
+        self.leftLungVolume,
+        self.totalLungVolume,
+        self.functionalRightVolume,
+        self.functionalLeftVolume,
+        self.functionalTotalVolume,
+        self.affectedRightVolume,
+        self.affectedLeftVolume,
+        self.affectedTotalVolume,
+        self.rightLungVolumePerc,
+        self.leftLungVolumePerc,
+        self.totalLungVolumePerc,
+        self.functionalRightVolumePerc,
+        self.functionalLeftVolumePerc,
+        self.functionalTotalVolumePerc,
+        self.affectedRightVolumePerc,
+        self.affectedLeftVolumePerc,
+        self.affectedTotalVolumePerc,
+        self.covidQRight,
+        self.covidQLeft,
+        self.covidQTotal,
+        ]
+        
+        try:
+            with open(filename, 'a') as f:
+                if not file_exists:
+                    for item in header: 
+                        f.write('"')
+                        f.write(item)  # file doesn't exist yet, write a header
+                        f.write('"')
+                        f.write(";")
+                    f.write("\n")
+                for item in data: 
+                    f.write(str(item))  
+                    f.write(";")
+                f.write("\n")
+        except IOError:
+            print("I/O error")
+        
 
     @property
     def inputVolume(self):
@@ -1478,7 +1606,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         if do_filters: 
             # Remove small islands
             # Create temporary segment editor to get access to effects
-            logging.info('Create temporary segment editor ... ')
+            logging.info('Creating temporary segment editor ... ')
             segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
             segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
             segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
