@@ -1496,7 +1496,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         segmentEditorNode.SetSelectedSegmentID(self.leftLungMaskSegmentID)
         segmentEditorWidget.setActiveEffectByName("Margin")
         effect = segmentEditorWidget.activeEffect()
-        effect.setParameter("MarginSizeMm",str(millimeters * -1.)
+        effect.setParameter("MarginSizeMm",str(millimeters * -1.))
         effect.self().onApply()
 
         # Delete temporary segment editor
