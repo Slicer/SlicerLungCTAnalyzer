@@ -51,6 +51,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._tracheaFiducials = None
       self._updatingGUIFromParameterNode = False
       self.createDetailedAirways = False
+      self.shrinkMasks = False
 
   def setup(self):
       """
@@ -93,6 +94,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -273,6 +275,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
       self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
+      self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
+      
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -318,6 +322,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.lungThresholdMin = self.ui.ThresholdRangeWidget.minimumValue
       self.logic.lungThresholdMax = self.ui.ThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
+      self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
 
     
       self._parameterNode.EndModify(wasModified)
@@ -362,6 +367,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
+          self.logic.shrinkMasks = self.shrinkMasks
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.applySegmentation()
           self.updateGUIFromParameterNode()
@@ -419,6 +425,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationStarted = False
         self.segmentationFinished = False
         self.detailedAirways = False
+        self.shrinkMasks = False
 
     def __del__(self):
         self.removeTemporaryObjects()
@@ -746,6 +753,20 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("KernelSizeMm","2")
                 effect.self().onApply()
 
+        if self.shrinkMasks: 
+            # Final shrinking masks by 1 mm
+            for i, segmentId in enumerate(segmentIds):
+                if self.detailedAirways and segmentId == self.tracheaSegmentId:
+                    print('Not shrink airways ...')
+                    # do not shrink the airways       
+                else:             
+                    self.showStatusMessage(f'Final shrinking ({i+1}/{len(segmentIds)})...')
+                    segmentEditorNode.SetSelectedSegmentID(segmentId)
+                    self.segmentEditorWidget.setActiveEffectByName("Margin")
+                    effect = self.segmentEditorWidget.activeEffect()
+                    effect.setParameter("MarginSizeMm","-1")
+                    effect.self().onApply()
+        
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
         self.outputSegmentation.CreateClosedSurfaceRepresentation()
