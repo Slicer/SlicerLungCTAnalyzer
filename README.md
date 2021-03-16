@@ -94,7 +94,15 @@ V 2.34 <br>
 </ul>
 V 2.35 <br>
 <ul>
-<li>Implementatioon of CSV export in CT Lung ANalyzer logic - can be (and has been) called via script</li>
+<li>Implementation of CSV export in CT Lung ANalyzer logic - can be (and has been) called via script</li>
+<li>Analyzer: CSV export button - will produce a file in the report directory</li>
+</ul>
+V 2.36 <br>
+<ul>
+<li>'Autoshrink masks (1 mm)' added in Lung CT Segmenter. Produces 'clean' lung masks which cover less pleura, pericardium and diaphragma. </li>
+<li>New function 'shrinkMasks(millimeters)' added in Lung CT Analyzer logic. This enables to shrink predefined masks by certain values to cover less pleura, pericardium and diaphragma. </li>
+<li>Do not use both functions, either one of them - they will add up.</li>
+
 <li>Analyzer: CSV export button - will produce a file in the report directory</li>
 </ul>
 (1) https://www.slicer.org/
