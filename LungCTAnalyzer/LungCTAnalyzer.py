@@ -5,6 +5,7 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
+
 #
 # LungCTAnalyzer
 #
@@ -1464,6 +1465,44 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         for parameterName in values:
             parameterNode.SetParameter(parameterName, str(values[parameterName]))
         parameterNode.EndModify(wasModified)
+
+    def shrinkLungMasks(self, millimeters=1.):
+        parameterNode = self.getParameterNode()
+        inputVolume = parameterNode.GetNodeReference("InputVolume")
+        segmentationNode = parameterNode.GetNodeReference("InputSegmentation")
+
+        rightMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
+        leftMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
+        if ( (rightMaskSegmentName != "RIGHT LUNG" and rightMaskSegmentName != "RIGHT LUNG MASK") or
+            (leftMaskSegmentName != "LEFT LUNG" and leftMaskSegmentName != "LEFT LUNG MASK") ):
+                raise ValueError("Error: Unable to shrink lung masks. No standard lung masks 'right lung' or 'left lung' found.")
+
+        logging.info('Creating temporary segment editor ... ')
+        segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+        segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+        segmentEditorWidget.setSegmentationNode(segmentationNode)
+        segmentEditorWidget.setMasterVolumeNode(inputVolume)
+
+        logging.info('Shrinking right lunk mask...')
+        segmentEditorNode.SetSelectedSegmentID(self.rightLungMaskSegmentID)
+        segmentEditorWidget.setActiveEffectByName("Margin")
+        effect = segmentEditorWidget.activeEffect()
+        effect.setParameter("MarginSizeMm","-1")
+        effect.self().onApply()
+
+        logging.info('Shrinking left lunk mask...')
+        segmentEditorNode.SetSelectedSegmentID(self.leftLungMaskSegmentID)
+        segmentEditorWidget.setActiveEffectByName("Margin")
+        effect = segmentEditorWidget.activeEffect()
+        effect.setParameter("MarginSizeMm",str(millimeters * -1.)
+        effect.self().onApply()
+
+        # Delete temporary segment editor
+        logging.info('Deleting temporary segment editor ... ')
+        segmentEditorWidget = None
+        slicer.mrmlScene.RemoveNode(segmentEditorNode)    
 
     def process(self):
         """
