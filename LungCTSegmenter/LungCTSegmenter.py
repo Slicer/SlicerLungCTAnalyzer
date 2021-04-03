@@ -52,6 +52,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._updatingGUIFromParameterNode = False
       self.createDetailedAirways = False
       self.shrinkMasks = False
+      self.detailedMasks = False
 
   def setup(self):
       """
@@ -95,6 +96,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -276,7 +279,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
-      
+      self.ui.detailedMasksCheckBox.checked = self.detailedMasks
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -323,6 +326,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.lungThresholdMax = self.ui.ThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
+      self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
 
     
       self._parameterNode.EndModify(wasModified)
@@ -367,8 +371,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
-          self.logic.shrinkMasks = self.shrinkMasks
           self.setInstructions('Finalizing the segmentation, please wait...')
+          self.logic.shrinkMasks = self.shrinkMasks
+          self.logic.detailedMasks = self.detailedMasks
           self.logic.applySegmentation()
           self.updateGUIFromParameterNode()
           qt.QApplication.restoreOverrideCursor()
@@ -426,7 +431,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationFinished = False
         self.detailedAirways = False
         self.shrinkMasks = False
-
+        self.detailedMasks = False
+        
     def __del__(self):
         self.removeTemporaryObjects()
 
@@ -575,8 +581,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # Create temporary segment editor to get access to effects
         self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-        self.segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
         if self.detailedAirways: 
             self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
@@ -650,7 +656,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if self.resampledVolume:
             slicer.mrmlScene.RemoveNode(self.resampledVolume)
         if self.segmentEditorWidget:
-            segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+            self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
             # Cancel "Grow from seeds" (deletes preview segmentation)
             self.segmentEditorWidget.setActiveEffectByName("Grow from seeds")
             effect = self.segmentEditorWidget.activeEffect()
@@ -659,7 +665,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             # Deactivates all effects
             self.segmentEditorWidget.setActiveEffect(None)
             self.segmentEditorWidget = None
-            slicer.mrmlScene.RemoveNode(segmentEditorNode)
+            slicer.mrmlScene.RemoveNode(self.segmentEditorNode)
 
     def cancelSegmentation(self):
         if self.outputSegmentation:
@@ -681,6 +687,228 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.util.showStatusMessage(msg, timeoutMsec)
         slicer.app.processEvents()
 
+    def trimSegmentWithCube(self, id,r,a,s,offs_r,offs_a,offs_s) :
+          
+        self.segmentEditorNode.SetSelectedSegmentID(id)
+        self.segmentEditorWidget.setActiveEffectByName("Surface cut")
+
+        effect = self.segmentEditorWidget.activeEffect()
+
+        effect.self().fiducialPlacementToggle.placeButton().click()
+        
+        _sv = 30
+        
+        if "dorsal" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = 0
+            superior_safety = _sv
+            inferior_safety = _sv
+        if "ventral" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = 0
+            posterior_safety = _sv
+            superior_safety = _sv
+            inferior_safety = _sv
+        if "upper" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = 0
+            inferior_safety = _sv
+        if "middle" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = 0
+            inferior_safety = 0
+        if "lower" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = _sv
+            inferior_safety = 0
+            
+        # trim with cube
+
+        points =[[r-offs_r-left_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety],
+                 [r+offs_r+right_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety],
+                 [r-offs_r-left_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety],
+                 [r+offs_r+right_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety],
+                ]
+
+        for p in points:
+            effect.self().segmentMarkupNode.AddFiducialFromArray(p)
+        
+        effect.setParameter("Operation","ERASE_INSIDE")
+        effect.setParameter("SmoothModel","0")
+
+        effect.self().onApply()
+        
+        # systematically remove small unwanted leftover islands at the surface cut borderlines 
+
+        #self.segmentEditorNode.SetSelectedSegmentID(id)
+        #self.segmentEditorWidget.setActiveEffectByName("Islands")
+        #effect = self.segmentEditorWidget.activeEffect()
+        ##effect.setParameter("MinimumSize","1000")
+        #effect.setParameter("Operation","KEEP_LARGEST_ISLAND")
+        #self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) # very important do do this, otherwise other segments become corrupted
+        #self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
+        
+        #effect.self().onApply()
+
+        
+        
+
+    def createSubSegment(self,segmentId,name): 
+        segmentName = self.outputSegmentation.GetSegmentation().GetSegment(segmentId).GetName()
+        newSeg = slicer.vtkSegment()
+        newSeg.SetName(segmentName + " " + name)
+        if segmentId == self.rightLungSegmentId: 
+            newSeg.SetColor(self.rightLungColor)
+        else: 
+            newSeg.SetColor(self.leftLungColor)
+        self.outputSegmentation.GetSegmentation().AddSegment(newSeg,segmentName + " " + name)                
+        newSeg.DeepCopy(self.outputSegmentation.GetSegmentation().GetSegment(segmentId))
+        newSeg.SetName(segmentName + " " + name)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),False)
+
+        return newSeg
+
+
+    def createDetailedMasks(self): 
+        segmentationNode = self.outputSegmentation
+
+        # Compute centroids
+        self.showStatusMessage('Computing centroids ...')
+        import SegmentStatistics
+        segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+        segStatLogic.getParameterNode().SetParameter("Segmentation", segmentationNode.GetID())
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_origin_ras.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_diameter_mm.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_x.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_y.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_z.enabled",str(True))
+        segStatLogic.computeStatistics()
+        stats = segStatLogic.getStatistics()
+
+        # Place a markup point in each centroid
+        markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
+        markupsNode.CreateDefaultDisplayNodes()
+        for segmentId in stats['SegmentIDs']:
+            if segmentId == self.rightLungSegmentId or segmentId == self.leftLungSegmentId:
+
+                # get centroid
+                centroid_ras = stats[segmentId,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+                # get bounding box
+                import numpy as np
+                obb_origin_ras = np.array(stats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_origin_ras"])
+                obb_diameter_mm = np.array(stats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_diameter_mm"])
+                obb_direction_ras_x = np.array(stats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_x"])
+                obb_direction_ras_y = np.array(stats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_y"])
+                obb_direction_ras_z = np.array(stats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_z"])
+                obb_center_ras = obb_origin_ras+0.5*(obb_diameter_mm[0] * obb_direction_ras_x + obb_diameter_mm[1] * obb_direction_ras_y + obb_diameter_mm[2] * obb_direction_ras_z)
+                axialLungDiameter = obb_diameter_mm[0]
+                sagittalLungDiameter = obb_diameter_mm[1]
+                coronalLungDiameter = obb_diameter_mm[2]
+                coronalApex = centroid_ras[2] + (coronalLungDiameter/2.)
+                                
+                segmentName = segmentationNode.GetSegmentation().GetSegment(segmentId).GetName()
+                markupsNode.AddFiducialFromArray(centroid_ras, segmentName)
+                
+                self.showStatusMessage('Creating special masks ...')
+                ventral = self.createSubSegment(segmentId, "ventral")
+                dorsal = self.createSubSegment(segmentId, "dorsal")
+                upper = self.createSubSegment(segmentId, "upper")
+                middle = self.createSubSegment(segmentId, "middle")
+                lower = self.createSubSegment(segmentId, "lower")
+                
+                ####### ventral
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] - (sagittalLungDiameter/4.)
+                s = centroid_ras[2]
+                
+                
+                crop_r = (axialLungDiameter/2.)  
+                crop_a = (sagittalLungDiameter/4.)
+                crop_s = (coronalLungDiameter/2.)
+                
+                self.showStatusMessage(' Cropping ventral mask ...')
+                self.trimSegmentWithCube(ventral.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### dorsal
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] + (sagittalLungDiameter/4.)
+                s = centroid_ras[2]
+                
+                crop_r = (axialLungDiameter/2.)  
+                crop_a = (sagittalLungDiameter/4.)
+                crop_s = (coronalLungDiameter/2.)
+
+                self.showStatusMessage(' Cropping dorsal mask ...')
+                self.trimSegmentWithCube(dorsal.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### upper
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = coronalApex - ((coronalLungDiameter/3.)*2.)
+                
+                crop_r = (axialLungDiameter/2.)
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = (coronalLungDiameter/3.)
+
+                self.showStatusMessage(' Cropping upper mask ...')
+                self.trimSegmentWithCube(upper.GetName(),r,a,s,crop_r,crop_a,crop_s)
+           
+                ####### middle
+                
+                ####### crop upper part
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = coronalApex
+
+                
+                crop_r = (axialLungDiameter/2.) 
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = (coronalLungDiameter/3.)
+
+                self.showStatusMessage(' Cropping middle mask ...')
+                self.trimSegmentWithCube(middle.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### crop lower part
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = coronalApex - coronalLungDiameter 
+
+                crop_r = (axialLungDiameter/2.)  
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = (coronalLungDiameter/3.)
+
+                self.trimSegmentWithCube(middle.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### lower
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = coronalApex - (coronalLungDiameter/3.)
+
+                
+                crop_r = (axialLungDiameter/2.)  
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = (coronalLungDiameter/3.)
+
+                self.showStatusMessage(' Cropping lower mask ...')
+                self.trimSegmentWithCube(lower.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
     def applySegmentation(self):
 
         if not self.segmentEditorWidget.activeEffect():
@@ -698,11 +926,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect = self.segmentEditorWidget.activeEffect()
         effect.self().onApply()
 
-        segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+        self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
 
 
         # disable intensity masking, otherwise vessels do not fill
-        segmentEditorNode.SetMasterVolumeIntensityMask(False)
+        self.segmentEditorNode.SetMasterVolumeIntensityMask(False)
 
         # Prevent confirmation popup for editing a hidden segment
         previousConfirmEditHiddenSegmentSetting = slicer.app.settings().value("Segmentations/ConfirmEditHiddenSegment")
@@ -713,7 +941,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # fill holes
         for i, segmentId in enumerate(segmentIds):
             self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
-            segmentEditorNode.SetSelectedSegmentID(segmentId)
+            self.segmentEditorNode.SetSelectedSegmentID(segmentId)
             self.segmentEditorWidget.setActiveEffectByName("Smoothing")
             effect = self.segmentEditorWidget.activeEffect()
             effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
@@ -746,29 +974,34 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 # do not smooth the airways       
             else:             
                 self.showStatusMessage(f'Final smoothing ({i+1}/{len(segmentIds)})...')
-                segmentEditorNode.SetSelectedSegmentID(segmentId)
+                self.segmentEditorNode.SetSelectedSegmentID(segmentId)
                 self.segmentEditorWidget.setActiveEffectByName("Smoothing")
                 effect = self.segmentEditorWidget.activeEffect()
                 effect.setParameter("SmoothingMethod","GAUSSIAN")
                 effect.setParameter("KernelSizeMm","2")
                 effect.self().onApply()
-
+        
         if self.shrinkMasks: 
             # Final shrinking masks by 1 mm
             for i, segmentId in enumerate(segmentIds):
                 if self.detailedAirways and segmentId == self.tracheaSegmentId:
-                    print('Not shrink airways ...')
+                    self.showStatusMessage(f'No shrinking.')
                     # do not shrink the airways       
                 else:             
                     self.showStatusMessage(f'Final shrinking ({i+1}/{len(segmentIds)})...')
-                    segmentEditorNode.SetSelectedSegmentID(segmentId)
+                    self.segmentEditorNode.SetSelectedSegmentID(segmentId)
                     self.segmentEditorWidget.setActiveEffectByName("Margin")
                     effect = self.segmentEditorWidget.activeEffect()
                     effect.setParameter("MarginSizeMm","-1")
                     effect.self().onApply()
         
+        if self.detailedMasks: 
+            self.createDetailedMasks()
+
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
+                        
+        self.showStatusMessage(' Creating 3D ...')
         self.outputSegmentation.CreateClosedSurfaceRepresentation()
 
         # Restore confirmation popup setting for editing a hidden segment
@@ -778,7 +1011,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
 
+        self.showStatusMessage(' Cleaning up ...')
         self.removeTemporaryObjects()
+                
         self.segmentationStarted = False
         self.segmentationFinished = True
 
