@@ -696,50 +696,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         effect.self().fiducialPlacementToggle.placeButton().click()
         
-        _sv = 30
-        
-        if "dorsal" in id: 
-            right_safety = _sv
-            left_safety = _sv
-            anterior_safety = _sv
-            posterior_safety = 0
-            superior_safety = _sv
-            inferior_safety = _sv
-        if "ventral" in id: 
-            right_safety = _sv
-            left_safety = _sv
-            anterior_safety = 0
-            posterior_safety = _sv
-            superior_safety = _sv
-            inferior_safety = _sv
-        if "upper" in id: 
-            right_safety = _sv
-            left_safety = _sv
-            anterior_safety = _sv
-            posterior_safety = _sv
-            superior_safety = 0
-            inferior_safety = _sv
-        if "middle" in id: 
-            right_safety = _sv
-            left_safety = _sv
-            anterior_safety = _sv
-            posterior_safety = _sv
-            superior_safety = 0
-            inferior_safety = 0
-        if "lower" in id: 
-            right_safety = _sv
-            left_safety = _sv
-            anterior_safety = _sv
-            posterior_safety = _sv
-            superior_safety = _sv
-            inferior_safety = 0
             
         # trim with cube
 
-        points =[[r-offs_r-left_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety],
-                 [r+offs_r+right_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety],
-                 [r-offs_r-left_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety],
-                 [r+offs_r+right_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety],
+        points =[[r-offs_r, a+offs_a, s+offs_s], [r+offs_r, a+offs_a, s+offs_s],
+                 [r+offs_r, a+offs_a, s-offs_s], [r-offs_r, a+offs_a, s-offs_s],
+                 [r-offs_r, a-offs_a, s+offs_s], [r+offs_r, a-offs_a, s+offs_s],
+                 [r+offs_r, a-offs_a, s-offs_s], [r-offs_r, a-offs_a, s-offs_s],
                 ]
 
         for p in points:
@@ -832,13 +795,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 ####### ventral
                 
                 r = centroid_ras[0]
-                a = centroid_ras[1] - (sagittalLungDiameter/4.)
+                a = centroid_ras[1] - (sagittalLungDiameter/2.)
                 s = centroid_ras[2]
                 
                 
-                crop_r = (axialLungDiameter/2.)  
-                crop_a = (sagittalLungDiameter/4.)
-                crop_s = (coronalLungDiameter/2.)
+                crop_r = axialLungDiameter  
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = coronalLungDiameter
                 
                 self.showStatusMessage(' Cropping ventral mask ...')
                 self.trimSegmentWithCube(ventral.GetName(),r,a,s,crop_r,crop_a,crop_s)
@@ -846,12 +809,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 ####### dorsal
                 
                 r = centroid_ras[0]
-                a = centroid_ras[1] + (sagittalLungDiameter/4.)
+                a = centroid_ras[1] + (sagittalLungDiameter/2.)
                 s = centroid_ras[2]
                 
-                crop_r = (axialLungDiameter/2.)  
-                crop_a = (sagittalLungDiameter/4.)
-                crop_s = (coronalLungDiameter/2.)
+                crop_r = axialLungDiameter
+                crop_a = (sagittalLungDiameter/2.)
+                crop_s = coronalLungDiameter
 
                 self.showStatusMessage(' Cropping dorsal mask ...')
                 self.trimSegmentWithCube(dorsal.GetName(),r,a,s,crop_r,crop_a,crop_s)
@@ -860,11 +823,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
                 r = centroid_ras[0]
                 a = centroid_ras[1] 
-                s = coronalApex - ((coronalLungDiameter/3.)*2.)
+                s = coronalApex - coronalLungDiameter
                 
-                crop_r = (axialLungDiameter/2.)
-                crop_a = (sagittalLungDiameter/2.)
-                crop_s = (coronalLungDiameter/3.)
+                crop_r = axialLungDiameter
+                crop_a = sagittalLungDiameter
+                crop_s = (coronalLungDiameter/3.) * 2.
 
                 self.showStatusMessage(' Cropping upper mask ...')
                 self.trimSegmentWithCube(upper.GetName(),r,a,s,crop_r,crop_a,crop_s)
@@ -877,8 +840,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 s = coronalApex
 
                 
-                crop_r = (axialLungDiameter/2.) 
-                crop_a = (sagittalLungDiameter/2.)
+                crop_r = axialLungDiameter 
+                crop_a = sagittalLungDiameter
                 crop_s = (coronalLungDiameter/3.)
 
                 self.showStatusMessage(' Cropping middle mask ...')
@@ -889,8 +852,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 a = centroid_ras[1] 
                 s = coronalApex - coronalLungDiameter 
 
-                crop_r = (axialLungDiameter/2.)  
-                crop_a = (sagittalLungDiameter/2.)
+                crop_r = axialLungDiameter  
+                crop_a = sagittalLungDiameter
                 crop_s = (coronalLungDiameter/3.)
 
                 self.trimSegmentWithCube(middle.GetName(),r,a,s,crop_r,crop_a,crop_s)
@@ -899,12 +862,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
                 r = centroid_ras[0]
                 a = centroid_ras[1] 
-                s = coronalApex - (coronalLungDiameter/3.)
+                s = coronalApex
 
                 
-                crop_r = (axialLungDiameter/2.)  
-                crop_a = (sagittalLungDiameter/2.)
-                crop_s = (coronalLungDiameter/3.)
+                crop_r = axialLungDiameter  
+                crop_a = sagittalLungDiameter
+                crop_s = (coronalLungDiameter/3.)*2.
 
                 self.showStatusMessage(' Cropping lower mask ...')
                 self.trimSegmentWithCube(lower.GetName(),r,a,s,crop_r,crop_a,crop_s)
