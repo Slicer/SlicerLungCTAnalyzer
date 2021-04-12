@@ -35,7 +35,7 @@
    <item>
     <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
      <property name="text">
-      <string>Input image and segmentation</string>
+      <string>Input image and segmentation, presets</string>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
       <item row="0" column="0">
@@ -156,13 +156,30 @@
        </widget>
       </item>
       <item row="4" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Regional analysis: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="detailedSubsegmentsCheckBox">
+        <property name="toolTip">
+         <string>Create additional lung segments: Ventral, dorsal, upper, middle, lower. Uses and creates lung lobe centroids as central reference points.   Slows the procedure and 3D creation. </string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
        <widget class="QLabel" name="label_6">
         <property name="text">
          <string>Density statistics: </string>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="5" column="1">
        <widget class="QCheckBox" name="generateStatisticsCheckBox">
         <property name="toolTip">
          <string>Check this to generate a statistics table. </string>
@@ -175,7 +192,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0" colspan="2">
+      <item row="7" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QPushButton" name="toggleInputSegmentationVisibility2DPushButton">
@@ -199,7 +216,7 @@
         </item>
        </layout>
       </item>
-      <item row="6" column="0">
+      <item row="8" column="0">
        <widget class="Line" name="line_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -427,7 +444,7 @@
          <string>Volume rendering opacities</string>
         </property>
         <property name="collapsed">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="1" column="0">
@@ -648,7 +665,7 @@
          <string>Show the extended results table. </string>
         </property>
         <property name="text">
-         <string>Show COVID-19 results table</string>
+         <string>Show extended results table</string>
         </property>
        </widget>
       </item>
@@ -718,14 +735,14 @@
       <bool>true</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
-      <item row="0" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>Masked lung CT:</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
+      <item row="1" column="1">
        <widget class="qMRMLNodeComboBox" name="lungMaskedVolumeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -761,14 +778,14 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_23">
         <property name="text">
          <string>Volume rendering property:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="volumeRenderingPropertyNodeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -804,14 +821,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_14">
         <property name="text">
          <string>Output segmentation:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -847,14 +864,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_15">
         <property name="text">
          <string>Results table:</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="qMRMLNodeComboBox" name="outputResultsTableSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -890,14 +907,14 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="label_16">
         <property name="text">
          <string>COVID-19 results table:</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="5" column="1">
        <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
         <property name="enabled">
          <bool>true</bool>

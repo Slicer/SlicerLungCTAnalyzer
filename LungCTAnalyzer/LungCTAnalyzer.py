@@ -4,7 +4,7 @@ import logging
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
-
+from SegmentStatisticsPlugins import *
 
 #
 # LungCTAnalyzer
@@ -56,7 +56,7 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="Lung",
         sampleName='DemoChestCT',
-        uris='http://scientific-networks.com/slicerdata/LungCTAnalyzerChestCT.nrrd',
+        uris='https://github.com/rbumm/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerChestCT.nrrd',
         fileNames='DemoChestCT.nrrd',
         nodeNames='DemoChestCT',
         thumbnailFileName=os.path.join(iconsPath, 'DemoChestCT.png'),
@@ -66,12 +66,12 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="Lung",
         sampleName='DemoLungMasks',
-        uris='http://scientific-networks.com/slicerdata/LungCTAnalyzerMaskSegmentation.seg.nrrd',
+        uris='https://github.com/rbumm/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerMaskSegmentation.seg.nrrd',
         fileNames='DemoLungMasks.seg.nrrd',
         nodeNames='DemoLungMasks',
         thumbnailFileName=os.path.join(iconsPath, 'DemoLungMasks.png'),
         loadFileType='SegmentationFile',
-        checksums='SHA256:76312929a5a17dc5188b268d0cd43dabe9f2e10c4496e71d56ee0be959077bc4'
+        checksums='SHA256:79f151b42cf999c1ecf13ee793da6cf649b54fe8634ec07723e4a1f44e53b57c'
         )
 
 #
@@ -87,7 +87,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.36
+        self.version = 2.37
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -144,6 +144,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Output options
         self.ui.generateStatisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.detailedSubsegmentsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.lungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -423,6 +424,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
+        self.ui.detailedSubsegmentsCheckBox.checked = self.logic.detailedSubsegments
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -485,6 +487,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
 
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
+        self.logic.detailedSubsegments = self.ui.detailedSubsegmentsCheckBox.checked
 
         self._parameterNode.EndModify(wasModified)
 
@@ -697,7 +700,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <td>{examDate}</td>
         </tr>
         </table>
-        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 potentially functional versus affected lung volumes are shown. "Emphysema" segment currently includes bronchi and will never be zero."Infiltration" and "Collapsed" currently include perivascular/-bronchial tissues and will also never be zero.</p>
+        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 functional versus affected lung volumes are shown. "Emphysema" segment currently includes bronchi and will never be zero."Infiltration" and "Collapsed" currently include perivascular/-bronchial tissues and will also never be zero. AF-Q = Affected volume (collapsed+infiltrated+emphysema) divided by functional (inflated) volume. Higher values indicate more severe disease. </p>
         <br>
         <h2>Volumetric analysis (Table 1)</h2>
         <br>
@@ -865,12 +868,12 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         examDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.examDate")
 
         if familyName and givenName and birthDate and examDate:
-            reportPath = f"{self.reportFolder}/{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}.csv"
+            reportPathWithoutExtension = f"{self.reportFolder}/{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}"
             descriptorString = f"{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}"
         else:  
-            reportPath = f"{self.reportFolder}/LungCT-Report-{timestampString}.csv"
+            reportPathWithoutExtension = f"{self.reportFolder}/LungCT-Report-{timestampString}"
             descriptorString = f"{timestampString}"
-        self.logic.saveDataToFile(reportPath,descriptorString,"","")
+        self.logic.saveDataToFile(reportPathWithoutExtension,descriptorString,"","")
         print("Done.")
 
     def onShowCovidResultsTable(self):
@@ -1023,6 +1026,24 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             {"name": "Vessels", "color": [1.0,0.0,0.0], "thresholds": ['thresholdCollapsedVessels', 'thresholdVesselsUpper'],"removesmallislands":"no"},
             ]
 
+        self.subSegmentProperties = [
+            {"name": "ventral", "color": [0.0,0.0,0.0]}, 
+            {"name": "dorsal","color": [0.0,0.0,0.0]}, 
+            {"name": "upper","color": [0.0,0.0,0.0]}, 
+            {"name": "middle","color": [0.0,0.0,0.0]}, 
+            {"name": "lower","color": [0.0,0.0,0.0]}, 
+            ]
+
+        self.inputStats = None
+        self.outputStats = None
+        self.segmentEditorNode = None
+        self.segmentEditorWidget = None
+
+
+    def showStatusMessage(self, msg, timeoutMsec=500):
+        slicer.util.showStatusMessage(msg, timeoutMsec)
+        slicer.app.processEvents()
+
     def setThresholds(self, parameterNode, thresholds, overwrite=True):
         wasModified = parameterNode.StartModify()
         for parameterName in thresholds:
@@ -1101,8 +1122,13 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         else:
             self.resultsTable.RemoveAllColumns()
 
+        # Compute stats
+        self.showStatusMessage('Computing output stats  ...')
+
         import SegmentStatistics
+        
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+       
         segStatLogic.getParameterNode().SetParameter("Segmentation", self.outputSegmentation.GetID())
         segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
         segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True" if self.generateStatistics else "False")
@@ -1110,6 +1136,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
         segStatLogic.computeStatistics()
         segStatLogic.exportToTable(self.resultsTable)
+        self.outputStats = segStatLogic.getStatistics()
+        # print(str(self.outputStats))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
 
         minThrCol = vtk.vtkFloatArray()
         minThrCol.SetName("MinThr")
@@ -1130,6 +1159,19 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
         self.resultsTable.GetTable().Modified()
 
+
+        if self.detailedSubsegments == True: 
+            segmentNameColumn = self.resultsTable.GetTable().GetColumnByName("Segment")
+            for side in ['left', 'right']:
+                for subSegmentProperty in self.subSegmentProperties:
+                    for segmentProperty in self.segmentProperties:
+                        segmentName = f"{segmentProperty['name']} {side} {subSegmentProperty['name']}"
+                        rowIndex = segmentNameColumn.LookupValue(segmentName)
+                        lowerThresholdName, upperThresholdName = segmentProperty["thresholds"]
+                        minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
+                        maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
+            self.resultsTable.GetTable().Modified()
+
         # Add patient information as node metadata (available if volume is loaded from DICOM)
         self.resultsTable.SetAttribute("LungCTAnalyzer.patientFamilyName", "")
         self.resultsTable.SetAttribute("LungCTAnalyzer.patientGivenName", "")
@@ -1148,32 +1190,111 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         except:
             pass
 
+    def getVol(self,segId):
+        result = 0.
+        try:         
+            result = round(float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"]))
+        except: 
+            # not found
+            result = 0.
+        return result
+
+    def getResultsFor(self, area):
+
+        self.rightResultLungVolume = self.getVol("Emphysema right " + area) + self.getVol("Inflated right " + area) + self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) 
+        self.leftResultLungVolume = self.getVol("Emphysema left " + area) + self.getVol("Inflated left " + area) + self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) 
+        self.totalResultLungVolume = self.rightResultLungVolume + self.leftResultLungVolume
+        if self.totalResultLungVolume > 0.:
+            self.rightResultLungVolumePerc = round(self.rightResultLungVolume * 100. / self.totalResultLungVolume)
+            self.leftResultLungVolumePerc = round(self.leftResultLungVolume * 100. / self.totalResultLungVolume)
+        else:
+            self.rightResultLungVolumePerc = -1
+            self.leftResultLungVolumePerc = -1
+        self.totalResultLungVolumePerc = 100.
+        self.affectedResultRightVolume = self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) + self.getVol("Emphysema right " + area)
+        self.affectedResultLeftVolume = self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) + self.getVol("Emphysema left " + area)
+        self.affectedResultTotalVolume = self.affectedResultRightVolume + self.affectedResultLeftVolume
+        self.functionalResultRightVolume = self.getVol("Inflated right " + area)
+        self.functionalResultLeftVolume = self.getVol("Inflated left " + area)
+        self.functionalResultTotalVolume = self.functionalResultRightVolume + self.functionalResultLeftVolume
+        self.emphysemaResultRightVolume = self.getVol("Emphysema right " + area)
+        self.emphysemaResultLeftVolume = self.getVol("Emphysema left " + area)
+        self.emphysemaResultTotalVolume = self.emphysemaResultRightVolume + self.emphysemaResultLeftVolume
+        
+        if self.totalResultLungVolume > 0.:
+            self.functionalResultTotalVolumePerc = round(self.functionalResultTotalVolume * 100. / self.totalResultLungVolume)
+            self.affectedResultTotalVolumePerc = round(self.affectedResultTotalVolume * 100. / self.totalResultLungVolume)
+            self.emphysemaResultTotalVolumePerc = round(self.emphysemaResultTotalVolume * 100. / self.totalResultLungVolume)
+        else :
+            self.functionalResultTotalVolumePerc = -1
+            self.affectedResultTotalVolumePerc = -1
+            self.emphysemaResultTotalVolumePerc = -1
+        
+        if self.rightResultLungVolume > 0.:
+            self.functionalResultRightVolumePerc = round(self.functionalResultRightVolume * 100. / self.rightResultLungVolume)
+            self.affectedResultRightVolumePerc = round(self.affectedResultRightVolume * 100. / self.rightResultLungVolume)
+            self.emphysemaResultRightVolumePerc = round(self.emphysemaResultRightVolume * 100. / self.rightResultLungVolume)
+        else :
+            self.functionalResultRightVolumePerc = -1
+            self.affectedResultRightVolumePerc = -1
+            self.emphysemaResultRightVolumePerc = -1
+
+        if self.leftResultLungVolume > 0.:
+            self.functionalResultLeftVolumePerc = round(self.functionalResultLeftVolume * 100. / self.leftResultLungVolume)
+            self.affectedResultLeftVolumePerc = round(self.affectedResultLeftVolume * 100. / self.leftResultLungVolume)
+            self.emphysemaResultLeftVolumePerc = round(self.emphysemaResultLeftVolume * 100. / self.leftResultLungVolume)
+        else: 
+            self.functionalResultLeftVolumePerc = -1
+            self.affectedResultLeftVolumePerc = -1
+            self.emphysemaResultLeftVolumePerc = -1
+
+        if self.functionalResultRightVolume > 0.: 
+            self.covidQResultRight = round(self.affectedResultRightVolume / self.functionalResultRightVolume,2)
+        else: 
+            self.covidQResultRight = 0
+        if self.functionalResultLeftVolume > 0.: 
+            self.covidQResultLeft = round(self.affectedResultLeftVolume / self.functionalResultLeftVolume,2)
+        else: 
+            self.covidQResultLeft = 0
+        if self.functionalResultTotalVolume > 0.: 
+            self.covidQResultTotal = round(self.affectedResultTotalVolume / self.functionalResultTotalVolume,2)
+        else: 
+            self.covidQResultTotal = 0
+
+    
     def calculateStatistics(self):
+
         resultsTableNode = self.resultsTable
 
-        col = 1
-        self.bulRightLung = round(float(resultsTableNode.GetCellText(0,col)))
-        self.venRightLung = round(float(resultsTableNode.GetCellText(1,col)))
-        self.infRightLung = round(float(resultsTableNode.GetCellText(2,col)))
-        self.colRightLung = round(float(resultsTableNode.GetCellText(3,col)))
-        self.vesRightLung = round(float(resultsTableNode.GetCellText(4,col)))
-        self.bulLeftLung = round(float(resultsTableNode.GetCellText(5,col)))
-        self.venLeftLung = round(float(resultsTableNode.GetCellText(6,col)))
-        self.infLeftLung = round(float(resultsTableNode.GetCellText(7,col)))
-        self.colLeftLung = round(float(resultsTableNode.GetCellText(8,col)))
-        self.vesLeftLung = round(float(resultsTableNode.GetCellText(9,col)))
+        col = 1        
+        
+        self.bulRightLung = self.getVol("Emphysema right")
+        self.venRightLung = self.getVol("Inflated right")
+        self.infRightLung = self.getVol("Infiltration right")
+        self.colRightLung = self.getVol("Collapsed right")
+        self.vesRightLung = self.getVol("Vessels right")
+        self.bulLeftLung = self.getVol("Emphysema left")
+        self.venLeftLung = self.getVol("Inflated left")
+        self.infLeftLung = self.getVol("Infiltration left")
+        self.colLeftLung = self.getVol("Collapsed left")
+        self.vesLeftLung = self.getVol("Vessels left")
 
-        self.rightLungVolume = self.bulRightLung + self.venRightLung + self.infRightLung + self.colRightLung - self.vesRightLung
-        self.leftLungVolume = self.bulLeftLung + self.venLeftLung + self.infLeftLung + self.colLeftLung - self.vesLeftLung
+        
+        self.rightLungVolume = self.getVol("Emphysema right") + self.getVol("Inflated right") + self.getVol("Infiltration right") + self.getVol("Collapsed right")
+        self.leftLungVolume = self.getVol("Emphysema left") + self.getVol("Inflated left") + self.getVol("Infiltration left") + self.getVol("Collapsed left") 
         self.totalLungVolume = self.rightLungVolume + self.leftLungVolume
 
-        self.functionalRightVolume = self.venRightLung
-        self.functionalLeftVolume = self.venLeftLung
+        self.functionalRightVolume = self.getVol("Inflated right")
+        self.functionalLeftVolume = self.getVol("Inflated left")
         self.functionalTotalVolume = self.venRightLung + self.venLeftLung
 
-        self.affectedRightVolume = self.infRightLung + self.colRightLung + self.bulRightLung
-        self.affectedLeftVolume = self.infLeftLung + self.colLeftLung + self.bulLeftLung
-        self.affectedTotalVolume = self.infRightLung + self.colRightLung + self.infLeftLung + self.colLeftLung + self.bulRightLung + self.bulLeftLung
+        self.affectedRightVolume = self.getVol("Infiltration right") + self.getVol("Collapsed right") + self.getVol("Emphysema right")
+        self.affectedLeftVolume = self.getVol("Infiltration left") + self.getVol("Collapsed left") + self.getVol("Emphysema left")
+        self.affectedTotalVolume = self.affectedRightVolume + self.affectedLeftVolume
+
+        self.emphysemaRightVolume = self.getVol("Emphysema right")
+        self.emphysemaLeftVolume = self.getVol("Emphysema left")
+        self.emphysemaTotalVolume = self.emphysemaRightVolume + self.emphysemaLeftVolume
 
         self.rightLungVolumePerc = round(self.rightLungVolume * 100. / self.totalLungVolume)
         self.leftLungVolumePerc = round(self.leftLungVolume * 100. / self.totalLungVolume)
@@ -1187,179 +1308,150 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.affectedLeftVolumePerc = round(self.affectedLeftVolume * 100. / self.leftLungVolume)
         self.affectedTotalVolumePerc = round(self.affectedTotalVolume * 100. / self.totalLungVolume)
 
+        self.emphysemaRightVolumePerc = round(self.emphysemaRightVolume * 100. / self.rightLungVolume)
+        self.emphysemaLeftVolumePerc = round(self.emphysemaLeftVolume * 100. / self.leftLungVolume)
+        self.emphysemaTotalVolumePerc = round(self.emphysemaTotalVolume * 100. / self.totalLungVolume)
+
         self.covidQRight = round(self.affectedRightVolume / self.functionalRightVolume,2)
         self.covidQLeft = round(self.affectedLeftVolume / self.functionalLeftVolume,2)
         self.covidQTotal = round(self.affectedTotalVolume / self.functionalTotalVolume,2)
 
+
     def createCovidResultsTable(self):
     
-        self.calculateStatistics()
-
-        
-
         if not self.covidResultsTable:
             self.covidResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT COVID-19 analysis results')
         else:
             self.covidResultsTable.RemoveAllColumns()
 
         labelArray = vtk.vtkStringArray()
-        labelArray.SetName("Results")
-
-        rightMlArray = vtk.vtkDoubleArray()
-        rightMlArray.SetName("right (ml)")
-        rightPercentArray = vtk.vtkDoubleArray()
-        rightPercentArray.SetName("right (%)")
-
-        leftMlArray = vtk.vtkDoubleArray()
-        leftMlArray.SetName("left (ml)")
-        leftPercentArray = vtk.vtkDoubleArray()
-        leftPercentArray.SetName("left (%)")
+        labelArray.SetName("Lung area")
 
         totalMlArray = vtk.vtkDoubleArray()
-        totalMlArray.SetName("total (ml)")
-        totalPercentArray = vtk.vtkDoubleArray()
-        totalPercentArray.SetName("total (%)")
+        totalMlArray.SetName("Total (ml)")
 
-        labelArray.InsertNextValue("Lung volume")
-        rightMlArray.InsertNextValue(self.rightLungVolume)
-        rightPercentArray.InsertNextValue(self.rightLungVolumePerc)
-        leftMlArray.InsertNextValue(self.leftLungVolume)
-        leftPercentArray.InsertNextValue(self.leftLungVolumePerc)
+        totalPercentArray = vtk.vtkDoubleArray()
+        totalPercentArray.SetName("Total (%)")
+
+        functionalMlArray = vtk.vtkDoubleArray()
+        functionalMlArray.SetName("Functional (ml)")
+
+        functionalPercentArray = vtk.vtkDoubleArray()
+        functionalPercentArray.SetName("Functional (%)")
+
+        affectedMlArray = vtk.vtkDoubleArray()
+        affectedMlArray.SetName("Affected (ml)")
+
+        affectedPercentArray = vtk.vtkDoubleArray()
+        affectedPercentArray.SetName("Affected (%)")
+
+        emphysemaMlArray = vtk.vtkDoubleArray()
+        emphysemaMlArray.SetName("Emphysema (ml)")
+
+        emphysemaPercentArray = vtk.vtkDoubleArray()
+        emphysemaPercentArray.SetName("Emphysema (%)")
+
+        covidqTotalArray = vtk.vtkDoubleArray()
+        covidqTotalArray.SetName("AF-Q total")
+
+        covidqRightArray = vtk.vtkDoubleArray()
+        covidqRightArray.SetName("AF-Q right")
+
+        covidqLeftArray = vtk.vtkDoubleArray()
+        covidqLeftArray.SetName("AF-Q left")
+
+
+        labelArray.InsertNextValue("Total lungs")
         totalMlArray.InsertNextValue(self.totalLungVolume)
         totalPercentArray.InsertNextValue(self.totalLungVolumePerc)
-        labelArray.InsertNextValue("Functional volume")
-        rightMlArray.InsertNextValue(self.functionalRightVolume)
-        rightPercentArray.InsertNextValue(self.functionalRightVolumePerc)
-        leftMlArray.InsertNextValue(self.functionalLeftVolume)
-        leftPercentArray.InsertNextValue(self.functionalLeftVolumePerc)
-        totalMlArray.InsertNextValue(self.functionalTotalVolume)
-        totalPercentArray.InsertNextValue(self.functionalTotalVolumePerc)
-        labelArray.InsertNextValue("Affected volume")
-        rightMlArray.InsertNextValue(self.affectedRightVolume)
-        rightPercentArray.InsertNextValue(self.affectedRightVolumePerc)
-        leftMlArray.InsertNextValue(self.affectedLeftVolume)
-        leftPercentArray.InsertNextValue(self.affectedLeftVolumePerc)
-        totalMlArray.InsertNextValue(self.affectedTotalVolume)
-        totalPercentArray.InsertNextValue(self.affectedTotalVolumePerc)
+        
+        functionalMlArray.InsertNextValue(self.functionalTotalVolume)
+        functionalPercentArray.InsertNextValue(self.functionalTotalVolumePerc)
+        
+        affectedMlArray.InsertNextValue(self.affectedTotalVolume)
+        affectedPercentArray.InsertNextValue(self.affectedTotalVolumePerc)
 
-        labelArray.InsertNextValue("CovidQ (affected / functional)")
-        rightMlArray.InsertNextValue(self.covidQRight)
-        rightPercentArray.InsertNextValue(-1)
-        leftMlArray.InsertNextValue(self.covidQLeft)
-        leftPercentArray.InsertNextValue(-1)
-        totalMlArray.InsertNextValue(self.covidQTotal)
-        totalPercentArray.InsertNextValue(-1)
+        emphysemaMlArray.InsertNextValue(self.emphysemaTotalVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaTotalVolumePerc)
+
+        covidqTotalArray.InsertNextValue(self.covidQTotal)
+        covidqRightArray.InsertNextValue(-1)
+        covidqLeftArray.InsertNextValue(-1)
+
+        labelArray.InsertNextValue("Right lung")
+        totalMlArray.InsertNextValue(self.rightLungVolume)
+        totalPercentArray.InsertNextValue(self.rightLungVolumePerc)
+        
+        functionalMlArray.InsertNextValue(self.functionalRightVolume)
+        functionalPercentArray.InsertNextValue(self.functionalRightVolumePerc)
+        
+        affectedMlArray.InsertNextValue(self.affectedRightVolume)
+        affectedPercentArray.InsertNextValue(self.affectedRightVolumePerc)
+
+        emphysemaMlArray.InsertNextValue(self.emphysemaRightVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaRightVolumePerc)
+
+        covidqTotalArray.InsertNextValue(-1)
+        covidqRightArray.InsertNextValue(self.covidQRight)
+        covidqLeftArray.InsertNextValue(-1)
+
+        labelArray.InsertNextValue("Left lung")
+        totalMlArray.InsertNextValue(self.leftLungVolume)
+        totalPercentArray.InsertNextValue(self.leftLungVolumePerc)
+        
+        functionalMlArray.InsertNextValue(self.functionalLeftVolume)
+        functionalPercentArray.InsertNextValue(self.functionalLeftVolumePerc)
+        
+        affectedMlArray.InsertNextValue(self.affectedLeftVolume)
+        affectedPercentArray.InsertNextValue(self.affectedLeftVolumePerc)
+
+        emphysemaMlArray.InsertNextValue(self.emphysemaLeftVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaLeftVolumePerc)
+
+        covidqTotalArray.InsertNextValue(-1)
+        covidqRightArray.InsertNextValue(-1)
+        covidqLeftArray.InsertNextValue(self.covidQLeft)
+
+
+        if self.detailedSubsegments: 
+
+            for subSegmentProperty in self.subSegmentProperties:
+
+                self.getResultsFor(f"{subSegmentProperty['name']}")
+                labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
+                totalMlArray.InsertNextValue(self.totalResultLungVolume)
+                totalPercentArray.InsertNextValue(self.totalResultLungVolumePerc)
+                functionalMlArray.InsertNextValue(self.functionalResultTotalVolume)
+                functionalPercentArray.InsertNextValue(self.functionalResultTotalVolumePerc)
+                affectedMlArray.InsertNextValue(self.affectedResultTotalVolume)
+                affectedPercentArray.InsertNextValue(self.affectedResultTotalVolumePerc)
+                emphysemaMlArray.InsertNextValue(self.emphysemaResultTotalVolume)
+                emphysemaPercentArray.InsertNextValue(self.emphysemaResultTotalVolumePerc)
+                
+                covidqTotalArray.InsertNextValue(self.covidQResultTotal)
+                covidqRightArray.InsertNextValue(self.covidQResultRight)
+                covidqLeftArray.InsertNextValue(self.covidQResultLeft)
+
 
         self.covidResultsTable.AddColumn(labelArray)
-        self.covidResultsTable.AddColumn(rightMlArray)
-        self.covidResultsTable.AddColumn(rightPercentArray)
-        self.covidResultsTable.AddColumn(leftMlArray)
-        self.covidResultsTable.AddColumn(leftPercentArray)
         self.covidResultsTable.AddColumn(totalMlArray)
         self.covidResultsTable.AddColumn(totalPercentArray)
+        self.covidResultsTable.AddColumn(functionalMlArray)
+        self.covidResultsTable.AddColumn(functionalPercentArray)
+        self.covidResultsTable.AddColumn(affectedMlArray)
+        self.covidResultsTable.AddColumn(affectedPercentArray)
+        self.covidResultsTable.AddColumn(emphysemaMlArray)
+        self.covidResultsTable.AddColumn(emphysemaPercentArray)
+        self.covidResultsTable.AddColumn(covidqTotalArray)
+        self.covidResultsTable.AddColumn(covidqRightArray)
+        self.covidResultsTable.AddColumn(covidqLeftArray)
 
 
-    def saveDataToFile(self, filename,user_str1,user_str2,user_str3):
+    def saveDataToFile(self, reportPathWithoutExtension,user_str1,user_str2,user_str3):
     
-        import os.path
+        slicer.util.saveNode(self.resultsTable, reportPathWithoutExtension + "_resultsTable.csv")
+        slicer.util.saveNode(self.covidResultsTable, reportPathWithoutExtension + "_extendedResultsTable.csv")
 
-
-        file_exists = os.path.isfile(filename)
-        
-        self.calculateStatistics()
-        
-        import csv
-        
-        header = [
-        'user1',
-        'user2',
-        'user3',
-        'bulRL',
-        'venRL',
-        'infRL',
-        'colRL',
-        'vesRL',
-        'bulLL',
-        'venLL',
-        'infLL',
-        'colLL',
-        'vesLL',
-        'rLV',
-        'lLV',
-        'tLV',
-        'fRV',
-        'fLV',
-        'fTV',
-        'aRV',
-        'aLV',
-        'aTV',
-        'rLVPerc',
-        'lLVPerc',
-        'tLVPerc',
-        'fRVPerc',
-        'fLVPerc',
-        'fTVPerc',
-        'aRVPerc',
-        'aLVPerc',
-        'aTVPerc',
-        'covidQR',
-        'covidQL',
-        'covidQT',
-        ]
-        
-        data = [
-        
-        user_str1,
-        user_str2,
-        user_str3,
-        self.bulRightLung,
-        self.venRightLung,
-        self.infRightLung,
-        self.colRightLung,
-        self.vesRightLung,
-        self.bulLeftLung,
-        self.venLeftLung,
-        self.infLeftLung,
-        self.colLeftLung,
-        self.vesLeftLung,
-        self.rightLungVolume,
-        self.leftLungVolume,
-        self.totalLungVolume,
-        self.functionalRightVolume,
-        self.functionalLeftVolume,
-        self.functionalTotalVolume,
-        self.affectedRightVolume,
-        self.affectedLeftVolume,
-        self.affectedTotalVolume,
-        self.rightLungVolumePerc,
-        self.leftLungVolumePerc,
-        self.totalLungVolumePerc,
-        self.functionalRightVolumePerc,
-        self.functionalLeftVolumePerc,
-        self.functionalTotalVolumePerc,
-        self.affectedRightVolumePerc,
-        self.affectedLeftVolumePerc,
-        self.affectedTotalVolumePerc,
-        self.covidQRight,
-        self.covidQLeft,
-        self.covidQTotal,
-        ]
-        
-        try:
-            with open(filename, 'a') as f:
-                if not file_exists:
-                    for item in header: 
-                        f.write('"')
-                        f.write(item)  # file doesn't exist yet, write a header
-                        f.write('"')
-                        f.write(";")
-                    f.write("\n")
-                for item in data: 
-                    f.write(str(item))  
-                    f.write(";")
-                f.write("\n")
-        except IOError:
-            print("I/O error")
         
 
     @property
@@ -1427,6 +1519,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetParameter("GenerateStatistics", "true" if on else "false")
 
     @property
+    def detailedSubsegments(self):
+      return self.getParameterNode().GetParameter("DetailedSubsegments") == "true"
+
+    @detailedSubsegments.setter
+    def detailedSubsegments(self, on):
+        self.getParameterNode().SetParameter("DetailedSubsegments", "true" if on else "false")
+
+    @property
     def lungMaskedVolume(self):
         return self.getParameterNode().GetNodeReference("LungMaskedVolume")
 
@@ -1466,43 +1566,178 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             parameterNode.SetParameter(parameterName, str(values[parameterName]))
         parameterNode.EndModify(wasModified)
 
-    def shrinkLungMasks(self, millimeters=1.):
-        parameterNode = self.getParameterNode()
-        inputVolume = parameterNode.GetNodeReference("InputVolume")
-        segmentationNode = parameterNode.GetNodeReference("InputSegmentation")
+    def trimSegmentWithCube(self, id,r,a,s,offs_r,offs_a,offs_s) :
+        
 
-        rightMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
-        leftMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
-        if ( (rightMaskSegmentName != "RIGHT LUNG" and rightMaskSegmentName != "RIGHT LUNG MASK") or
-            (leftMaskSegmentName != "LEFT LUNG" and leftMaskSegmentName != "LEFT LUNG MASK") ):
-                raise ValueError("Error: Unable to shrink lung masks. No standard lung masks 'right lung' or 'left lung' found.")
+        self.segmentEditorNode.SetSelectedSegmentID(id)
+        self.segmentEditorWidget.setActiveEffectByName("Surface cut")
 
-        logging.info('Creating temporary segment editor ... ')
-        segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
-        segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-        segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
-        segmentEditorWidget.setSegmentationNode(segmentationNode)
-        segmentEditorWidget.setMasterVolumeNode(inputVolume)
+        effect = self.segmentEditorWidget.activeEffect()
 
-        logging.info('Shrinking right lunk mask...')
-        segmentEditorNode.SetSelectedSegmentID(self.rightLungMaskSegmentID)
-        segmentEditorWidget.setActiveEffectByName("Margin")
-        effect = segmentEditorWidget.activeEffect()
-        effect.setParameter("MarginSizeMm","-1")
+        effect.self().fiducialPlacementToggle.placeButton().click()
+        
+        _sv = 50
+        
+        if "dorsal" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = 0
+            superior_safety = _sv
+            inferior_safety = _sv
+        if "ventral" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = 0
+            posterior_safety = _sv
+            superior_safety = _sv
+            inferior_safety = _sv
+        if "upper" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = 0
+            inferior_safety = _sv
+        if "middle" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = 0
+            inferior_safety = 0
+        if "lower" in id: 
+            right_safety = _sv
+            left_safety = _sv
+            anterior_safety = _sv
+            posterior_safety = _sv
+            superior_safety = _sv
+            inferior_safety = 0
+            
+        # trim with cube
+
+        points =[[r-offs_r-left_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a+offs_a+anterior_safety, s+offs_s+superior_safety],
+                 [r+offs_r+right_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a+offs_a+anterior_safety, s-offs_s-inferior_safety],
+                 [r-offs_r-left_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety], [r+offs_r+right_safety, a-offs_a-posterior_safety, s+offs_s+superior_safety],
+                 [r+offs_r+right_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety], [r-offs_r-left_safety, a-offs_a-posterior_safety, s-offs_s-inferior_safety],
+                ]
+
+        for p in points:
+            effect.self().segmentMarkupNode.AddFiducialFromArray(p)
+        
+        effect.setParameter("Operation","ERASE_INSIDE")
+        effect.setParameter("SmoothModel","0")
+
         effect.self().onApply()
+        
 
-        logging.info('Shrinking left lunk mask...')
-        segmentEditorNode.SetSelectedSegmentID(self.leftLungMaskSegmentID)
-        segmentEditorWidget.setActiveEffectByName("Margin")
-        effect = segmentEditorWidget.activeEffect()
-        effect.setParameter("MarginSizeMm",str(millimeters * -1.))
-        effect.self().onApply()
 
-        # Delete temporary segment editor
-        logging.info('Deleting temporary segment editor ... ')
-        segmentEditorWidget = None
-        slicer.mrmlScene.RemoveNode(segmentEditorNode)    
+    def cropSubSegmentation(self, segmentSrc, sideId, typeStr): 
+
+
+        inputStats = self.inputStats
+        segmentId = sideId + " lung"
+        centroid_ras = inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+        # get bounding box
+        import numpy as np
+        obb_origin_ras = np.array(inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_origin_ras"])
+        obb_diameter_mm = np.array(inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_diameter_mm"])
+        obb_direction_ras_x = np.array(inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_x"])
+        obb_direction_ras_y = np.array(inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_y"])
+        obb_direction_ras_z = np.array(inputStats[segmentId,"LabelmapSegmentStatisticsPlugin.obb_direction_ras_z"])
+        obb_center_ras = obb_origin_ras+0.5*(obb_diameter_mm[0] * obb_direction_ras_x + obb_diameter_mm[1] * obb_direction_ras_y + obb_diameter_mm[2] * obb_direction_ras_z)
+        
+        axialLungDiameter = obb_diameter_mm[0]
+        sagittalLungDiameter = obb_diameter_mm[1]
+        coronalLungDiameter = obb_diameter_mm[2]
+        coronalApex = centroid_ras[2] + (coronalLungDiameter/2.)
+        if typeStr == "ventral": 
+            ####### ventral
+                        
+            r = centroid_ras[0]
+            a = centroid_ras[1] - (sagittalLungDiameter/4.)
+            s = centroid_ras[2]
+            
+            
+            crop_r = (axialLungDiameter/2.)  
+            crop_a = (sagittalLungDiameter/4.)
+            crop_s = (coronalLungDiameter/2.)
+
+            
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+        elif  typeStr == "dorsal": 
+            ####### dorsal
+            
+            r = centroid_ras[0]
+            a = centroid_ras[1] + (sagittalLungDiameter/4.)
+            s = centroid_ras[2]
+            
+            crop_r = (axialLungDiameter/2.)  
+            crop_a = (sagittalLungDiameter/4.)
+            crop_s = (coronalLungDiameter/2.)
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+        elif typeStr == "upper": 
+            ####### upper
+            
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = coronalApex - ((coronalLungDiameter/3.)*2.)
+            
+            crop_r = (axialLungDiameter/2.)
+            crop_a = (sagittalLungDiameter/2.)
+            crop_s = (coronalLungDiameter/3.)
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+   
+        elif typeStr == "middle": 
+            ####### middle
+            
+            ####### crop upper part
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = coronalApex
+
+            
+            crop_r = (axialLungDiameter/2.) 
+            crop_a = (sagittalLungDiameter/2.)
+            crop_s = (coronalLungDiameter/3.)
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+            ####### crop lower part
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = coronalApex - coronalLungDiameter 
+
+            crop_r = (axialLungDiameter/2.)  
+            crop_a = (sagittalLungDiameter/2.)
+            crop_s = (coronalLungDiameter/3.)
+
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+        elif typeStr == "lower": 
+            ####### lower
+            
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = coronalApex - (coronalLungDiameter/3.)
+
+            
+            crop_r = (axialLungDiameter/2.)  
+            crop_a = (sagittalLungDiameter/2.)
+            crop_s = (coronalLungDiameter/3.)
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+
 
     def process(self):
         """
@@ -1532,23 +1767,130 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             if not slicer.util.confirmYesNoDisplay("Warning: segment names are expected to be 'left/right lung' ('left/right lung mask'). Are you sure you want to continue?"):
               raise UserWarning("User cancelled the analysis")
 
-        maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
+        if ( (rightMaskSegmentName == "RIGHT LUNG MASK") or (leftMaskSegmentName == "LEFT LUNG MASK") ):
+            #segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).SetName("right lung")
+            #segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).SetName("left lung")
+            segmentationNode.GetSegmentation().GetNthSegment(0).SetName("right lung")
+            segmentationNode.GetSegmentation().GetNthSegment(1).SetName("left lung")
+            
+            # for compatibitlity reasons - regional lung area definition needs to have these names
 
-        self.createThresholdedSegments(maskLabelVolume)
+        # Compute centroids
+        parameterNode = self.getParameterNode()
+        segmentationNode = parameterNode.GetNodeReference("InputSegmentation")
+        import SegmentStatistics
+        self.showStatusMessage('Computing input stats and centroids ...')
+        
+        segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+                
+        segStatLogic.getParameterNode().SetParameter("Segmentation", segmentationNode.GetID())
 
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_origin_ras.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_diameter_mm.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_x.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_y.enabled",str(True))
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.obb_direction_ras_z.enabled",str(True))
+        segStatLogic.computeStatistics()
+        inputStats = segStatLogic.getStatistics()
+        self.inputStats = inputStats
+        #print(str(self.inputStats))
+        
+
+        # create masked volume
+        self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
+
+        # create main outout segmentation
+        self.createThresholdedSegments(self.maskLabelVolume)
+
+
+        
+        
+        if self.detailedSubsegments == True: 
+
+            # split lung into subregions
+            self.showStatusMessage('Splitting output segments into subregions ...')
+
+            logging.info('Creating temporary segment editor ... ')
+            self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+            self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+            self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+            self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+            self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+            self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+
+            for side in ['left', 'right']:
+                for region in ['ventral', 'dorsal','upper','middle','lower']: 
+                    for segmentProperty in self.segmentProperties:
+                        segmentName = f"{segmentProperty['name']} {side}"
+                        sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                        sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                        newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + region,segmentName +" " + region,segmentProperty['color'])
+                        newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                        newSeg.DeepCopy(sourceSeg)
+                        newSeg.SetName(segmentName + " " + region)
+                        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+                        self.cropSubSegmentation(newSeg, side, region)
+                    
+             # Delete temporary segment editor
+            logging.info('Deleting temporary segment editor ... ')
+            self.segmentEditorWidget = None
+            slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
+            self.segmentEditorNode = None
+
+
+
+        # infiltrationRightVentralId = slicer.mrmlScene.GetFirstNodeByName("Infiltration Right Ventral")
+        
         # Cleanup
-        maskLabelColorTable = maskLabelVolume.GetDisplayNode().GetColorNode()
-        slicer.mrmlScene.RemoveNode(maskLabelVolume)
-        slicer.mrmlScene.RemoveNode(maskLabelColorTable)
+        self.showStatusMessage('Cleaning up ...')
+        self.maskLabelColorTable = self.maskLabelVolume.GetDisplayNode().GetColorNode()
+        slicer.mrmlScene.RemoveNode(self.maskLabelVolume)
+        slicer.mrmlScene.RemoveNode(self.maskLabelColorTable)
+        allModelNodes = slicer.util.getNodes('vtkMRMLModelNode*').values()
+        for ctn in allModelNodes:
+          #logging.info('Name:>' + ctn.GetName()+'<')
+          teststr = ctn.GetName()
+          if 'SegmentEditorSurfaceCutModel' in teststr:
+            #logging.info('Found:' + ctn.GetName())
+            slicer.mrmlScene.RemoveNode(ctn)
+                #break        
+        allMarkupNodes = slicer.util.getNodes('vtkMRMLMarkupsFiducialNode*').values()
+        for ctn in allMarkupNodes:
+          #logging.info('Name:>' + ctn.GetName()+'<')
+          teststr = ctn.GetName()
+          if teststr == "C":
+            #logging.info('Found:' + ctn.GetName())
+            slicer.mrmlScene.RemoveNode(ctn)
+                #break        
+        
+        
 
         # Compute quantitative results
+        self.showStatusMessage('Creating results table ...')
         self.createResultsTable()
+
+        self.showStatusMessage('Calculating statistics ...')
+        self.calculateStatistics()
+        self.showStatusMessage('Creating special table ...')
         self.createCovidResultsTable()
 
+        # turn visibility of subregions off if created
+        if self.detailedSubsegments == True: 
+            for segmentProperty in self.segmentProperties:
+                for side in ['left', 'right']:
+                    for region in ['ventral', 'dorsal','upper','middle','lower']: 
+                            segmentName = f"{segmentProperty['name']} {side} {region}"
+                            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                            sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(segID)
+                            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(sourceSeg.GetName(),False)
+                        
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
     def createMaskedVolume(self, keepMaskLabelVolume=False):
+        self.showStatusMessage('Creating masked volume ...')
         maskLabelVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLLabelMapVolumeNode')
 
         rightLeftLungSegmentIds = vtk.vtkStringArray()
@@ -1582,6 +1924,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             slicer.mrmlScene.RemoveNode(maskLabelColorTable)
 
     def createThresholdedSegments(self, maskLabelVolume):
+ 
+        self.showStatusMessage('Creating thresholded segments ...')
+
         # Create color table to store segment names and colors
         segmentLabelColorTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLColorTableNode')
         segmentLabelColorTable.SetTypeToUser()
@@ -1641,33 +1986,31 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.outputSegmentation.GetSegmentation().RemoveAllSegments()
         slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(segmentLabelVolume, self.outputSegmentation)
         
-        do_filters = True
-        if do_filters: 
-            # Remove small islands
-            # Create temporary segment editor to get access to effects
-            logging.info('Creating temporary segment editor ... ')
-            segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
-            segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-            segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-            segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
-            segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-            segmentEditorWidget.setMasterVolumeNode(maskLabelVolume)
-            for side in ["right", "left"]:
-                  maskLabelValue = 1 if side == "right" else 2
-                  for segmentProperty in self.segmentProperties:
-                      segmentName = f"{segmentProperty['name']} {side}"
-                      if segmentProperty["removesmallislands"] == "yes":
-                          logging.info('Removing small islands in  ' + segmentName)
-                          segmentEditorNode.SetSelectedSegmentID(segmentName)
-                          segmentEditorWidget.setActiveEffectByName("Islands")
-                          effect = segmentEditorWidget.activeEffect()
-                          effect.setParameter("MinimumSize","1000")
-                          effect.setParameter("Operation","REMOVE_SMALL_ISLANDS")
-                          effect.self().onApply()
-            # Delete temporary segment editor
-            logging.info('Deleting temporary segment editor ... ')
-            segmentEditorWidget = None
-            slicer.mrmlScene.RemoveNode(segmentEditorNode)    
+        # Remove small islands
+        # Create temporary segment editor to get access to effects
+        logging.info('Creating temporary segment editor ... ')
+        segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+        segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+        segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+        segmentEditorWidget.setMasterVolumeNode(maskLabelVolume)
+        for side in ["right", "left"]:
+              maskLabelValue = 1 if side == "right" else 2
+              for segmentProperty in self.segmentProperties:
+                  segmentName = f"{segmentProperty['name']} {side}"
+                  if segmentProperty["removesmallislands"] == "yes":
+                      logging.info('Removing small islands in  ' + segmentName)
+                      segmentEditorNode.SetSelectedSegmentID(segmentName)
+                      segmentEditorWidget.setActiveEffectByName("Islands")
+                      effect = segmentEditorWidget.activeEffect()
+                      effect.setParameter("MinimumSize","1000")
+                      effect.setParameter("Operation","REMOVE_SMALL_ISLANDS")
+                      effect.self().onApply()
+        # Delete temporary segment editor
+        logging.info('Deleting temporary segment editor ... ')
+        segmentEditorWidget = None
+        slicer.mrmlScene.RemoveNode(segmentEditorNode)    
 
 
         # Cleanup
