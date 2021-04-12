@@ -1570,6 +1570,10 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         
 
         self.segmentEditorNode.SetSelectedSegmentID(id)
+        if not segmentEditorWidget.effectByName("Surface cut"):
+            slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
+            raise ValueError("Installation of module required")
+
         self.segmentEditorWidget.setActiveEffectByName("Surface cut")
 
         effect = self.segmentEditorWidget.activeEffect()
