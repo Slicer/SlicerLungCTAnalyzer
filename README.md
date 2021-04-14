@@ -89,6 +89,8 @@ V 2.32 <br>
 <li>PDF changes</li>
 </ul>
 V 2.34 <br>
+
+
 <ul>
 <li>Segmenter: Resampled volume levels are now adjusted to what users select for their input volume (identical brightness and contrast after 'Start')  </li>
 </ul>
@@ -106,7 +108,7 @@ V 2.37 <br>
 <ul>
 <li>"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations. </li>  
 <li>"COVID-result table" reordered and renamed to "Extended results table"</li>
-<li>COVID-Q renamed to A/F-Q (for more general usage)</li>
+<li>COVID-Q renamed to A/F-Q (for more general use)</li>
 <li>CSV export now exports two result tables directly </li>
 </ul>
 
