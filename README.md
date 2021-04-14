@@ -42,7 +42,7 @@ Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-CovidQ (COVID-19 quotient: total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
+AF-Q(total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
@@ -108,7 +108,7 @@ V 2.37 <br>
 <ul>
 <li>"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations. </li>  
 <li>"COVID-result table" reordered and renamed to "Extended results table"</li>
-<li>COVID-Q renamed to A/F-Q (for more general use)</li>
+<li>COVID-Q renamed to AF-Q (for more general use)</li>
 <li>CSV export now exports two result tables directly </li>
 </ul>
 
