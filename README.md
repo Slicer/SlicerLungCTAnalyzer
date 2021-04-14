@@ -106,7 +106,7 @@ V 2.37 <br>
 <ul>
 <li>"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations. </li>  
 <li>"COVID-result table" reordered and renamed to "Extended results table"</li>
-<li>COVID-Q renamed to A/F-Q (for more general use)</li>
+<li>COVID-Q renamed to A/F-Q (for more general usage)</li>
 <li>CSV export now exports two result tables directly </li>
 </ul>
 
