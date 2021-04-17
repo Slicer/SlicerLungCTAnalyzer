@@ -42,7 +42,7 @@ Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-<small>AF-Q parameter discontinued after realizing it´s non-linearity</small> <br>
+<small>AF-Q parameter discontinued after realizing it´s non-linearity</small> <br></i>
 
 
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
