@@ -42,8 +42,9 @@ Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-<small>AF-Q parameter discontinued after realizing it´s non-linearity</small> <br></i>
+<br></i>
 
+Comment: The AF-Q parameter was discontinued after realizing it´s non-linearity<br>
 
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
@@ -57,66 +58,6 @@ Lung vessels have a thin infiltration-like parenchyma cover around them. This in
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse<br>
 <br>
-<b>Version history</b><br>
-V 1.0<br>
-<ul>
-<li>Initial version</li>
-</ul>
-V 1.1<br>
-<ul>
-<li>right and left lung mask drop down segment selectors added</li>
-<li>processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'</li>
-</ul>
-V 2.0 <br>
-<ul>
-<li>code made efficient and modular - thanks Andras Lasso (PERK)</li>
-<li>real-time volume rendering</li>
-<li>immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)</li>
-<li>better GUI</li>
-</ul>
-V 2.1 <br>
-<ul>
-<li>New extension "Lung CT Segmenter" created from https://github.com/rbumm/SlicerLungMaskGenerator</li>
-<li>Improvements of lung segmenter module by Andras Lasso (PERK)</li>
-</ul>
-V 2.2 <br>
-<ul>
-<li>Show / hide 2D segments automatically</li>
-<li>implemented warning dialog before enabling 3D display </li>
-</ul>
-V 2.32 <br>
-<ul>
-<li>version</li>
-<li>PDF changes</li>
-</ul>
-V 2.34 <br>
-<ul>
-<li>Segmenter: Resampled volume levels are now adjusted to what users select for their input volume (identical brightness and contrast after 'Start')  </li>
-</ul>
-V 2.35 <br>
-<ul>
-<li>Implementation of CSV export in CT Lung Analyzer logic - can be (and has been) called via script</li>
-<li>Analyzer: CSV export button - will produce a file in the report directory</li>
-</ul>
-V 2.36 <br>
-<ul>
-<li>'Autoshrink masks (1 mm)' added in Lung CT Segmenter. Produces 'cleaner' lung masks which cover less pleura, pericardium and diaphragma. </li>
-<li>Analyzer: CSV export button - will produce a csv file in the report directory</li>
-</ul>
-V 2.37 <br>
-<ul>
-<li>"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations. </li>  
-<li>"COVID-result table" reordered and renamed to "Extended results table"</li>
-<li>COVID-Q renamed to AF-Q (for more general use)</li>
-<li>CSV export now exports two result tables directly </li>
-</ul>
-V 2.38 <br>
-<ul>
-<li>A/F-Q finally removed from the extended results table after realizing its non-linear character. The usage of the linear "% affected" parameter is recommended instead.</li>  
-<li>"Segment Editor Extra Effects" check:  Bug removed.</li>
-<li>"Infitrated" and "Collapsed" (ml and %) added to the extended results table.</li>
-</ul>
-
 
 
 (1) https://www.slicer.org/

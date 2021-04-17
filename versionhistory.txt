@@ -1,0 +1,59 @@
+<b>Version history</b>
+V 1.0
+Initial version
+
+V 1.1
+
+right and left lung mask drop down segment selectors added
+processing routine checks existence and name of 'Right lung mask' and 'Left lung mask'
+>
+V 2.0 
+
+code made efficient and modular - thanks Andras Lasso (PERK)
+real-time volume rendering
+immediate updated of the color categorization, both in 2D and 3D (using colormaps and volume rendering)
+better GUI
+
+V 2.1 
+
+New extension "Lung CT Segmenter" created from https://github.com/rbumm/SlicerLungMaskGenerator
+Improvements of lung segmenter module by Andras Lasso (PERK)
+
+V 2.2 
+
+Show / hide 2D segments automatically
+implemented warning dialog before enabling 3D display 
+
+V 2.32 
+
+version
+PDF changes
+
+V 2.34 
+
+Segmenter: Resampled volume levels are now adjusted to what users select for their input volume (identical brightness and contrast after 'Start')  
+
+V 2.35 
+
+Implementation of CSV export in CT Lung Analyzer logic - can be (and has been) called via script
+Analyzer: CSV export button - will produce a file in the report directory
+
+V 2.36 
+
+'Autoshrink masks (1 mm)' added in Lung CT Segmenter. Produces 'cleaner' lung masks which cover less pleura, pericardium and diaphragma. 
+Analyzer: CSV export button - will produce a csv file in the report directory
+
+V 2.37 
+
+"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations.   
+"COVID-result table" reordered and renamed to "Extended results table"
+COVID-Q renamed to AF-Q (for more general use)
+CSV export now exports two result tables directly 
+
+V 2.38 
+
+A/F-Q finally removed from the extended results table after realizing its non-linear character. The usage of the linear "% affected" parameter is recommended instead.  
+"Segment Editor Extra Effects" check:  Bug removed.
+"Infitrated" and "Collapsed" (ml and %) added to the extended results table.
+
+
