@@ -42,7 +42,9 @@ Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-AF-Q(total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
+<small>AF-Q parameter discontinued after realizing it´s non-linearity</small> <br>
+
+
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
