@@ -42,7 +42,7 @@ Functional total lung volume (inflated, % of total lung volume)<br>
 Affected right lung volume (infiltrated + collapsed right volume, % of right lung volume)<br>
 Affected left lung volume (infiltrated + collapsed left volume, % of left lung volume) <br>
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
-CovidQ (COVID-19 quotient: total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
+AF-Q(total affected lung volume [ml] /  functional lung volume [ml]) <br></i><br>
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
@@ -89,6 +89,8 @@ V 2.32 <br>
 <li>PDF changes</li>
 </ul>
 V 2.34 <br>
+
+
 <ul>
 <li>Segmenter: Resampled volume levels are now adjusted to what users select for their input volume (identical brightness and contrast after 'Start')  </li>
 </ul>
@@ -100,11 +102,17 @@ V 2.35 <br>
 V 2.36 <br>
 <ul>
 <li>'Autoshrink masks (1 mm)' added in Lung CT Segmenter. Produces 'cleaner' lung masks which cover less pleura, pericardium and diaphragma. </li>
-<li>New function 'shrinkMasks(millimeters)' added in Lung CT Analyzer logic. This enables to shrink predefined masks by certain values to cover less pleura, pericardium and diaphragma. </li>
-<li>Do not use both functions, either one of them - they will add up.</li>
-
-<li>Analyzer: CSV export button - will produce a file in the report directory</li>
+<li>Analyzer: CSV export button - will produce a csv file in the report directory</li>
 </ul>
+V 2.37 <br>
+<ul>
+<li>"Regional analysis" checkbox and function added in Lung CT Analyzer. Creates ventral, dorsal, upper, middle and lower result segmentations. </li>  
+<li>"COVID-result table" reordered and renamed to "Extended results table"</li>
+<li>COVID-Q renamed to AF-Q (for more general use)</li>
+<li>CSV export now exports two result tables directly </li>
+</ul>
+
+
 (1) https://www.slicer.org/
 <br>
 <br>
