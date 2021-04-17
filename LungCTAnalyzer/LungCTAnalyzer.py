@@ -87,7 +87,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.37
+        self.version = 2.38
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -700,7 +700,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         <td>{examDate}</td>
         </tr>
         </table>
-        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 functional versus affected lung volumes are shown. "Emphysema" segment currently includes bronchi and will never be zero."Infiltration" and "Collapsed" currently include perivascular/-bronchial tissues and will also never be zero. AF-Q = Affected volume (collapsed+infiltrated+emphysema) divided by functional (inflated) volume. Higher values indicate more severe disease. </p>
+        <p>The results of the analysis of the CT scan are summarized in the following tables. Segments are created according to their Hounsfield units using predefined threshold ranges. In Table 2 functional versus affected lung volumes are shown. "Emphysema" segment currently includes bronchi and will never be zero. "Infiltration" and "Collapsed" currently include perivascular/-bronchial tissues and will also never be zero. </p>
         <br>
         <h2>Volumetric analysis (Table 1)</h2>
         <br>
@@ -1220,46 +1220,52 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.emphysemaResultRightVolume = self.getVol("Emphysema right " + area)
         self.emphysemaResultLeftVolume = self.getVol("Emphysema left " + area)
         self.emphysemaResultTotalVolume = self.emphysemaResultRightVolume + self.emphysemaResultLeftVolume
+        self.infiltratedResultRightVolume = self.getVol("Emphysema right " + area)
+        self.infiltratedResultLeftVolume = self.getVol("Emphysema left " + area)
+        self.infiltratedResultTotalVolume = self.infiltratedResultRightVolume + self.infiltratedResultLeftVolume
+        self.collapsedResultRightVolume = self.getVol("Emphysema right " + area)
+        self.collapsedResultLeftVolume = self.getVol("Emphysema left " + area)
+        self.collapsedResultTotalVolume = self.collapsedResultRightVolume + self.collapsedResultLeftVolume
         
         if self.totalResultLungVolume > 0.:
-            self.functionalResultTotalVolumePerc = round(self.functionalResultTotalVolume * 100. / self.totalResultLungVolume)
-            self.affectedResultTotalVolumePerc = round(self.affectedResultTotalVolume * 100. / self.totalResultLungVolume)
-            self.emphysemaResultTotalVolumePerc = round(self.emphysemaResultTotalVolume * 100. / self.totalResultLungVolume)
+            self.functionalResultTotalVolumePerc = round(100 * self.functionalResultTotalVolume / self.totalResultLungVolume)
+            self.affectedResultTotalVolumePerc = round(100 * self.affectedResultTotalVolume / self.totalResultLungVolume)
+            self.emphysemaResultTotalVolumePerc = round(100 * self.emphysemaResultTotalVolume / self.totalResultLungVolume,1)
+            self.infiltratedResultTotalVolumePerc = round(100 * self.infiltratedResultTotalVolume / self.totalResultLungVolume,1)
+            self.collapsedResultTotalVolumePerc = round(100 * self.collapsedResultTotalVolume / self.totalResultLungVolume,1)
         else :
             self.functionalResultTotalVolumePerc = -1
             self.affectedResultTotalVolumePerc = -1
             self.emphysemaResultTotalVolumePerc = -1
+            self.infiltratedResultTotalVolumePerc = -1
+            self.collapsedResultTotalVolumePerc = -1 
         
         if self.rightResultLungVolume > 0.:
-            self.functionalResultRightVolumePerc = round(self.functionalResultRightVolume * 100. / self.rightResultLungVolume)
-            self.affectedResultRightVolumePerc = round(self.affectedResultRightVolume * 100. / self.rightResultLungVolume)
-            self.emphysemaResultRightVolumePerc = round(self.emphysemaResultRightVolume * 100. / self.rightResultLungVolume)
+            self.functionalResultRightVolumePerc = round(100 * self.functionalResultRightVolume / self.rightResultLungVolume)
+            self.affectedResultRightVolumePerc = round(100 * self.affectedResultRightVolume / self.rightResultLungVolume)
+            self.emphysemaResultRightVolumePerc = round(100 * self.emphysemaResultRightVolume / self.rightResultLungVolume,1)
+            self.infiltratedResultRightVolumePerc = round(100 * self.infiltratedResultRightVolume / self.rightResultLungVolume,1)
+            self.collapsedResultRightVolumePerc = round(100 * self.collapsedResultRightVolume / self.rightResultLungVolume,1)
         else :
             self.functionalResultRightVolumePerc = -1
             self.affectedResultRightVolumePerc = -1
             self.emphysemaResultRightVolumePerc = -1
+            self.infiltratedResultRightVolumePerc = -1
+            self.collapsedResultRightVolumePerc = -1
 
         if self.leftResultLungVolume > 0.:
-            self.functionalResultLeftVolumePerc = round(self.functionalResultLeftVolume * 100. / self.leftResultLungVolume)
-            self.affectedResultLeftVolumePerc = round(self.affectedResultLeftVolume * 100. / self.leftResultLungVolume)
-            self.emphysemaResultLeftVolumePerc = round(self.emphysemaResultLeftVolume * 100. / self.leftResultLungVolume)
+            self.functionalResultLeftVolumePerc = round(100 * self.functionalResultLeftVolume / self.leftResultLungVolume)
+            self.affectedResultLeftVolumePerc = round(100 * self.affectedResultLeftVolume / self.leftResultLungVolume)
+            self.emphysemaResultLeftVolumePerc = round(100 * self.emphysemaResultLeftVolume  / self.leftResultLungVolume,1)
+            self.infiltratedResultLeftVolumePerc = round(100 * self.infiltratedResultLeftVolume  / self.leftResultLungVolume,1)
+            self.collapsedResultLeftVolumePerc = round(100 * self.collapsedResultLeftVolume  / self.leftResultLungVolume,1)
         else: 
             self.functionalResultLeftVolumePerc = -1
             self.affectedResultLeftVolumePerc = -1
             self.emphysemaResultLeftVolumePerc = -1
+            self.infiltratedResultLeftVolumePerc = -1
+            self.collapsedResultLeftVolumePerc = -1
 
-        if self.functionalResultRightVolume > 0.: 
-            self.covidQResultRight = round(self.affectedResultRightVolume / self.functionalResultRightVolume,2)
-        else: 
-            self.covidQResultRight = 0
-        if self.functionalResultLeftVolume > 0.: 
-            self.covidQResultLeft = round(self.affectedResultLeftVolume / self.functionalResultLeftVolume,2)
-        else: 
-            self.covidQResultLeft = 0
-        if self.functionalResultTotalVolume > 0.: 
-            self.covidQResultTotal = round(self.affectedResultTotalVolume / self.functionalResultTotalVolume,2)
-        else: 
-            self.covidQResultTotal = 0
 
     
     def calculateStatistics(self):
@@ -1296,48 +1302,57 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.emphysemaLeftVolume = self.getVol("Emphysema left")
         self.emphysemaTotalVolume = self.emphysemaRightVolume + self.emphysemaLeftVolume
 
+        self.infiltratedRightVolume = self.getVol("Infiltration right")
+        self.infiltratedLeftVolume = self.getVol("Infiltration left")
+        self.infiltratedTotalVolume = self.infiltratedRightVolume + self.infiltratedLeftVolume
+
+        self.collapsedRightVolume = self.getVol("Collapsed right")
+        self.collapsedLeftVolume = self.getVol("Collapsed left")
+        self.collapsedTotalVolume = self.collapsedRightVolume + self.collapsedLeftVolume
+
         self.rightLungVolumePerc = round(self.rightLungVolume * 100. / self.totalLungVolume)
         self.leftLungVolumePerc = round(self.leftLungVolume * 100. / self.totalLungVolume)
         self.totalLungVolumePerc = 100.
 
-        self.functionalRightVolumePerc = round(self.functionalRightVolume * 100. / self.rightLungVolume)
-        self.functionalLeftVolumePerc = round(self.functionalLeftVolume * 100. / self.leftLungVolume)
-        self.functionalTotalVolumePerc = round(self.functionalTotalVolume * 100. / self.totalLungVolume)
+        self.functionalRightVolumePerc = round(100 * self.functionalRightVolume / self.rightLungVolume)
+        self.functionalLeftVolumePerc = round(100 * self.functionalLeftVolume / self.leftLungVolume)
+        self.functionalTotalVolumePerc = round(100 * self.functionalTotalVolume / self.totalLungVolume)
 
-        self.affectedRightVolumePerc = round(self.affectedRightVolume * 100. / self.rightLungVolume)
-        self.affectedLeftVolumePerc = round(self.affectedLeftVolume * 100. / self.leftLungVolume)
-        self.affectedTotalVolumePerc = round(self.affectedTotalVolume * 100. / self.totalLungVolume)
+        self.affectedRightVolumePerc = round(100 * self.affectedRightVolume / self.rightLungVolume)
+        self.affectedLeftVolumePerc = round(100 * self.affectedLeftVolume / self.leftLungVolume)
+        self.affectedTotalVolumePerc = round(100 * self.affectedTotalVolume / self.totalLungVolume)
 
-        self.emphysemaRightVolumePerc = round(self.emphysemaRightVolume * 100. / self.rightLungVolume)
-        self.emphysemaLeftVolumePerc = round(self.emphysemaLeftVolume * 100. / self.leftLungVolume)
-        self.emphysemaTotalVolumePerc = round(self.emphysemaTotalVolume * 100. / self.totalLungVolume)
+        self.emphysemaRightVolumePerc = round(100 * self.emphysemaRightVolume / self.rightLungVolume,1)
+        self.emphysemaLeftVolumePerc = round(100 * self.emphysemaLeftVolume / self.leftLungVolume,1)
+        self.emphysemaTotalVolumePerc = round(100 * self.emphysemaTotalVolume / self.totalLungVolume,1)
 
-        self.covidQRight = round(self.affectedRightVolume / self.functionalRightVolume,2)
-        self.covidQLeft = round(self.affectedLeftVolume / self.functionalLeftVolume,2)
-        self.covidQTotal = round(self.affectedTotalVolume / self.functionalTotalVolume,2)
+        self.infiltratedRightVolumePerc = round(100 * self.infiltratedRightVolume / self.rightLungVolume,1)
+        self.infiltratedLeftVolumePerc = round(100 * self.infiltratedLeftVolume / self.leftLungVolume,1)
+        self.infiltratedTotalVolumePerc = round(100 * self.infiltratedTotalVolume / self.totalLungVolume,1)
+
+        self.collapsedRightVolumePerc = round(100 * self.collapsedRightVolume / self.rightLungVolume,1)
+        self.collapsedLeftVolumePerc = round(100 * self.collapsedLeftVolume / self.leftLungVolume,1)
+        self.collapsedTotalVolumePerc = round(100 * self.collapsedTotalVolume / self.totalLungVolume,1)
 
 
     def createCovidResultsTable(self):
     
         if not self.covidResultsTable:
-            self.covidResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT COVID-19 analysis results')
+            self.covidResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT analysis extended results')
         else:
             self.covidResultsTable.RemoveAllColumns()
 
         labelArray = vtk.vtkStringArray()
         labelArray.SetName("Lung area")
 
-        totalMlArray = vtk.vtkDoubleArray()
-        totalMlArray.SetName("Total (ml)")
-
-        totalPercentArray = vtk.vtkDoubleArray()
-        totalPercentArray.SetName("Total (%)")
+        affectedFunctionalMlArray = vtk.vtkDoubleArray()
+        affectedFunctionalMlArray.SetName("Inflated + Affected (ml)")
 
         functionalMlArray = vtk.vtkDoubleArray()
-        functionalMlArray.SetName("Functional (ml)")
+        functionalMlArray.SetName("Inflated (ml)")
 
         functionalPercentArray = vtk.vtkDoubleArray()
-        functionalPercentArray.SetName("Functional (%)")
+        functionalPercentArray.SetName("Inflated (%)")
 
         affectedMlArray = vtk.vtkDoubleArray()
         affectedMlArray.SetName("Affected (ml)")
@@ -1351,19 +1366,22 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         emphysemaPercentArray = vtk.vtkDoubleArray()
         emphysemaPercentArray.SetName("Emphysema (%)")
 
-        covidqTotalArray = vtk.vtkDoubleArray()
-        covidqTotalArray.SetName("AF-Q total")
+        infiltratedMlArray = vtk.vtkDoubleArray()
+        infiltratedMlArray.SetName("Infiltrated (ml)")
 
-        covidqRightArray = vtk.vtkDoubleArray()
-        covidqRightArray.SetName("AF-Q right")
+        infiltratedPercentArray = vtk.vtkDoubleArray()
+        infiltratedPercentArray.SetName("Infiltrated (%)")
 
-        covidqLeftArray = vtk.vtkDoubleArray()
-        covidqLeftArray.SetName("AF-Q left")
+        collapsedMlArray = vtk.vtkDoubleArray()
+        collapsedMlArray.SetName("Collapsed (ml)")
+
+        collapsedPercentArray = vtk.vtkDoubleArray()
+        collapsedPercentArray.SetName("Collapsed (%)")
+
 
 
         labelArray.InsertNextValue("Total lungs")
-        totalMlArray.InsertNextValue(self.totalLungVolume)
-        totalPercentArray.InsertNextValue(self.totalLungVolumePerc)
+        affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalTotalVolume)
         functionalPercentArray.InsertNextValue(self.functionalTotalVolumePerc)
@@ -1371,16 +1389,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         affectedMlArray.InsertNextValue(self.affectedTotalVolume)
         affectedPercentArray.InsertNextValue(self.affectedTotalVolumePerc)
 
+        infiltratedMlArray.InsertNextValue(self.infiltratedTotalVolume)
+        infiltratedPercentArray.InsertNextValue(self.infiltratedTotalVolumePerc)
+
+        collapsedMlArray.InsertNextValue(self.collapsedTotalVolume)
+        collapsedPercentArray.InsertNextValue(self.collapsedTotalVolumePerc)
+
         emphysemaMlArray.InsertNextValue(self.emphysemaTotalVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaTotalVolumePerc)
 
-        covidqTotalArray.InsertNextValue(self.covidQTotal)
-        covidqRightArray.InsertNextValue(-1)
-        covidqLeftArray.InsertNextValue(-1)
-
         labelArray.InsertNextValue("Right lung")
-        totalMlArray.InsertNextValue(self.rightLungVolume)
-        totalPercentArray.InsertNextValue(self.rightLungVolumePerc)
+        affectedFunctionalMlArray.InsertNextValue(self.rightLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalRightVolume)
         functionalPercentArray.InsertNextValue(self.functionalRightVolumePerc)
@@ -1388,16 +1407,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         affectedMlArray.InsertNextValue(self.affectedRightVolume)
         affectedPercentArray.InsertNextValue(self.affectedRightVolumePerc)
 
+        infiltratedMlArray.InsertNextValue(self.infiltratedRightVolume)
+        infiltratedPercentArray.InsertNextValue(self.infiltratedRightVolumePerc)
+
+        collapsedMlArray.InsertNextValue(self.collapsedRightVolume)
+        collapsedPercentArray.InsertNextValue(self.collapsedRightVolumePerc)
+
         emphysemaMlArray.InsertNextValue(self.emphysemaRightVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaRightVolumePerc)
 
-        covidqTotalArray.InsertNextValue(-1)
-        covidqRightArray.InsertNextValue(self.covidQRight)
-        covidqLeftArray.InsertNextValue(-1)
-
         labelArray.InsertNextValue("Left lung")
-        totalMlArray.InsertNextValue(self.leftLungVolume)
-        totalPercentArray.InsertNextValue(self.leftLungVolumePerc)
+        affectedFunctionalMlArray.InsertNextValue(self.leftLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalLeftVolume)
         functionalPercentArray.InsertNextValue(self.functionalLeftVolumePerc)
@@ -1405,12 +1425,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         affectedMlArray.InsertNextValue(self.affectedLeftVolume)
         affectedPercentArray.InsertNextValue(self.affectedLeftVolumePerc)
 
+        infiltratedMlArray.InsertNextValue(self.infiltratedLeftVolume)
+        infiltratedPercentArray.InsertNextValue(self.infiltratedLeftVolumePerc)
+
+        collapsedMlArray.InsertNextValue(self.collapsedLeftVolume)
+        collapsedPercentArray.InsertNextValue(self.collapsedLeftVolumePerc)
+
         emphysemaMlArray.InsertNextValue(self.emphysemaLeftVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaLeftVolumePerc)
-
-        covidqTotalArray.InsertNextValue(-1)
-        covidqRightArray.InsertNextValue(-1)
-        covidqLeftArray.InsertNextValue(self.covidQLeft)
 
 
         if self.detailedSubsegments: 
@@ -1419,32 +1441,31 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
                 self.getResultsFor(f"{subSegmentProperty['name']}")
                 labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
-                totalMlArray.InsertNextValue(self.totalResultLungVolume)
-                totalPercentArray.InsertNextValue(self.totalResultLungVolumePerc)
+                affectedFunctionalMlArray.InsertNextValue(self.totalResultLungVolume)
                 functionalMlArray.InsertNextValue(self.functionalResultTotalVolume)
                 functionalPercentArray.InsertNextValue(self.functionalResultTotalVolumePerc)
                 affectedMlArray.InsertNextValue(self.affectedResultTotalVolume)
                 affectedPercentArray.InsertNextValue(self.affectedResultTotalVolumePerc)
+                infiltratedMlArray.InsertNextValue(self.infiltratedResultTotalVolume)
+                infiltratedPercentArray.InsertNextValue(self.infiltratedResultTotalVolumePerc)
+                collapsedMlArray.InsertNextValue(self.collapsedResultTotalVolume)
+                collapsedPercentArray.InsertNextValue(self.collapsedResultTotalVolumePerc)
                 emphysemaMlArray.InsertNextValue(self.emphysemaResultTotalVolume)
                 emphysemaPercentArray.InsertNextValue(self.emphysemaResultTotalVolumePerc)
                 
-                covidqTotalArray.InsertNextValue(self.covidQResultTotal)
-                covidqRightArray.InsertNextValue(self.covidQResultRight)
-                covidqLeftArray.InsertNextValue(self.covidQResultLeft)
-
 
         self.covidResultsTable.AddColumn(labelArray)
-        self.covidResultsTable.AddColumn(totalMlArray)
-        self.covidResultsTable.AddColumn(totalPercentArray)
+        self.covidResultsTable.AddColumn(affectedFunctionalMlArray)
         self.covidResultsTable.AddColumn(functionalMlArray)
         self.covidResultsTable.AddColumn(functionalPercentArray)
-        self.covidResultsTable.AddColumn(affectedMlArray)
-        self.covidResultsTable.AddColumn(affectedPercentArray)
         self.covidResultsTable.AddColumn(emphysemaMlArray)
         self.covidResultsTable.AddColumn(emphysemaPercentArray)
-        self.covidResultsTable.AddColumn(covidqTotalArray)
-        self.covidResultsTable.AddColumn(covidqRightArray)
-        self.covidResultsTable.AddColumn(covidqLeftArray)
+        self.covidResultsTable.AddColumn(infiltratedMlArray)
+        self.covidResultsTable.AddColumn(infiltratedPercentArray)
+        self.covidResultsTable.AddColumn(collapsedMlArray)
+        self.covidResultsTable.AddColumn(collapsedPercentArray)
+        self.covidResultsTable.AddColumn(affectedMlArray)
+        self.covidResultsTable.AddColumn(affectedPercentArray)
 
 
     def saveDataToFile(self, reportPathWithoutExtension,user_str1,user_str2,user_str3):
@@ -1570,7 +1591,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         
 
         self.segmentEditorNode.SetSelectedSegmentID(id)
-        if not segmentEditorWidget.effectByName("Surface cut"):
+        if not self.segmentEditorWidget.effectByName("Surface cut"):
             slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
             raise ValueError("Installation of module required")
 
