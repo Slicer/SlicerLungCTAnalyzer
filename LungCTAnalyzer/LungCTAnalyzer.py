@@ -99,7 +99,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.reportFolder = ""
 
         ScriptedLoadableModuleWidget.setup(self)
 
@@ -209,6 +208,16 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 parser.write(configfile)
 
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
+
+        if parser.has_option('Updates', 'check'): 
+            self.checkUpdates = parser.getboolean('Updates','check')
+        else: 
+            parser.add_section('Updates')
+            parser.set('Updates', 'check', str(True))
+            self.checkUpdates = True
+            with open('LCTA.INI', 'w') as configfile:    # save
+                parser.write(configfile)
+
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
@@ -1192,11 +1201,12 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
     def getVol(self,segId):
         result = 0.
-        try:         
+        try:       
+            print(segId)        
             result = round(float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"]))
         except: 
             # not found
-            result = 0.
+            result = -1
         return result
 
     def getResultsFor(self, area):
@@ -1220,11 +1230,11 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.emphysemaResultRightVolume = self.getVol("Emphysema right " + area)
         self.emphysemaResultLeftVolume = self.getVol("Emphysema left " + area)
         self.emphysemaResultTotalVolume = self.emphysemaResultRightVolume + self.emphysemaResultLeftVolume
-        self.infiltratedResultRightVolume = self.getVol("Emphysema right " + area)
-        self.infiltratedResultLeftVolume = self.getVol("Emphysema left " + area)
+        self.infiltratedResultRightVolume = self.getVol("Infiltration right " + area)
+        self.infiltratedResultLeftVolume = self.getVol("Infiltration left " + area)
         self.infiltratedResultTotalVolume = self.infiltratedResultRightVolume + self.infiltratedResultLeftVolume
-        self.collapsedResultRightVolume = self.getVol("Emphysema right " + area)
-        self.collapsedResultLeftVolume = self.getVol("Emphysema left " + area)
+        self.collapsedResultRightVolume = self.getVol("Collapsed right " + area)
+        self.collapsedResultLeftVolume = self.getVol("Collapsed left " + area)
         self.collapsedResultTotalVolume = self.collapsedResultRightVolume + self.collapsedResultLeftVolume
         
         if self.totalResultLungVolume > 0.:
