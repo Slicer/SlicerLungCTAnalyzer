@@ -87,7 +87,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.38
+        self.version = 2.39
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -150,6 +150,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputCovidResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
+        # Advanced options
+        self.ui.checkForUpdatesCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+
         # Thresholds
         self.ui.BullaRangeWidget.connect('valuesChanged(double,double)', self.onBullaRangeWidgetChanged)
         self.ui.InflatedRangeWidget.connect('valuesChanged(double,double)', self.onInflatedRangeWidgetChanged)
@@ -160,6 +163,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.saveThresholdsButton.connect('clicked(bool)', self.onSaveThresholdsButton)
         self.ui.loadThresholdsButton.connect('clicked(bool)', self.onLoadThresholdsButton)
         self.ui.createPDFReportButton.connect('clicked(bool)', self.onCreatePDFReportButton)
+        
         
         # Report Dir
        
@@ -210,11 +214,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
 
         if parser.has_option('Updates', 'check'): 
-            self.checkUpdates = parser.getboolean('Updates','check')
+            self.checkForUpdates = parser.getboolean('Updates','check')
         else: 
             parser.add_section('Updates')
             parser.set('Updates', 'check', str(True))
-            self.checkUpdates = True
+            self.checkForUpdates = True
             with open('LCTA.INI', 'w') as configfile:    # save
                 parser.write(configfile)
 
@@ -280,20 +284,23 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         from urllib.request import urlopen
         import json
         
-        link = "https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/version.json?raw=true"
-        try:
-            f = urlopen(link)
-            myfile = f.read()
-            #print(myfile)
-            dct = json.loads(myfile)
-            #print(dct["version"])
-            if self.version < float(dct["version"]): 
-                slicer.util.messageBox("There is a new version of Lung CT Analyzer available. \n Please consider updating via the extension manager.")
-            else:
-                print("Lung CT analyzer is up to date.")
-        except Exception as e:
-            qt.QApplication.restoreOverrideCursor()
-            slicer.util.errorDisplay("Failed to check current version: "+str(e))
+        if self.checkForUpdates: 
+            link = "https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/version.json?raw=true"
+            try:
+                f = urlopen(link)
+                myfile = f.read()
+                #print(myfile)
+                dct = json.loads(myfile)
+                #print(dct["version"])
+                if self.version < float(dct["version"]): 
+                    slicer.util.messageBox("There is a new version of Lung CT Analyzer available. \n Please consider updating via the extension manager.")
+                else:
+                    print("Lung CT analyzer is up to date.")
+            except Exception as e:
+                qt.QApplication.restoreOverrideCursor()
+                slicer.util.errorDisplay("Failed to check current version: "+str(e))
+        else : 
+            print("Checking of Lung CT analyzer updates is disabled.")
         
 
         
@@ -302,6 +309,25 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Called when the application closes and the module widget is destroyed.
         """
         self.removeObservers()
+ 
+        import configparser
+        parser = configparser.SafeConfigParser()
+        parser.read('LCTA.INI')
+
+        if parser.has_option('Updates', 'check'): 
+            if self.checkForUpdates: 
+                parser.set('Updates','check',str(True))
+            else: 
+                parser.set('Updates','check',str(False))
+        else: 
+            parser.add_section('Updates')
+            if self.checkForUpdates: 
+                parser.set('Updates','check',str(True))
+            else: 
+                parser.set('Updates','check',str(False))
+        with open('LCTA.INI', 'w') as configfile:    # save
+            parser.write(configfile)
+
 
     def enter(self):
         """
@@ -432,6 +458,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
 
 
+        self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
         self.ui.detailedSubsegmentsCheckBox.checked = self.logic.detailedSubsegments
 
@@ -495,6 +522,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
         
 
+        self.checkForUpdates = self.ui.checkForUpdatesCheckBox.checked
+        
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
         self.logic.detailedSubsegments = self.ui.detailedSubsegmentsCheckBox.checked
 
@@ -886,11 +915,12 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         print("Done.")
 
     def onShowCovidResultsTable(self):
-        slicer.util.messageBox("CovidQ has not been clinically evaluated yet. Do not base treatment decisions on that value.",
+        slicer.util.messageBox("COVID segmentations have not been clinically evaluated yet. Do not base treatment decisions on that values.",
             dontShowAgainSettingsKey="LungCTAnalyzer/DontShowCovidResultsWarning",
             icon=qt.QMessageBox.Warning)
 
         self.logic.showTable(self.logic.covidResultsTable)
+        
 
     def toggleSegmentationVisibility2D(self, segmentationNode):
         segmentationDisplayNode = segmentationNode.GetDisplayNode()

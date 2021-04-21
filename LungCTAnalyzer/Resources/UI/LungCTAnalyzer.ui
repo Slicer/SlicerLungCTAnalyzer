@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>529</width>
+    <width>557</width>
     <height>962</height>
    </rect>
   </property>
@@ -735,14 +735,14 @@
       <bool>true</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>Masked lung CT:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="lungMaskedVolumeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -778,14 +778,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_23">
         <property name="text">
          <string>Volume rendering property:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="qMRMLNodeComboBox" name="volumeRenderingPropertyNodeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -821,14 +821,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_14">
         <property name="text">
          <string>Output segmentation:</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="qMRMLNodeComboBox" name="outputSegmentationSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -864,14 +864,14 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="label_15">
         <property name="text">
          <string>Results table:</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="5" column="1">
        <widget class="qMRMLNodeComboBox" name="outputResultsTableSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -907,14 +907,14 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="label_16">
         <property name="text">
          <string>COVID-19 results table:</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="6" column="1">
        <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -947,6 +947,13 @@
         </property>
         <property name="noneDisplay">
          <string>Create new table</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="checkForUpdatesCheckBox">
+        <property name="text">
+         <string>Check for Updates</string>
         </property>
        </widget>
       </item>
