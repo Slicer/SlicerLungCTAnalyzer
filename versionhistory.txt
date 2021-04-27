@@ -56,4 +56,12 @@ A/F-Q finally removed from the extended results table after realizing its non-li
 "Segment Editor Extra Effects" check:  Bug removed.
 "Infitrated" and "Collapsed" (ml and %) added to the extended results table.
 
+V 2.39
+Bug in the extended results table removed
+"Check for updates" state now saved in configparser
+
+V 2.40 
+
+remove small island function disabled in Lung CT Analyzer (unpredictable results) 
+emphysema color changed from black to green for a better display
 

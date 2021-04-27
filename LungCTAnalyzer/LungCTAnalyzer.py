@@ -87,7 +87,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.39
+        self.version = 2.40
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -1058,10 +1058,10 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             }
 
         self.segmentProperties = [
-            {"name": "Emphysema", "color": [0.0,0.0,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated'],"removesmallislands":"yes"},
+            {"name": "Emphysema", "color": [0.0,0.5,0.0], "thresholds": ['thresholdBullaLower', 'thresholdBullaInflated'],"removesmallislands":"no"},
             {"name": "Inflated", "color": [0.0,0.5,1.0], "thresholds": ['thresholdBullaInflated', 'thresholdInflatedInfiltrated'],"removesmallislands":"no"},
-            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed'],"removesmallislands":"yes"},
-            {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels'],"removesmallislands":"yes"},
+            {"name": "Infiltration", "color": [1.0,0.5,0.0], "thresholds": ['thresholdInflatedInfiltrated', 'thresholdInfiltratedCollapsed'],"removesmallislands":"no"},
+            {"name": "Collapsed", "color": [1.0,0.0,1.0], "thresholds": ['thresholdInfiltratedCollapsed', 'thresholdCollapsedVessels'],"removesmallislands":"no"},
             {"name": "Vessels", "color": [1.0,0.0,0.0], "thresholds": ['thresholdCollapsedVessels', 'thresholdVesselsUpper'],"removesmallislands":"no"},
             ]
 
