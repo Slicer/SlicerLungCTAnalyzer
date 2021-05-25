@@ -65,3 +65,8 @@ V 2.40
 remove small island function disabled in Lung CT Analyzer (unpredictable results) 
 emphysema color changed from black to green for a better display
 
+V 2.41
+
+- right and left lung masks are set visible as they should before "Segment statistics" for centroids
+- setDefaultThresholds() function implemented for use via scripts
+- ability to include or exclude emphysematic bullae from "affected" calculation in the extended results table  
