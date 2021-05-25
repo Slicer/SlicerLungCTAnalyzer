@@ -87,7 +87,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.40
+        self.version = 2.41
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -144,6 +144,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Output options
         self.ui.generateStatisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.detailedSubsegmentsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.countBullaeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.lungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -461,6 +462,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
         self.ui.detailedSubsegmentsCheckBox.checked = self.logic.detailedSubsegments
+        self.ui.countBullaeCheckBox.checked = self.logic.countBullae
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -526,6 +528,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
         self.logic.detailedSubsegments = self.ui.detailedSubsegmentsCheckBox.checked
+        self.logic.countBullae = self.ui.countBullaeCheckBox.checked
 
         self._parameterNode.EndModify(wasModified)
 
@@ -1077,6 +1080,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.outputStats = None
         self.segmentEditorNode = None
         self.segmentEditorWidget = None
+        
 
 
     def showStatusMessage(self, msg, timeoutMsec=500):
@@ -1111,6 +1115,28 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.setThresholds(parameterNode, self.defaultThresholds, overwrite=False)
         if not parameterNode.GetParameter("ComputeImageIntensityStatistics"):
             parameterNode.SetParameter("ComputeImageIntensityStatistics", "true")
+            
+    def setDefaultThresholds(self, bullaLower,bullaInflated,inflatedInfiltrated,infiltratedCollapsed,collapsedVessels,vesselsUpper):
+        """
+        Initialize thresholds with special settings.
+        """             
+        scriptThresholds = {
+            'thresholdBullaLower': -1050.,
+            'thresholdBullaInflated': -950.,
+            'thresholdInflatedInfiltrated': -750.,
+            'thresholdInfiltratedCollapsed': -400.,
+            'thresholdCollapsedVessels': 0.,
+            'thresholdVesselsUpper': 3000.,
+            }
+        
+        scriptThresholds['thresholdBullaLower'] = bullaLower
+        scriptThresholds['thresholdBullaInflated'] = bullaInflated
+        scriptThresholds['thresholdInflatedInfiltrated'] = inflatedInfiltrated
+        scriptThresholds['thresholdInfiltratedCollapsed'] = infiltratedCollapsed
+        scriptThresholds['thresholdCollapsedVessels'] = collapsedVessels
+        scriptThresholds['thresholdVesselsUpper'] = vesselsUpper
+        self.setThresholds(self.getParameterNode(), scriptThresholds)
+         
 
     def updateMaskedVolumeColors(self):
         if not self.lungMaskedVolume:
@@ -1251,12 +1277,21 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.rightResultLungVolumePerc = -1
             self.leftResultLungVolumePerc = -1
         self.totalResultLungVolumePerc = 100.
-        self.affectedResultRightVolume = self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) + self.getVol("Emphysema right " + area)
-        self.affectedResultLeftVolume = self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) + self.getVol("Emphysema left " + area)
-        self.affectedResultTotalVolume = self.affectedResultRightVolume + self.affectedResultLeftVolume
-        self.functionalResultRightVolume = self.getVol("Inflated right " + area)
-        self.functionalResultLeftVolume = self.getVol("Inflated left " + area)
-        self.functionalResultTotalVolume = self.functionalResultRightVolume + self.functionalResultLeftVolume
+        if self.countBullae: 
+            self.affectedResultRightVolume = self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) + self.getVol("Emphysema right " + area)
+            self.affectedResultLeftVolume = self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) + self.getVol("Emphysema left " + area)
+            self.affectedResultTotalVolume = self.affectedResultRightVolume + self.affectedResultLeftVolume
+            self.functionalResultRightVolume = self.getVol("Inflated right " + area)
+            self.functionalResultLeftVolume = self.getVol("Inflated left " + area)
+            self.functionalResultTotalVolume = self.functionalResultRightVolume + self.functionalResultLeftVolume
+        else: 
+            self.affectedResultRightVolume = self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) 
+            self.affectedResultLeftVolume = self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) 
+            self.affectedResultTotalVolume = self.affectedResultRightVolume + self.affectedResultLeftVolume
+            self.functionalResultRightVolume = self.getVol("Inflated right " + area) + self.getVol("Emphysema right " + area)
+            self.functionalResultLeftVolume = self.getVol("Inflated left " + area) + self.getVol("Emphysema right " + area)
+            self.functionalResultTotalVolume = self.functionalResultRightVolume + self.functionalResultLeftVolume
+        
         self.emphysemaResultRightVolume = self.getVol("Emphysema right " + area)
         self.emphysemaResultLeftVolume = self.getVol("Emphysema left " + area)
         self.emphysemaResultTotalVolume = self.emphysemaResultRightVolume + self.emphysemaResultLeftVolume
@@ -1330,14 +1365,23 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.leftLungVolume = self.getVol("Emphysema left") + self.getVol("Inflated left") + self.getVol("Infiltration left") + self.getVol("Collapsed left") 
         self.totalLungVolume = self.rightLungVolume + self.leftLungVolume
 
-        self.functionalRightVolume = self.getVol("Inflated right")
-        self.functionalLeftVolume = self.getVol("Inflated left")
-        self.functionalTotalVolume = self.venRightLung + self.venLeftLung
+        if self.countBullae: 
+            self.functionalRightVolume = self.getVol("Inflated right")
+            self.functionalLeftVolume = self.getVol("Inflated left")
+            self.functionalTotalVolume = self.venRightLung + self.venLeftLung
 
-        self.affectedRightVolume = self.getVol("Infiltration right") + self.getVol("Collapsed right") + self.getVol("Emphysema right")
-        self.affectedLeftVolume = self.getVol("Infiltration left") + self.getVol("Collapsed left") + self.getVol("Emphysema left")
-        self.affectedTotalVolume = self.affectedRightVolume + self.affectedLeftVolume
+            self.affectedRightVolume = self.getVol("Infiltration right") + self.getVol("Collapsed right") + self.getVol("Emphysema right")
+            self.affectedLeftVolume = self.getVol("Infiltration left") + self.getVol("Collapsed left") + self.getVol("Emphysema left")
+            self.affectedTotalVolume = self.affectedRightVolume + self.affectedLeftVolume
+        else: 
+            self.functionalRightVolume = self.getVol("Inflated right") + self.getVol("Emphysema right")
+            self.functionalLeftVolume = self.getVol("Inflated left") + self.getVol("Emphysema right")
+            self.functionalTotalVolume = self.venRightLung + self.venLeftLung
 
+            self.affectedRightVolume = self.getVol("Infiltration right") + self.getVol("Collapsed right") 
+            self.affectedLeftVolume = self.getVol("Infiltration left") + self.getVol("Collapsed left") 
+            self.affectedTotalVolume = self.affectedRightVolume + self.affectedLeftVolume
+        
         self.emphysemaRightVolume = self.getVol("Emphysema right")
         self.emphysemaLeftVolume = self.getVol("Emphysema left")
         self.emphysemaTotalVolume = self.emphysemaRightVolume + self.emphysemaLeftVolume
@@ -1514,6 +1558,196 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         slicer.util.saveNode(self.covidResultsTable, reportPathWithoutExtension + "_extendedResultsTable.csv")
 
         
+        
+    def saveExtendedDataToFile(self, filename,user_str1,user_str2,user_str3):
+
+        import os.path
+
+
+        file_exists = os.path.isfile(filename)
+
+        self.calculateStatistics()
+
+        import csv
+
+        header = [
+        'user1',
+        'user2',
+        'user3',
+        'func+aff ml',
+        'inflated ml',
+        'inflated %',
+        'emphysema ml',
+        'emphysema %',
+        'infiltrated ml',
+        'infiltrated %',
+        'collapsed ml',
+        'collapsed %',
+        'affected ml',
+        'affected %',
+        'right func+aff ml',
+        'right inflated ml',
+        'right inflated %',
+        'right emphysema ml',
+        'right emphysema %',
+        'right infiltrated ml',
+        'right infiltrated %',
+        'right collapsed ml',
+        'right collapsed %',
+        'right affected ml',
+        'right affected %',
+        'left func+aff ml',
+        'left inflated ml',
+        'left inflated %',
+        'left emphysema ml',
+        'left emphysema %',
+        'left infiltrated ml',
+        'left infiltrated %',
+        'left collapsed ml',
+        'left collapsed %',
+        'left affected ml',
+        'left affected %',
+        'dorsal func+aff ml',
+        'dorsal inflated ml',
+        'dorsal inflated %',
+        'dorsal emphysema ml',
+        'dorsal emphysema %',
+        'dorsal infiltrated ml',
+        'dorsal infiltrated %',
+        'dorsal collapsed ml',
+        'dorsal collapsed %',
+        'dorsal affected ml',
+        'dorsal affected %',
+        'ventral func+aff ml',
+        'ventral inflated ml',
+        'ventral inflated %',
+        'ventral emphysema ml',
+        'ventral emphysema %',
+        'ventral infiltrated ml',
+        'ventral infiltrated %',
+        'ventral collapsed ml',
+        'ventral collapsed %',
+        'ventral affected ml',
+        'ventral affected %',
+        'upper func+aff ml',
+        'upper inflated ml',
+        'upper inflated %',
+        'upper emphysema ml',
+        'upper emphysema %',
+        'upper infiltrated ml',
+        'upper infiltrated %',
+        'upper collapsed ml',
+        'upper collapsed %',
+        'upper affected ml',
+        'upper affected %',
+        'middle func+aff ml',
+        'middle inflated ml',
+        'middle inflated %',
+        'middle emphysema ml',
+        'middle emphysema %',
+        'middle infiltrated ml',
+        'middle infiltrated %',
+        'middle collapsed ml',
+        'middle collapsed %',
+        'middle affected ml',
+        'middle affected %',
+        'lower func+aff ml',
+        'lower inflated ml',
+        'lower inflated %',
+        'lower emphysema ml',
+        'lower emphysema %',
+        'lower infiltrated ml',
+        'lower infiltrated %',
+        'lower collapsed ml',
+        'lower collapsed %',
+        'lower affected ml',
+        'lower affected %',
+        ]
+
+        data = [
+
+        user_str1,
+        user_str2,
+        user_str3,
+        self.functionalTotalVolume+self.affectedTotalVolume,
+        self.functionalTotalVolume,
+        self.functionalTotalVolumePerc,
+        self.emphysemaTotalVolume,
+        self.emphysemaTotalVolumePerc,
+        self.infiltratedTotalVolume,
+        self.infiltratedTotalVolumePerc,
+        self.collapsedTotalVolume,
+        self.collapsedTotalVolumePerc,
+        self.affectedTotalVolume,
+        self.affectedTotalVolumePerc,
+        self.functionalRightVolume+self.affectedRightVolume,
+        self.functionalRightVolume,
+        self.functionalRightVolumePerc,
+        self.emphysemaRightVolume,
+        self.emphysemaRightVolumePerc,
+        self.infiltratedRightVolume,
+        self.infiltratedRightVolumePerc,
+        self.collapsedRightVolume,
+        self.collapsedRightVolumePerc,
+        self.affectedRightVolume,
+        self.affectedRightVolumePerc,
+        self.functionalLeftVolume+self.affectedLeftVolume,
+        self.functionalLeftVolume,
+        self.functionalLeftVolumePerc,
+        self.emphysemaLeftVolume,
+        self.emphysemaLeftVolumePerc,
+        self.infiltratedLeftVolume,
+        self.infiltratedLeftVolumePerc,
+        self.collapsedLeftVolume,
+        self.collapsedLeftVolumePerc,
+        self.affectedLeftVolume,
+        self.affectedLeftVolumePerc,
+        ]
+        
+        
+        try:
+            with open(filename, 'a') as f:
+                if not file_exists:
+                    for item in header: 
+                        f.write('"')
+                        f.write(item)  # file doesn't exist yet, write a header
+                        f.write('"')
+                        f.write(";")
+                    f.write("\n")
+                for item in data: 
+                    f.write(str(item))  
+                    f.write(";")
+                if self.detailedSubsegments: 
+                    for subSegmentProperty in self.subSegmentProperties:
+                        self.getResultsFor(f"{subSegmentProperty['name']}")
+                        f.write(str(self.functionalResultTotalVolume + self.affectedResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultTotalVolumePerc))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultTotalVolumePerc))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultTotalVolumePerc))
+                        f.write(";")
+                        f.write(str(self.collapsedResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.collapsedResultTotalVolumePerc))
+                        f.write(";")
+                        f.write(str(self.affectedResultTotalVolume))
+                        f.write(";")
+                        f.write(str(self.affectedResultTotalVolumePerc))
+                        f.write(";")
+                f.write("\n")
+        except IOError:
+            print("I/O error")
+        
+        
+        
 
     @property
     def inputVolume(self):
@@ -1588,6 +1822,22 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetParameter("DetailedSubsegments", "true" if on else "false")
 
     @property
+    def countBullae(self):
+      return self.getParameterNode().GetParameter("CountBullae") == "true"
+
+    @countBullae.setter
+    def countBullae(self, on):
+        self.getParameterNode().SetParameter("CountBullae", "true" if on else "false")
+
+    @property
+    def shrinkMasks(self):
+      return self.getParameterNode().GetParameter("ShrinkMasks") == "true"
+
+    @shrinkMasks.setter
+    def shrinkMasks(self, on):
+        self.getParameterNode().SetParameter("ShrinkMasks", "true" if on else "false")
+
+    @property
     def lungMaskedVolume(self):
         return self.getParameterNode().GetNodeReference("LungMaskedVolume")
 
@@ -1618,6 +1868,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         for parameterName in self.defaultThresholds:
             values[parameterName] = float(parameterNode.GetParameter(parameterName))
         return values
+        
 
     @thresholds.setter
     def thresholds(self, values):
@@ -1821,34 +2072,72 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         if not inputVolume:
             raise ValueError("Input lung CT is invalid")
 
-        segmentationNode = parameterNode.GetNodeReference("InputSegmentation")
-        if not segmentationNode:
+        inputSegmentationNode = parameterNode.GetNodeReference("InputSegmentation")
+        if not inputSegmentationNode:
             raise ValueError("Input lung segmentation node is invalid")
 
-        rightMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
-        leftMaskSegmentName = segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
+        rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
+        leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
         if ( (rightMaskSegmentName != "RIGHT LUNG" and rightMaskSegmentName != "RIGHT LUNG MASK") or
             (leftMaskSegmentName != "LEFT LUNG" and leftMaskSegmentName != "LEFT LUNG MASK") ):
             if not slicer.util.confirmYesNoDisplay("Warning: segment names are expected to be 'left/right lung' ('left/right lung mask'). Are you sure you want to continue?"):
               raise UserWarning("User cancelled the analysis")
 
         if ( (rightMaskSegmentName == "RIGHT LUNG MASK") or (leftMaskSegmentName == "LEFT LUNG MASK") ):
-            #segmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).SetName("right lung")
-            #segmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).SetName("left lung")
+            #inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).SetName("right lung")
+            #inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).SetName("left lung")
             segmentationNode.GetSegmentation().GetNthSegment(0).SetName("right lung")
-            segmentationNode.GetSegmentation().GetNthSegment(1).SetName("left lung")
-            
+            inputSegmentationNode.GetSegmentation().GetNthSegment(1).SetName("left lung")
             # for compatibitlity reasons - regional lung area definition needs to have these names
 
+
+        # create masked volume
+        self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
+
+        self.shringMasks = True
+        if self.shrinkMasks: 
+            # shrinking masks by 1 mm
+            logging.info('Creating temporary segment editor ... ')
+            self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+            self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+            self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+            self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+            self.segmentEditorWidget.setSegmentationNode(self.inputSegmentation)
+            self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+
+            self.showStatusMessage('Shrinking right lung mask ...')
+            self.segmentEditorNode.SetSelectedSegmentID(self.rightLungMaskSegmentID)
+            self.segmentEditorWidget.setActiveEffectByName("Margin")
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("MarginSizeMm","-1")
+            effect.self().onApply()
+            self.showStatusMessage('Shrinking left lung mask ...')
+            self.segmentEditorNode.SetSelectedSegmentID(self.leftLungMaskSegmentID)
+            self.segmentEditorWidget.setActiveEffectByName("Margin")
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("MarginSizeMm","-1")
+            effect.self().onApply()
+            # Delete temporary segment editor
+            logging.info('Deleting temporary segment editor ... ')
+            self.segmentEditorWidget = None
+            slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
+            self.segmentEditorNode = None
+
+
+
         # Compute centroids
-        parameterNode = self.getParameterNode()
-        segmentationNode = parameterNode.GetNodeReference("InputSegmentation")
+
         import SegmentStatistics
         self.showStatusMessage('Computing input stats and centroids ...')
+        print("Computing input stats and centroids ...")    
+        rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName()        
+        leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName()        
         
+        inputSegmentationNode.GetDisplayNode().SetSegmentVisibility(rightMaskSegmentName,True)
+        inputSegmentationNode.GetDisplayNode().SetSegmentVisibility(leftMaskSegmentName,True)
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
                 
-        segStatLogic.getParameterNode().SetParameter("Segmentation", segmentationNode.GetID())
+        segStatLogic.getParameterNode().SetParameter("Segmentation", inputSegmentationNode.GetID())
 
         segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
         segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", str(True))
@@ -1860,11 +2149,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         segStatLogic.computeStatistics()
         inputStats = segStatLogic.getStatistics()
         self.inputStats = inputStats
-        #print(str(self.inputStats))
+        #print("Input stats: "+ str(self.inputStats))
         
 
-        # create masked volume
-        self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
 
         # create main outout segmentation
         self.createThresholdedSegments(self.maskLabelVolume)

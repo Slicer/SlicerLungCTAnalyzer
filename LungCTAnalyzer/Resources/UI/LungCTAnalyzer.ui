@@ -172,14 +172,14 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="label_6">
         <property name="text">
          <string>Density statistics: </string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="6" column="1">
        <widget class="QCheckBox" name="generateStatisticsCheckBox">
         <property name="toolTip">
          <string>Check this to generate a statistics table. </string>
@@ -192,7 +192,7 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0" colspan="2">
+      <item row="9" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QPushButton" name="toggleInputSegmentationVisibility2DPushButton">
@@ -216,10 +216,27 @@
         </item>
        </layout>
       </item>
-      <item row="8" column="0">
+      <item row="10" column="0">
        <widget class="Line" name="line_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QCheckBox" name="countBullaeCheckBox">
+        <property name="toolTip">
+         <string>Check this to count emphysematic bullae as 'affected' lung tissue in the extended result table. In doubt, leave unchecked because there may be overlaps with 'inflated' tissue in low quality or low dose CT data. If unchecked, 'affected' = 'infiltrated' + 'collapsed'.</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Count bullae as 'affected': </string>
         </property>
        </widget>
       </item>
