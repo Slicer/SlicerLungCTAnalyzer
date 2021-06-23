@@ -87,12 +87,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.41
+        self.version = 2.42
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
         self._parameterNode = None
         self._updatingGUIFromParameterNode = False
+        self.inputFilename = None
 
 
     def setup(self):
@@ -380,6 +381,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
             if firstVolumeNode:
                 self.logic.inputVolume = firstVolumeNode
+
         if not self.logic.inputSegmentation:
             firstSegmentationNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
             if firstSegmentationNode:
@@ -497,7 +499,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         This method is called when the user makes any change in the GUI.
         The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
         """
-
+        
         if self._parameterNode is None or self._updatingGUIFromParameterNode:
             return
 
@@ -561,6 +563,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             volumeProperty.GetRGBTransferFunction().DeepCopy(colorTransferFunction)
 
     def onInputSegmentationSelected(self, segmentationNode):
+
         if segmentationNode == self.logic.inputSegmentation:
             # no change
             return
@@ -575,6 +578,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.rightLungMaskSelector.blockSignals(wasBlockedRight)
         self.ui.leftLungMaskSelector.blockSignals(wasBlockedLeft)
+
 
         self.updateParameterNodeFromGUI()
 
@@ -1098,14 +1102,50 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     def saveCustomThresholds(self):
         parameterNode = self.getParameterNode()
         thresholds = {}
+        
         for parameterName in self.defaultThresholds:
             thresholds[parameterName] = float(parameterNode.GetParameter(parameterName))
         slicer.app.settings().setValue("LungCTAnalyzer/CustomThresholds",str(thresholds))
+         
+        inputVolume = parameterNode.GetNodeReference("InputVolume")
+        if not inputVolume:
+            print("Error. Cannot get input volume node reference and unable to write thresholed to the volume directory. ")
+        else: 
+            storageNode = inputVolume.GetStorageNode()
+            inputFilename = storageNode.GetFileName()
+            head, tail = os.path.split(inputFilename)
+            with open(head+"/LCTAThresholdDict.txt", "w+") as text_file:
+                text_file.write(str(thresholds))
+        slicer.util.delayDisplay("Thresholds saved globally and locally.",3000)
+
+
 
     def loadCustomThresholds(self):
         import ast
+        
         thresholds = ast.literal_eval(slicer.app.settings().value("LungCTAnalyzer/CustomThresholds", "{}"))
         self.setThresholds(self.getParameterNode(), thresholds)
+
+        parameterNode = self.getParameterNode()
+        inputVolume = parameterNode.GetNodeReference("InputVolume")
+        if not inputVolume:
+            print("Error. Cannot get input volume node reference and unable to write thresholed to the volume directory. ")
+        else: 
+            storageNode = inputVolume.GetStorageNode()
+            inputFilename = storageNode.GetFileName()
+            head, tail = os.path.split(inputFilename)
+            file_exists = os.path.isfile(head+"/LCTAThresholdDict.txt")
+            if file_exists: 
+                with open(head+"/LCTAThresholdDict.txt", "r") as text_file:
+                    contents = text_file.read()
+                    thresholds = ast.literal_eval(contents)
+                    self.setThresholds(self.getParameterNode(), thresholds)
+                    slicer.util.delayDisplay("Local thresholds used from "+head+"/LCTAThresholdDict.txt",3000)
+            else: 
+                slicer.util.delayDisplay('Global thresholds loaded.',3000)
+
+
+
 
     def setDefaultParameters(self, parameterNode):
         """
@@ -1258,7 +1298,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     def getVol(self,segId):
         result = 0.
         try:       
-            print(segId)        
+            # print(segId)        
             result = round(float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"]))
         except: 
             # not found
@@ -2063,6 +2103,26 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         logging.info('Processing started.')
         import time
         startTime = time.time()
+        # Prevent progress dialog from automatically closing
+        progressbar = slicer.util.createProgressDialog(parent=slicer.util.mainWindow(), windowTitle='Processing...', autoClose=False)
+        progressbar.setCancelButton(None)
+
+        progress =0
+        steps = 7
+        if self.shrinkMasks:
+            steps +=1
+        if self.detailedSubsegments: 
+            steps +=1
+            
+        progressStep = 100/steps
+        
+        # Update progress value
+        progressbar.setValue(progress)
+        progress += progressStep
+        
+        # Update label text
+        progressbar.labelText = "Starting processing ..."
+        slicer.app.processEvents()
 
         # Validate inputs
 
@@ -2090,12 +2150,24 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             inputSegmentationNode.GetSegmentation().GetNthSegment(1).SetName("left lung")
             # for compatibitlity reasons - regional lung area definition needs to have these names
 
+ 
+        # Update progress value
+        progressbar.setValue(progress)
+        progress += progressStep
+        # Update label text
+        progressbar.labelText = "Creating masked volume ..."
+        slicer.app.processEvents()
 
         # create masked volume
         self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
 
-        self.shringMasks = True
         if self.shrinkMasks: 
+            # Update progress value
+            progressbar.setValue(progress)
+            progress += progressStep
+            # Update label text
+            progressbar.labelText = "Shrinking lung masks ..."
+            slicer.app.processEvents()
             # shrinking masks by 1 mm
             logging.info('Creating temporary segment editor ... ')
             self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
@@ -2124,11 +2196,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorNode = None
 
 
-
         # Compute centroids
 
         import SegmentStatistics
         self.showStatusMessage('Computing input stats and centroids ...')
+         # Update progress value
+        progressbar.setValue(progress)
+        progress += progressStep
+        # Update label text
+        progressbar.labelText = "Computing input stats and centroids ..."
+        slicer.app.processEvents()
+
         print("Computing input stats and centroids ...")    
         rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName()        
         leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName()        
@@ -2154,16 +2232,79 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
 
         # create main outout segmentation
+        # Update progress value
+        progressbar.setValue(progress)
+        progress += progressStep
+        # Update label text
+        progressbar.labelText = "Creating thresholded segments ..."
+        slicer.app.processEvents()
         self.createThresholdedSegments(self.maskLabelVolume)
 
 
-        
+        #for segmentProperty in self.segmentProperties:
+        #    for side in ['left', 'right']:
+        #        for region in ['ventral', 'dorsal','upper','middle','lower']: 
+        #                segmentName = f"{segmentProperty['name']} {side} {region}"
+        self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+        self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        self.segmentEditorNode.PaintAllowedEverywhere = True
+        self.segmentEditorNode.OverwriteAllSegments = True
+        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+        self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+        self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+
+        for side in ['right','left']:
+            # fill holes in vessel segmentations
+            # Update progress value
+            progressbar.setValue(progress)
+            progress += progressStep
+            # Update label text
+            progressbar.labelText = f'Filling holes in segment "Vessels {side}" ...'
+            slicer.app.processEvents()
+            self.showStatusMessage(f'Filling holes in segment "Vessels {side}" ...')
+            self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
+            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
+            effect.setParameter("KernelSizeMm","3")
+            effect.self().onApply()
+            
+            # grow vessels slightly to counteract perivascular 'collapse' 
+            #self.showStatusMessage(f'Growing segment "Vessels {side}" ...')
+            #self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
+            #self.segmentEditorWidget.setActiveEffectByName("Margin")
+            #effect = self.segmentEditorWidget.activeEffect()
+            #effect.setParameter("MarginSizeMm","0.3")
+            #effect.self().onApply()
+
+            # remove insignificant infiltates 
+            #self.showStatusMessage(f'Removing small islands in segment "Infiltration {side}" ...')
+            #self.segmentEditorNode.SetSelectedSegmentID(f'Infiltration {side}')
+            #self.segmentEditorWidget.setActiveEffectByName("Islands")
+            #effect = self.segmentEditorWidget.activeEffect()
+            #effect.setParameter("SmoothingMethod","REMOVE_SMALL_ISLANDS")
+            #effect.setParameter("Islands.MinimumSize","1000")
+            #effect.self().onApply()
+
+
+        # Delete temporary segment editor
+        logging.info('Deleting temporary segment editor ... ')
+        self.segmentEditorWidget = None
+        slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
+        self.segmentEditorNode = None      
         
         if self.detailedSubsegments == True: 
 
             # split lung into subregions
             self.showStatusMessage('Splitting output segments into subregions ...')
-
+            # Update progress value
+            progressbar.setValue(progress)
+            progress += progressStep
+            # Update label text
+            progressbar.labelText = "Splitting output segments into subregions ..."
+            slicer.app.processEvents()
+   
             logging.info('Creating temporary segment editor ... ')
             self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
             self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
@@ -2221,6 +2362,12 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         # Compute quantitative results
         self.showStatusMessage('Creating results table ...')
+        # Update progress value
+        progressbar.setValue(progress)
+        progress += progressStep
+        # Update label text
+        progressbar.labelText = "Creating result tables ..."
+        slicer.app.processEvents()
         self.createResultsTable()
 
         self.showStatusMessage('Calculating statistics ...')
@@ -2238,6 +2385,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                             sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(segID)
                             self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(sourceSeg.GetName(),False)
                         
+        # Update progress value
+        progressbar.value = 99
+        # Update label text
+        progressbar.labelText = "Processing complete."
+        slicer.app.processEvents()
+        time.sleep(3)
+        slicer.app.processEvents()
+        progressbar.close()
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 

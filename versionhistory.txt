@@ -70,3 +70,10 @@ V 2.41
 - right and left lung masks are set visible as they should before "Segment statistics" for centroids
 - setDefaultThresholds() function implemented for use via scripts
 - ability to include or exclude emphysematic bullae from "affected" calculation in the extended results table  
+
+V 2.42
+
+- lung vessels are now solidified, reducing collapse error
+- thresholds are now saved globally and locally (in the directory of the CT volume). "Load thresholds" prefers to load the local threshold dict, if not found, loads global dict
+- we now have a progress bar.
+- there is an option to shrink lung masks by 1 mm if Lung CT Analyzer ist used via script 
