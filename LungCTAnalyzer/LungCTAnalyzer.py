@@ -2094,6 +2094,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
 
+    def showProgress(self,progressText):
+            # Update progress value
+            self.progressbar.setValue(self.progress)
+            self.progress += self.progressStep
+            # Update label text
+            self.progressbar.labelText = progressText
+            slicer.app.processEvents()
+            self.showStatusMessage(progressText)
 
     def process(self):
         """
@@ -2104,25 +2112,18 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         import time
         startTime = time.time()
         # Prevent progress dialog from automatically closing
-        progressbar = slicer.util.createProgressDialog(parent=slicer.util.mainWindow(), windowTitle='Processing...', autoClose=False)
-        progressbar.setCancelButton(None)
+        self.progressbar = slicer.util.createProgressDialog(parent=slicer.util.mainWindow(), windowTitle='Processing...', autoClose=False)
+        self.progressbar.setCancelButton(None)
 
-        progress =0
+        self.progress =0
         steps = 7
         if self.shrinkMasks:
             steps +=1
         if self.detailedSubsegments: 
             steps +=1
             
-        progressStep = 100/steps
-        
-        # Update progress value
-        progressbar.setValue(progress)
-        progress += progressStep
-        
-        # Update label text
-        progressbar.labelText = "Starting processing ..."
-        slicer.app.processEvents()
+        self.progressStep = 100/steps
+        self.showProgress("Starting processing ...")
 
         # Validate inputs
 
@@ -2151,23 +2152,13 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             # for compatibitlity reasons - regional lung area definition needs to have these names
 
  
-        # Update progress value
-        progressbar.setValue(progress)
-        progress += progressStep
-        # Update label text
-        progressbar.labelText = "Creating masked volume ..."
-        slicer.app.processEvents()
+        self.showProgress("Creating masked volume ...")
 
         # create masked volume
         self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
 
         if self.shrinkMasks: 
-            # Update progress value
-            progressbar.setValue(progress)
-            progress += progressStep
-            # Update label text
-            progressbar.labelText = "Shrinking lung masks ..."
-            slicer.app.processEvents()
+            self.showProgress("Shrinking lung masks ...")
             # shrinking masks by 1 mm
             logging.info('Creating temporary segment editor ... ')
             self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
@@ -2199,14 +2190,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         # Compute centroids
 
         import SegmentStatistics
-        self.showStatusMessage('Computing input stats and centroids ...')
-         # Update progress value
-        progressbar.setValue(progress)
-        progress += progressStep
-        # Update label text
-        progressbar.labelText = "Computing input stats and centroids ..."
-        slicer.app.processEvents()
-
+        self.showProgress("Computing input stats and centroids ...")
         print("Computing input stats and centroids ...")    
         rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName()        
         leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName()        
@@ -2233,11 +2217,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         # create main outout segmentation
         # Update progress value
-        progressbar.setValue(progress)
-        progress += progressStep
-        # Update label text
-        progressbar.labelText = "Creating thresholded segments ..."
-        slicer.app.processEvents()
+        self.showProgress("Creating thresholded segments ...")
         self.createThresholdedSegments(self.maskLabelVolume)
 
 
@@ -2256,13 +2236,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         for side in ['right','left']:
             # fill holes in vessel segmentations
-            # Update progress value
-            progressbar.setValue(progress)
-            progress += progressStep
-            # Update label text
-            progressbar.labelText = f'Filling holes in segment "Vessels {side}" ...'
-            slicer.app.processEvents()
-            self.showStatusMessage(f'Filling holes in segment "Vessels {side}" ...')
+            self.showProgress(f'Filling holes in segment "Vessels {side}" ...')
             self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
             self.segmentEditorWidget.setActiveEffectByName("Smoothing")
             effect = self.segmentEditorWidget.activeEffect()
@@ -2297,13 +2271,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         if self.detailedSubsegments == True: 
 
             # split lung into subregions
-            self.showStatusMessage('Splitting output segments into subregions ...')
-            # Update progress value
-            progressbar.setValue(progress)
-            progress += progressStep
-            # Update label text
-            progressbar.labelText = "Splitting output segments into subregions ..."
-            slicer.app.processEvents()
+            self.segmentEditorNode.SetSelectedSegmentID("Splitting output segments into subregions ...")
    
             logging.info('Creating temporary segment editor ... ')
             self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
@@ -2361,13 +2329,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         
 
         # Compute quantitative results
-        self.showStatusMessage('Creating results table ...')
-        # Update progress value
-        progressbar.setValue(progress)
-        progress += progressStep
-        # Update label text
-        progressbar.labelText = "Creating result tables ..."
-        slicer.app.processEvents()
+        self.showProgress("Creating result tables ...")
         self.createResultsTable()
 
         self.showStatusMessage('Calculating statistics ...')
@@ -2386,13 +2348,11 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                             self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(sourceSeg.GetName(),False)
                         
         # Update progress value
-        progressbar.value = 99
-        # Update label text
-        progressbar.labelText = "Processing complete."
-        slicer.app.processEvents()
+        self.progress = 99
+        self.showProgress("Processing complete.")
         time.sleep(3)
         slicer.app.processEvents()
-        progressbar.close()
+        self.progressbar.close()
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
