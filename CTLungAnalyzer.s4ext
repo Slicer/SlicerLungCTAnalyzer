@@ -6,7 +6,7 @@
 
 # This is source code manager (i.e. svn)
 scm git
-scmurl git://github.com/rbumm/SlicerCTLungAnalyzer
+scmurl https://github.com/rbumm/SlicerLungCTAnalyzer
 scmrevision master
 
 # list dependencies
@@ -15,30 +15,30 @@ scmrevision master
 depends NA
 
 # Inner build directory (default is ".")
-build_subdirectory inner-build
+build_subdirectory .
 
 # homepage
-homepage https://github.com/rbumm/SlicerCTLungAnalyzer
+homepage https://github.com/rbumm/SlicerLungCTAnalyzer#lung-ct-analyzer
 
 # Firstname1 Lastname1 ([SubOrg1, ]Org1), Firstname2 Lastname2 ([SubOrg2, ]Org2)
 # For example: Jane Roe (Superware), John Doe (Lab1, Nowhere), Joe Bloggs (Noware)
-contributors Rudolf Bumm (KSGR)
+contributors Rudolf Bumm (KSGR Chur Switzerland)
 
 # Match category in the xml description of the module (where it shows up in Modules menu)
-category Lung
+category Chest Imaging Platform
 
 # url to icon (png, size 128x128 pixels)
-iconurl https://github.com/rbumm/SlicerCTLungAnalyzer/blob/main/CTLungAnalyzer/Resources/Icons/CTLungAnalyzer.png
+iconurl https://raw.githubusercontent.com/rbumm/SlicerLungCTAnalyzer/master/LungCTAnalyzer.png
 
 # Give people an idea what to expect from this code
 #  - Is it just a test or something you stand behind?
-Under development, but usable
+status 
 
 # One line stating what the module does
-description This extension performs segmentation and 2D / 3D display of a chest CT into non-ventilated, ventilated, infiltrated and collapsed lung tissue as well as vessels. 
+description Extension for segmentation and analysis of lung CTs. Analysis consists of producing five different segmentations of lungs based on Hounsfield unit range: Bulla / emphysema, ventilated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ - for an instant estimation of the severity of  infestation.  
 
 # Space separated list of urls
-screenshoturls https://user-images.githubusercontent.com/18140094/98554410-f5ddd600-22a0-11eb-9196-b9223c8ada3f.jpg
+screenshoturls https://user-images.githubusercontent.com/18140094/98554410-f5ddd600-22a0-11eb-9196-b9223c8ada3f.jpg https://user-images.githubusercontent.com/18140094/98554914-9207dd00-22a1-11eb-9bae-7f537a765cc3.jpg https://user-images.githubusercontent.com/18140094/98555178-e6ab5800-22a1-11eb-8cbf-7dfa3e346b43.jpg
 
 # 0 or 1: Define if the extension should be enabled after its installation.
 enabled 1
