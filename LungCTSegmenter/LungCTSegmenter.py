@@ -536,17 +536,20 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.rightLungFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "R")
             self.rightLungFiducials.CreateDefaultDisplayNodes()
             self.rightLungFiducials.GetDisplayNode().SetSelectedColor(self.brighterColor(self.rightLungColor))
+            self.rightLungFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
         if not self.leftLungFiducials:
             self.leftLungFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "L")
             self.leftLungFiducials.CreateDefaultDisplayNodes()
             self.leftLungFiducials.GetDisplayNode().SetSelectedColor(self.brighterColor(self.leftLungColor))
+            self.leftLungFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
         if not self.tracheaFiducials:
             self.tracheaFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "T")
             self.tracheaFiducials.CreateDefaultDisplayNodes()
             self.tracheaFiducials.GetDisplayNode().SetSelectedColor(self.brighterColor(self.tracheaColor))
+            self.tracheaFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
+
         if not self.resampledVolume:
             self.resampledVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Resampled Volume")
-
 
         # Get window / level of inputVolume 
         displayNode = self.inputVolume.GetDisplayNode()
