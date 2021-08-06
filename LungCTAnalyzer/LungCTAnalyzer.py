@@ -911,12 +911,16 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         givenName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientGivenName")
         birthDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientBirthDate")
         examDate = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.examDate")
-
+        if not self.logic.inputVolume: 
+            inputVolumeNodeName = "CT"
+        else:
+            inputVolumeNodeName = self.logic.inputVolume.GetName()
+        
         if familyName and givenName and birthDate and examDate:
             reportPathWithoutExtension = f"{self.reportFolder}/{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}"
             descriptorString = f"{familyName}-{givenName}-{birthDate}-{examDate}-{timestampString}"
         else:  
-            reportPathWithoutExtension = f"{self.reportFolder}/LungCT-Report-{timestampString}"
+            reportPathWithoutExtension = f"{self.reportFolder}/{inputVolumeNodeName}-{timestampString}-LungCTReport"
             descriptorString = f"{timestampString}"
         self.logic.saveDataToFile(reportPathWithoutExtension,descriptorString,"","")
         print("Done.")
