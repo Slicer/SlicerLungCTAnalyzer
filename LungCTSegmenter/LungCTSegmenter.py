@@ -524,7 +524,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationStarted = True
         self.segmentationFinished = False
         
-        print("Start ." + str(self.detailedAirways) + ".")
+        print("Start.")
         import time
         startTime = time.time()
 
@@ -1029,7 +1029,7 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         # Get/create input data
 
         import SampleData
-        registerSampleData()
+        #registerSampleData()
         inputVolume = SampleData.downloadSample('CTChest')
         self.delayDisplay('Loaded test data set')
 
@@ -1044,41 +1044,73 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
                 #break        
         # Create new markers
         markupsRightLungNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsRightLungNode.SetName("_markerRightLung")
+        markupsRightLungNode.SetName("R")
         markupsLeftLungNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsLeftLungNode.SetName("_markerLeftLung")
+        markupsLeftLungNode.SetName("L")
         markupsTracheaNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsTracheaNode.SetName("_markerUpperTrachea")
-        markupsBifurcationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
-        markupsBifurcationNode.SetName("_markerBifurcation")
+        markupsTracheaNode.SetName("T")
 
-        # add one fiducial each
+        # add six fiducials each right and left
         markupsRightLungNode.CreateDefaultDisplayNodes()
-        markupsRightLungNode.AddFiducial(64.,43.,-170.)
+        markupsRightLungNode.AddFiducial(50.,48.,-173.)
+        markupsRightLungNode.AddFiducial(96.,-2.,-173.)
+        markupsRightLungNode.AddFiducial(92.,-47.,-173.)
+        markupsRightLungNode.AddFiducial(47.,-22.,-52.)
+        markupsRightLungNode.AddFiducial(86.,-22.,-128.)
+        markupsRightLungNode.AddFiducial(104.,-22.,-189.)
+        
         markupsLeftLungNode.CreateDefaultDisplayNodes()
-        markupsLeftLungNode.AddFiducial(-95.,25.,-170.)
+        markupsLeftLungNode.AddFiducial(-100.,29.,-173.)
+        markupsLeftLungNode.AddFiducial(-111.,-37.,-173.)
+        markupsLeftLungNode.AddFiducial(-76.,-85.,-173.)
+        markupsLeftLungNode.AddFiducial(-77.,22.,-55.)
+        markupsLeftLungNode.AddFiducial(-100.,-22.,-123.)
+        markupsLeftLungNode.AddFiducial(-119.,-22.,-127.)
+
+        # add one fiducial 
         markupsTracheaNode.CreateDefaultDisplayNodes()
-        markupsTracheaNode.AddFiducial(-8.7,15.7,-12.8)
-        markupsBifurcationNode.CreateDefaultDisplayNodes()
-        markupsBifurcationNode.AddFiducial(-12.4,-24.3,-117.8)
+        markupsTracheaNode.AddFiducial(-4.,-14.,-90.)
 
         # Test the module logic
 
         logic = LungCTSegmenterLogic()
 
-        # Test algorithm without 3D
+        # Test algorithm 
         self.delayDisplay("Processing, please wait ...")
 
-        logic.process(inputVolume, -1000.,-200.,False)
+        logic.removeTemporaryObjects()
+        logic.rightLungFiducials = markupsRightLungNode
+        logic.leftLungFiducials = markupsLeftLungNode
+        logic.tracheaFiducials = markupsTracheaNode
+        
+        logic.startSegmentation()
+        logic.updateSegmentation()
+        logic.applySegmentation()
+        
+        #logic.process(inputVolume, -1000.,-200.,False)
+        resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
-        resultsTableNode = slicer.util.getNode('_maskResultsTable')
-        _volumeRightLungMask = round(float(resultsTableNode.GetCellText(0,1)))
-        _volumeLeftLungMask = round(float(resultsTableNode.GetCellText(1,1)))
+        # Compute stats
+        import SegmentStatistics
+        
+        segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+       
+        segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
+        segStatLogic.getParameterNode().SetParameter("ScalarVolume", logic.inputVolume.GetID())
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+        segStatLogic.computeStatistics()
+        segStatLogic.exportToTable(resultsTableNode)
+
+        #resultsTableNode = slicer.util.getNode('_maskResultsTable')
+        _volumeRightLungMask = round(float(resultsTableNode.GetCellText(0,3)))
+        _volumeLeftLungMask = round(float(resultsTableNode.GetCellText(1,3)))
         print(_volumeRightLungMask)
         print(_volumeLeftLungMask)
         # assert vs known volumes of the chest CT dataset
-        self.assertEqual(_volumeRightLungMask, 3272) 
-        self.assertEqual(_volumeLeftLungMask, 3184)
+        self.assertEqual(_volumeRightLungMask, 3322) 
+        self.assertEqual(_volumeLeftLungMask, 3227)
 
 
         self.delayDisplay('Test passed')
