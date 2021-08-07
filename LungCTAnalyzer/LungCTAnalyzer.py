@@ -2544,8 +2544,8 @@ class LungCTAnalyzerTest(ScriptedLoadableModuleTest):
         logic = LungCTAnalyzerLogic()
         logic.inputVolume = inputVolume
         logic.inputSegmentation = lungMaskSegmentation
-        logic.rightLungMaskSegmentID = lungMaskSegmentation.GetSegmentation().GetSegmentIdBySegmentName("Right Lung Mask")
-        logic.leftLungMaskSegmentID = lungMaskSegmentation.GetSegmentation().GetSegmentIdBySegmentName("Left Lung Mask")
+        logic.rightLungMaskSegmentID = lungMaskSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+        logic.leftLungMaskSegmentID = lungMaskSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung")
 
         self.delayDisplay('Processing starts.')
         logic.process() # 3D
