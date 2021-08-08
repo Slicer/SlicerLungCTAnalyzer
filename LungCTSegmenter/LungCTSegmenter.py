@@ -53,6 +53,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createDetailedAirways = False
       self.shrinkMasks = False
       self.detailedMasks = False
+      self.isSufficientNumberOfPointsPlaced = False
+
 
   def setup(self):
       """
@@ -245,38 +247,45 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           else:
               self.setInstructions('Click "Start" to initiate point placement.')
       else:
+          
+          slicer.app.processEvents()
+          rightLungF = self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints()
+          leftLungF = self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints()
+          tracheaF = self.logic.tracheaFiducials.GetNumberOfDefinedControlPoints()
+          #print(" R " + str(rightLungF) + " L " + str(leftLungF) + " T " + str(tracheaF))
+          
           # Segmentation is in progress
           self.ui.adjustPointsGroupBox.enabled = True
-          if self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints() < 3:
-              self.setInstructionPlaceMorePoints("right lung", 0, 3, self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints())
+          if  rightLungF < 3:
+              self.setInstructionPlaceMorePoints("right lung", 0, 3, rightLungF)
               self.ui.rightLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
-          elif self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints() < 3:
-              self.setInstructionPlaceMorePoints("left lung", 0, 3, self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints())
+          elif leftLungF < 3:
+              self.setInstructionPlaceMorePoints("left lung", 0, 3, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
-          elif self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints() < 6:
-              self.setInstructionPlaceMorePoints("right lung", 3, 6, self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints())
+          elif rightLungF < 6:
+              self.setInstructionPlaceMorePoints("right lung", 3, 6, rightLungF)
               self.ui.rightLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
-          elif self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints() < 6:
-              self.setInstructionPlaceMorePoints("left lung", 3, 6, self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints())
+          elif leftLungF < 6:
+              self.setInstructionPlaceMorePoints("left lung", 3, 6, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
-          elif self.logic.tracheaFiducials.GetNumberOfDefinedControlPoints() < 1:
-              self.setInstructionPlaceMorePoints("trachea", 0, 1, self.logic.tracheaFiducials.GetNumberOfDefinedControlPoints())
+          elif tracheaF < 1:
+              self.setInstructionPlaceMorePoints("trachea", 0, 1, tracheaF)
               self.ui.tracheaPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
           else:
               self.setInstructions('Verify that segmentation is complete. Click "Apply" to finalize.')
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
-              isSufficientNumberOfPointsPlaced = True
+              self.isSufficientNumberOfPointsPlaced = True
 
       self.ui.startButton.enabled = not self.logic.segmentationStarted
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
-      self.ui.applyButton.enabled = isSufficientNumberOfPointsPlaced
+      self.ui.applyButton.enabled = self.isSufficientNumberOfPointsPlaced
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
@@ -306,8 +315,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # region growing, which would take time)
       slicer.modules.markups.logic().SetAllMarkupsLocked(caller, True)
 
-      self.logic.updateSegmentation()
       self.updateGUIFromParameterNode()
+      if self.isSufficientNumberOfPointsPlaced: 
+          self.logic.updateSegmentation()
 
   def updateParameterNodeFromGUI(self, caller=None, event=None):
       """
@@ -350,6 +360,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
           self.setInstructions("Initializing segmentation...")
+          self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.startSegmentation()
@@ -389,6 +400,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Stop segmentation without applying it.
       """
       try:
+          self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
           self.updateGUIFromParameterNode()
       except Exception as e:
