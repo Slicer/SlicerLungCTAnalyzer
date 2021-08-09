@@ -979,6 +979,22 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if self.detailedMasks: 
             self.createDetailedMasks()
 
+        # to create labelmap compatibility with Chest Imaging Platform
+        
+        segmentToLabelValueMapping = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode", "CIP colors")
+        segmentToLabelValueMapping.SetTypeToUser()
+        segmentToLabelValueMapping.HideFromEditorsOff()
+        segmentToLabelValueMapping.SetNumberOfColors(69)
+        segmentToLabelValueMapping.SetColor( 0, "background", 0.0, 0.0, 0.0, 0.0)
+        segmentToLabelValueMapping.SetColor( 1, "whole lung", 0.42, 0.38, 0.75, 1.0)
+        segmentToLabelValueMapping.SetColor( 2, "right lung", 0.26, 0.64, 0.10, 1.0)
+        segmentToLabelValueMapping.SetColor( 3, "left lung",  0.80, 0.11, 0.36, 1.0)
+        segmentToLabelValueMapping.SetColor(58, "trachea",    0.49, 0.49, 0.79, 1.0)
+        segmentToLabelValueMapping.NamesInitialisedOn()
+        self.outputSegmentation.SetLabelmapConversionColorTableNodeID("CIP colors")
+
+        # end for for compatibility with CIP 
+
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
                         
