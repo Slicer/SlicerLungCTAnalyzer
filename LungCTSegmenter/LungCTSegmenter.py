@@ -956,10 +956,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorWidget.setActiveEffectByName("Smoothing")
                 effect = self.segmentEditorWidget.activeEffect()
                 effect.setParameter("SmoothingMethod","GAUSSIAN")
-                if slicer.app.majorVersion<=4 and slicer.app.minorVersion <=11: 
-                    effect.setParameter("GaussianStandardDeviationMm","4")
-                else: 
-                    effect.setParameter("GaussianStandardDeviationMm","2")
+                effect.setParameter("GaussianStandardDeviationMm","2")
                 effect.self().onApply()
         
         if self.shrinkMasks: 
