@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>445</width>
+    <width>452</width>
     <height>605</height>
    </rect>
   </property>
@@ -113,10 +113,10 @@
       <item row="1" column="0">
        <widget class="QCheckBox" name="detailedAirwaysCheckBox">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
-         <string>Produce detailed airways</string>
+         <string>Detailed airways</string>
         </property>
        </widget>
       </item>
