@@ -460,9 +460,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         logging.info("Error. Cannot get input volume node reference, unable to write to its volume directory. ")
     else: 
         storageNode = self.logic.inputVolume.GetStorageNode()
-        inputFilename = storageNode.GetFileName()
-        head, tail = os.path.split(inputFilename)
-        directory = head + "/LungCTSegmenter/"
+        if storageNode:
+            inputFilename = storageNode.GetFileName()
+            baseFolder, tail = os.path.split(inputFilename)
+        else:
+            baseFolder = slicer.app.defaultScenePath
+        directory = baseFolder + "/LungCTSegmenter/"
         if not os.path.exists(directory):
             os.makedirs(directory)
         self.saveFiducials(directory)
@@ -1103,17 +1106,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.createDetailedMasks()
 
         # to create labelmap compatibility with Chest Imaging Platform
-        segmentToLabelValueMapping = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode", "CIP colors")
-        segmentToLabelValueMapping.SetTypeToUser()
-        segmentToLabelValueMapping.HideFromEditorsOff()
-        segmentToLabelValueMapping.SetNumberOfColors(69)
-        segmentToLabelValueMapping.SetColor( 0, "background", 0.0, 0.0, 0.0, 0.0)
-        segmentToLabelValueMapping.SetColor( 1, "whole lung", 0.42, 0.38, 0.75, 1.0)
-        segmentToLabelValueMapping.SetColor( 2, "right lung", 0.26, 0.64, 0.10, 1.0)
-        segmentToLabelValueMapping.SetColor( 3, "left lung",  0.80, 0.11, 0.36, 1.0)
-        segmentToLabelValueMapping.SetColor(58, "trachea",    0.49, 0.49, 0.79, 1.0)
-        segmentToLabelValueMapping.NamesInitialisedOn()
-        self.outputSegmentation.SetLabelmapConversionColorTableNodeID("CIP colors")
+        segmentToLabelValueMapping = slicer.util.getFirstNodeByClassByName("vtkMRMLColorTableNode", "CIP colors")
+        if not segmentToLabelValueMapping:
+            segmentToLabelValueMapping = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode", "CIP colors")
+            segmentToLabelValueMapping.SetTypeToUser()
+            segmentToLabelValueMapping.HideFromEditorsOff()
+            segmentToLabelValueMapping.SetNumberOfColors(69)
+            segmentToLabelValueMapping.SetColor( 0, "background", 0.0, 0.0, 0.0, 0.0)
+            segmentToLabelValueMapping.SetColor( 1, "whole lung", 0.42, 0.38, 0.75, 1.0)
+            segmentToLabelValueMapping.SetColor( 2, "right lung", 0.26, 0.64, 0.10, 1.0)
+            segmentToLabelValueMapping.SetColor( 3, "left lung",  0.80, 0.11, 0.36, 1.0)
+            segmentToLabelValueMapping.SetColor(58, "trachea",    0.49, 0.49, 0.79, 1.0)
+            segmentToLabelValueMapping.NamesInitialisedOn()
+        self.outputSegmentation.SetLabelmapConversionColorTableNodeID(segmentToLabelValueMapping.GetID())
         #labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
         #slicer.modules.segmentations.logic().ExportVisibleSegmentsToLabelmapNode(self.outputSegmentation, labelmapVolumeNode, self.inputVolume)
         # end for for compatibility with CIP 
