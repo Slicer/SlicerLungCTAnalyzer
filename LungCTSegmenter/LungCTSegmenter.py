@@ -121,7 +121,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def installKeyboardShortcuts(self):
     self.shortcutLoadFiducials = qt.QShortcut(slicer.util.mainWindow())
     self.shortcutLoadFiducials.setKey(qt.QKeySequence("l"))
-    self.shortcutLoadFiducials.connect( 'activated()', self.loadFiducials)
+    self.shortcutLoadFiducials.connect( 'activated()', self.loadFiducialsLocalOrGlobal)
 
   def removeKeyboardShortcuts(self):
     self.shortcutLoadFiducials.activated.disconnect()
@@ -394,7 +394,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
-          self.saveFiducials()
+          self.saveFiducialsGlobalAndLocal()
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
           self.logic.detailedMasks = self.detailedMasks
@@ -424,34 +424,54 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onUpdateIntensityButton(self):
       self.updateParameterNodeFromGUI()
       self.logic.updateSegmentation()
+
+  def saveFiducials(self, directory):
+    try:
+        markupsNode = slicer.mrmlScene.GetFirstNodeByName('R')
+        temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
+        temporaryStorageNode.SetFileName(directory+"R.fcsv")
+        temporaryStorageNode.WriteData(markupsNode)
+        slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
+        markupsNode = slicer.mrmlScene.GetFirstNodeByName('L')
+        temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
+        temporaryStorageNode.SetFileName(directory+"L.fcsv")
+        temporaryStorageNode.WriteData(markupsNode)
+        slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
+        markupsNode = slicer.mrmlScene.GetFirstNodeByName('T')
+        temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
+        temporaryStorageNode.SetFileName(directory+"T.fcsv")
+        temporaryStorageNode.WriteData(markupsNode)
+        slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
+    except Exception as e:
+        slicer.util.errorDisplay("Failed to save markups: "+str(e))
+        import traceback
+        traceback.print_exc()
       
-  def saveFiducials(self):
-    print("Save fiducials ...")
+  def saveFiducialsGlobalAndLocal(self):
+    logging.info("Saving fiducials in root directory ...")
     import os
     directory = slicer.mrmlScene.GetRootDirectory() + "/LungCTSegmenter/"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    markupsNode = slicer.mrmlScene.GetFirstNodeByName('R')
-    temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
-    temporaryStorageNode.SetFileName(directory+"R.fcsv")
-    temporaryStorageNode.WriteData(markupsNode)
-    slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
-    markupsNode = slicer.mrmlScene.GetFirstNodeByName('L')
-    temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
-    temporaryStorageNode.SetFileName(directory+"L.fcsv")
-    temporaryStorageNode.WriteData(markupsNode)
-    slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
-    markupsNode = slicer.mrmlScene.GetFirstNodeByName('T')
-    temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
-    temporaryStorageNode.SetFileName(directory+"T.fcsv")
-    temporaryStorageNode.WriteData(markupsNode)
-    slicer.mrmlScene.RemoveNode(temporaryStorageNode)  
+    self.saveFiducials(directory)
+    
+    logging.info("Saving fiducials in volume directory ...")
+    if not self.logic.inputVolume:
+        logging.info("Error. Cannot get input volume node reference, unable to write to its volume directory. ")
+    else: 
+        storageNode = self.logic.inputVolume.GetStorageNode()
+        inputFilename = storageNode.GetFileName()
+        head, tail = os.path.split(inputFilename)
+        directory = head + "/LungCTSegmenter/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        self.saveFiducials(directory)
 
-  def loadFiducials(self):
-    import os.path
-    print("Load fiducials ...")
+  def loadFiducials(self,directory):
+
+    RLoadSuccess = LLoadSuccess = TLoadSuccess = False 
     temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
-    file_path = slicer.mrmlScene.GetRootDirectory()+"/LungCTSegmenter/R.fcsv"
+    file_path = directory +"/R.fcsv"
     if os.path.exists(file_path): 
         if not self.logic.rightLungFiducials:
             self.logic.rightLungFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "R")
@@ -460,7 +480,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.rightLungFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
             temporaryStorageNode.SetFileName(file_path)
             temporaryStorageNode.ReadData(self.logic.rightLungFiducials)
-    file_path = slicer.mrmlScene.GetRootDirectory()+"/LungCTSegmenter/L.fcsv"
+            RLoadSuccess = True
+    file_path = directory +"/L.fcsv"
     if os.path.exists(file_path): 
         if not self.logic.leftLungFiducials:
             self.logic.leftLungFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "L")
@@ -469,7 +490,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.leftLungFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
             temporaryStorageNode.SetFileName(file_path)
             temporaryStorageNode.ReadData(self.logic.leftLungFiducials)
-    file_path = slicer.mrmlScene.GetRootDirectory()+"/LungCTSegmenter/T.fcsv"
+            LLoadSuccess = True
+    file_path = directory +"/T.fcsv"
     if os.path.exists(file_path): 
         if not self.logic.tracheaFiducials:
             self.logic.tracheaFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "T")
@@ -478,9 +500,43 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.tracheaFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
             temporaryStorageNode.SetFileName(file_path)
             temporaryStorageNode.ReadData(self.logic.tracheaFiducials)
+            TLoadSuccess = True
     slicer.mrmlScene.RemoveNode(temporaryStorageNode)
-    # start segmentation process and allow user to move or add additional markups
-    self.onStartButton()
+    
+    if RLoadSuccess and LLoadSuccess and TLoadSuccess:
+        return True
+    else:
+        return False 
+
+
+  def loadFiducialsLocalOrGlobal(self):
+    import os.path
+
+    fiducialsLoadSuccess = False
+    # prefer local markups if available 
+    logging.info("Loading fiducials from volume directory ...")
+    if not self.logic.inputVolume:
+        logging.info("No input volume.")
+    else: 
+        storageNode = self.logic.inputVolume.GetStorageNode()
+        inputFilename = storageNode.GetFileName()
+        head, tail = os.path.split(inputFilename)
+        directory = head + "/LungCTSegmenter/"
+        if not os.path.exists(directory):
+            print("No fiducials in volume directory.")
+        else: 
+            fiducialsLoadSuccess= self.loadFiducials(directory)
+
+    # if not local markups available load last global  
+    if not fiducialsLoadSuccess: 
+        logging.info("Loading fiducials from root directory ...")
+        directory = slicer.mrmlScene.GetRootDirectory()+"/LungCTSegmenter/"
+        if os.path.exists(directory): 
+            fiducialsLoadSuccess = self.loadFiducials(directory)
+
+    if fiducialsLoadSuccess: 
+        # start segmentation process and allow user to move or add additional markups
+        self.onStartButton()
 
 #
 # LungCTSegmenterLogic
@@ -1057,7 +1113,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         segmentToLabelValueMapping.SetColor( 3, "left lung",  0.80, 0.11, 0.36, 1.0)
         segmentToLabelValueMapping.SetColor(58, "trachea",    0.49, 0.49, 0.79, 1.0)
         segmentToLabelValueMapping.NamesInitialisedOn()
-        self.outputSegmentation.SetLabelmapConversionColorTableNodeID("CIP colors")        
+        self.outputSegmentation.SetLabelmapConversionColorTableNodeID("CIP colors")
+        #labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+        #slicer.modules.segmentations.logic().ExportVisibleSegmentsToLabelmapNode(self.outputSegmentation, labelmapVolumeNode, self.inputVolume)
         # end for for compatibility with CIP 
 
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
