@@ -1118,10 +1118,20 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segmentToLabelValueMapping.SetColor( 3, "left lung",  0.80, 0.11, 0.36, 1.0)
             segmentToLabelValueMapping.SetColor(58, "trachea",    0.49, 0.49, 0.79, 1.0)
             segmentToLabelValueMapping.NamesInitialisedOn()
-        self.outputSegmentation.SetLabelmapConversionColorTableNodeID(segmentToLabelValueMapping.GetID())
-        #labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-        #slicer.modules.segmentations.logic().ExportVisibleSegmentsToLabelmapNode(self.outputSegmentation, labelmapVolumeNode, self.inputVolume)
-        # end for for compatibility with CIP 
+        
+        labelmapVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLLabelMapVolumeNode","LungCTSegmentationLabelMap")
+        if not labelmapVolumeNode:
+            labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode","LungCTSegmentationLabelMap")
+
+        segmentIdList = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
+        # Segment ids must be converted into a vtkStringArray to be used in ExportSegmentsToLabelmapNode
+        segmentIds = vtk.vtkStringArray()
+        for segmentId in segmentIdList:
+          segmentIds.InsertNextValue(segmentId)
+        
+        slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode(self.outputSegmentation, segmentIds, labelmapVolumeNode, \
+            self.inputVolume, slicer.vtkSegmentation.EXTENT_REFERENCE_GEOMETRY, segmentToLabelValueMapping)
+        # end for compatibility with CIP 
 
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
