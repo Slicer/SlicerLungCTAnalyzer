@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>452</width>
-    <height>605</height>
+    <width>544</width>
+    <height>661</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -260,6 +260,9 @@
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
+     <property name="toolTip">
+      <string>Set intensity ranges to default values.</string>
+     </property>
      <property name="text">
       <string>Advanced</string>
      </property>
@@ -293,13 +296,20 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QPushButton" name="updateIntensityButton">
         <property name="toolTip">
          <string>Update current segmentation preview after lung intensity range changes</string>
         </property>
         <property name="text">
          <string>Update </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="setDefaultButton">
+        <property name="text">
+         <string>Set default</string>
         </property>
        </widget>
       </item>

@@ -106,14 +106,29 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
       self.ui.cancelButton.connect('clicked(bool)', self.onCancelButton)
       self.ui.updateIntensityButton.connect('clicked(bool)', self.onUpdateIntensityButton)
+      self.ui.setDefaultButton.connect('clicked(bool)', self.onSetDefaultButton)
       
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
+      
+      import configparser
+
+      parser = configparser.SafeConfigParser()
+      parser.read('LCTA.INI')
+      if parser.has_option('LungThreshholdRange', 'minimumValue'): 
+          self.ui.ThresholdRangeWidget.minimumValue = int(float(parser.get('LungThreshholdRange','minimumValue')))
+      else: 
+          self.ui.ThresholdRangeWidget.minimumValue = -1000
+
+      if parser.has_option('LungThreshholdRange', 'maximumValue'): 
+          self.ui.ThresholdRangeWidget.maximumValue = int(float(parser.get('LungThreshholdRange','maximumValue')))
+      else: 
+          self.ui.ThresholdRangeWidget.maximumValue = -200
 
       # Make sure parameter node is initialized (needed for module reload)
       self.initializeParameterNode()
 
       # Initial GUI update
-      self.updateGUIFromParameterNode
+      self.updateGUIFromParameterNode()
       
       # Install keyboard shortcuts
       self.installKeyboardShortcuts()
@@ -126,10 +141,33 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def removeKeyboardShortcuts(self):
     self.shortcutLoadFiducials.activated.disconnect()
 
+  def writeConfigParser(self):
+      import configparser
+      parser = configparser.SafeConfigParser()
+      parser.read('LCTA.INI')
+
+      if parser.has_option('LungThreshholdRange', 'minimumValue'):
+          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.ThresholdRangeWidget.minimumValue))
+      else: 
+          if not parser.has_section('LungThreshholdRange'): 
+            parser.add_section('LungThreshholdRange')
+          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.ThresholdRangeWidget.minimumValue))
+
+      if parser.has_option('LungThreshholdRange', 'maximumValue'):
+          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.ThresholdRangeWidget.maximumValue))
+      else: 
+          if not parser.has_section('LungThreshholdRange'): 
+            parser.add_section('LungThreshholdRange')
+          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.ThresholdRangeWidget.maximumValue))
+
+      with open('LCTA.INI', 'w') as configfile:    # save
+          parser.write(configfile)
+
   def cleanup(self):
       """
       Called when the application closes and the module widget is destroyed.
       """
+      self.writeConfigParser()
       self.removeFiducialObservers()
       self.removeObservers()
       self.removeKeyboardShortcuts()
@@ -167,7 +205,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._tracheaFiducials = None
 
 
+  def onSetDefaultButton(self):
+      self.ui.ThresholdRangeWidget.minimumValue = -1000
+      self.ui.ThresholdRangeWidget.maximumValue = -200
+      self.writeConfigParser()
+      self.updateParameterNodeFromGUI()
+
   def onThresholdRangeWidgetChanged(self):
+ 
+      self.writeConfigParser()
       self.updateParameterNodeFromGUI()
       
   def onSceneEndClose(self, caller, event):
