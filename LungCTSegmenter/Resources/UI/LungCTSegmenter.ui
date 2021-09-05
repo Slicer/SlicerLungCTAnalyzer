@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>544</width>
-    <height>661</height>
+    <height>696</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -309,7 +309,7 @@
       <item row="1" column="0">
        <widget class="QPushButton" name="setDefaultButton">
         <property name="text">
-         <string>Set default</string>
+         <string>Reset to default</string>
         </property>
        </widget>
       </item>
