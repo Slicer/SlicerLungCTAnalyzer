@@ -27,7 +27,7 @@ as well as a spacial representation of the diseased lung regions. Furthermore, w
 for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.
 """
         self.parent.acknowledgementText = """
-This file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Parts of this code were inspired by a code snippet (https://gist.github.com/lassoan/5ad51c89521d3cd9c5faf65767506b37) of Andras Lasso, PerkLab.
+The first version of this file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Parts of this code were inspired by a code snippet (https://gist.github.com/lassoan/5ad51c89521d3cd9c5faf65767506b37) of Andras Lasso, PerkLab.
 """
 
         # Additional initialization step after application startup is complete
@@ -2328,9 +2328,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
           if teststr == "C":
             #logging.info('Found:' + ctn.GetName())
             slicer.mrmlScene.RemoveNode(ctn)
-                #break        
-        
-        
+                #break               
 
         # Compute quantitative results
         self.showProgress("Creating result tables ...")
