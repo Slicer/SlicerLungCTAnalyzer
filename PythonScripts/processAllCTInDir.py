@@ -1,12 +1,26 @@
-# Windoes: Open slicer and enter the command to call this script (me) 
+# Windows: Open slicer and enter the command to call this script (me) 
 # exec(open(r"C:\Users\Yourname\Documents\MySlicerExtensions\LungCTAnalyzer\PythonScripts\processAllCTInDir.py").read())
 
 
 """
-      Run this script to search a directory for CT data sets,  
-      automatically run LungCTAnalyzer and save the results.
+      ProcessAllCtInDir
       
-      This file was developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland.
+      Purpose: 
+      Run this script to search a directory for CT data sets according the 
+      data structure suggested by @PaoloZaffino,   
+      automatically run LungCTAnalyzer on them and save the results.
+      
+      Prerequisites:
+      - Each CT data set needs to be placed in a subdirectory "Pat x" where x is an integer
+      - input volumes need to be present in each dir and named as follows: 
+              "CT.nrrd", "CT_followup.nrrd", "CT_followup2.nrrd", "CT_followup3.nrrd" 
+      - lung masks need to be prepated in each dir with LungCTSegmenter and named:                                                                            
+             "LungMasksCT.seg.nrrd","LungMasksCTFollowup.seg.nrrd","LungMasksCTFollowup2.seg.nrrd","LungMasksCTFollowup3.seg.nrrd"
+      - Up to three follow up CT's are supported
+      - results will be saved as CSV to "results.csv" 
+      - scene will be saved automatically as a MRB file. 
+      
+      ProcessAllCtInDir.py was developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland in 8/2021
       
 """
 
@@ -35,7 +49,7 @@ shrinkMasks = True
 countBullae = False
 saveDataFileName = ["results.csv","resultsFollowup.csv","resultsFollowup2.csv","resultsFollowup3.csv"]
 saveComment = ["Initial","Followup","Followup2","Followup3"]
-sceneFilename = "saved_scene.mrb"
+sceneFilename = ["saved_scene.mrb", "saved_scene_followup.mrb", "saved_scene_followup2.mrb", "saved_scene_followup3.mrb"]
 ctCount=0
 
 import time
@@ -82,7 +96,7 @@ for filename in glob.iglob(root_dir + '**/*.nrrd', recursive=True):
                 sys.stdout.flush()
                 logic.saveExtendedDataToFile(root_dir + "/"+ saveDataFileName[cn],filename,str(ctCount),saveComment[cn])
                 # Save scene
-                sceneSaveFilename = pathhead+"/"+sceneFilename
+                sceneSaveFilename = pathhead+"/"+sceneFilename[cn]
                 if slicer.util.saveScene(sceneSaveFilename):
                   logging.info("Scene saved to: {0}".format(sceneSaveFilename))
                 else:
@@ -92,5 +106,5 @@ for filename in glob.iglob(root_dir + '**/*.nrrd', recursive=True):
         slicer.app.processEvents()
         
 stopTime = time.time()
-logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
+logging.info('Serial processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
