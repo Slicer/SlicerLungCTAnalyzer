@@ -14,11 +14,11 @@
       - Each CT data set needs to be placed in a subdirectory "Pat x" where x is an integer
       - input volumes need to be present in each dir and named as follows: 
               "CT.nrrd", "CT_followup.nrrd", "CT_followup2.nrrd", "CT_followup3.nrrd" 
-      - lung masks need to be prepated in each dir with LungCTSegmenter and named:                                                                            
+      - lung masks need to be prepared in each dir with LungCTSegmenter and named:                                                                            
              "LungMasksCT.seg.nrrd","LungMasksCTFollowup.seg.nrrd","LungMasksCTFollowup2.seg.nrrd","LungMasksCTFollowup3.seg.nrrd"
       - Up to three follow up CT's are supported
       - results will be saved as CSV to "results.csv" 
-      - scene will be saved automatically as a MRB file. 
+      - all scenes will be saved automatically as a MRB file. 
       
       ProcessAllCtInDir.py was developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland in 8/2021
       
