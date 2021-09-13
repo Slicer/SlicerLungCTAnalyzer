@@ -1152,9 +1152,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.createDetailedMasks()
 
         # to create labelmap compatibility with Chest Imaging Platform
-        segmentToLabelValueMapping = slicer.util.getFirstNodeByClassByName("vtkMRMLColorTableNode", "CIP colors")
+        segmentToLabelValueMapping = slicer.util.getFirstNodeByClassByName("vtkMRMLColorTableNode", "chest_region_colors_basic")
         if not segmentToLabelValueMapping:
-            segmentToLabelValueMapping = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode", "CIP colors")
+            segmentToLabelValueMapping = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode", "chest_region_colors_basic")
             segmentToLabelValueMapping.SetTypeToUser()
             segmentToLabelValueMapping.HideFromEditorsOff()
             segmentToLabelValueMapping.SetNumberOfColors(69)
