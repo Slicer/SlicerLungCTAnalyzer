@@ -82,3 +82,6 @@ V 2.44
 
 - LungCTSegmenter automatically generates a labelmap from it's segmentation output that is compatible with "Parenchyma analysis" of the CIP
 
+V 2.44
+
+- Airway segmentation (CIP) implemented 
