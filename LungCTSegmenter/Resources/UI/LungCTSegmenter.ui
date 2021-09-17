@@ -97,16 +97,30 @@
       <string>Segmentation</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="7" column="1">
-       <widget class="QPushButton" name="applyButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
+      <item row="0" column="0" colspan="2">
+       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
         <property name="toolTip">
-         <string>Run the algorithm.</string>
+         <string>Find instructzions here during the segmentation procedure.  </string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="2">
+       <widget class="QPushButton" name="startButton">
+        <property name="toolTip">
+         <string>Press this button to start the segmentation process. </string>
         </property>
         <property name="text">
-         <string>Apply</string>
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="detailedMasksCheckBox">
+        <property name="toolTip">
+         <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
+        </property>
+        <property name="text">
+         <string>Create additional lung masks (dorsal,ventral,upper,middle,lower)</string>
         </property>
        </widget>
       </item>
@@ -115,31 +129,21 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <property name="toolTip">
+         <string>Perform a CIP airway segmentation (takes between 80 -140 s). If not found, the Chest Imaging Platform extension will be installed once.  </string>
+        </property>
         <property name="text">
-         <string>Detailed airways</string>
+         <string>Airway segmentation (CIP)</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QPushButton" name="cancelButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="shrinkMasksCheckBox">
         <property name="toolTip">
-         <string>Cancel the current segmentation process.</string>
+         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
         </property>
         <property name="text">
-         <string>Cancel</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0" colspan="2">
-       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
-        <property name="toolTip">
-         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
-        </property>
-        <property name="text">
-         <string>Toggle segments visibility</string>
+         <string>Auto shrink masks (1 mm)</string>
         </property>
        </widget>
       </item>
@@ -221,37 +225,46 @@
         </layout>
        </widget>
       </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
+      <item row="8" column="0" colspan="2">
+       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
         <property name="toolTip">
-         <string>Find instructzions here during the segmentation procedure.  </string>
+         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
+        </property>
+        <property name="text">
+         <string>Toggle segments visibility</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="shrinkMasksCheckBox">
+      <item row="7" column="0">
+       <widget class="QPushButton" name="cancelButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Cancel the current segmentation process.</string>
+        </property>
         <property name="text">
-         <string>Auto shrink masks (1 mm)</string>
+         <string>Cancel</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0" colspan="2">
-       <widget class="QPushButton" name="startButton">
+      <item row="7" column="1">
+       <widget class="QPushButton" name="applyButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
-         <string>Press this button to start the segmentation process. </string>
+         <string>Run the algorithm.</string>
         </property>
         <property name="text">
-         <string>Start</string>
+         <string>Apply</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="detailedMasksCheckBox">
+      <item row="1" column="1">
+       <widget class="QComboBox" name="kernelTypeComboBox">
         <property name="toolTip">
-         <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
-        </property>
-        <property name="text">
-         <string>Create additional lung masks (dorsal,ventral,upper,middle,lower)</string>
+         <string>ReconstructionKernelType parameter of airway segmentation. STANDARD offers highest details of the bronchial tree, but may produce leaks. LUNG is less detailed but more robust concerning leaks. B70f is low detailed has hardly any leaks. </string>
         </property>
        </widget>
       </item>
