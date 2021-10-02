@@ -417,6 +417,40 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       else:
           segmentationDisplayNode.Visibility2DOn()
 
+  def checkCIPInstalled(self):
+      #  
+      extensionName = 'Chest_Imaging_Platform'
+      em = slicer.app.extensionsManagerModel()
+      logging.info('Checking existence of CIP ...')
+      if not em.isExtensionInstalled(extensionName):
+          logging.info('CIP not found. Installing CIP ...')
+          if not slicer.util.confirmYesNoDisplay("The Chest Imaging Platform is needed to do airway segmentation. Do you want to install it ?", windowTitle=None, parent=None):
+              logging.info('User cancelled CIP installation.')
+              self.createDetailedAirways = False
+              self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
+              return
+          else: 
+              extensionMetaData = em.retrieveExtensionMetadataByName(extensionName)
+              if slicer.app.majorVersion*100+slicer.app.minorVersion < 413:
+                  # Slicer-4.11
+                  itemId = extensionMetaData['item_id']
+                  url = f"{em.serverUrl().toString()}/download?items={itemId}"
+              else:
+                  # Slicer-4.13
+                  itemId = extensionMetaData['_id']
+                  url = f"{em.serverUrl().toString()}/api/v1/item/{itemId}/download"
+              extensionPackageFilename = slicer.app.temporaryPath+'/'+itemId
+              slicer.util.downloadFile(url, extensionPackageFilename)
+              em.installExtension(extensionPackageFilename)
+              if not slicer.util.confirmYesNoDisplay("A restart of Slicer is needed. Do you want to continue?", windowTitle=None, parent=None):
+                  self.createDetailedAirways = False
+                  self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
+                  return
+              else: 
+                  slicer.util.restart()
+      else: 
+          logging.info('CIP found.')
+
   def onStartButton(self):
       """
       Run processing when user clicks "Start" button.
@@ -426,6 +460,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
+          if self.createDetailedAirways:
+            self.checkCIPInstalled() 
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
@@ -727,7 +763,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationStarted = True
         self.segmentationFinished = False
         
-        print("Start.")
         import time
         startTime = time.time()
 
@@ -790,10 +825,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-        if self.detailedAirways: 
-            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
-        else: 
-            self.segmentEditorWidget.setMasterVolumeNode(self.resampledVolume)
+        self.segmentEditorWidget.setMasterVolumeNode(self.resampledVolume)
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
@@ -1103,22 +1135,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         import time
         startTime = time.time()
-
-
-        if self.detailedAirways: 
-            extensionName = 'Chest_Imaging_Platform'
-            em = slicer.app.extensionsManagerModel()
-            logging.info('Checking existence of CIP ...')
-            if not em.isExtensionInstalled(extensionName):
-                logging.info('CIP not found. Installing CIP ...')
-                extensionMetaData = em.retrieveExtensionMetadataByName(extensionName)
-                url = em.serverUrl().toString()+'/download/item/'+extensionMetaData['item_id']
-                extensionPackageFilename = slicer.app.temporaryPath+'/'+extensionMetaData['md5']
-                slicer.util.downloadFile(url, extensionPackageFilename)
-                em.installExtension(extensionPackageFilename)
-                slicer.util.restart()
-            else: 
-                logging.info('CIP found.')
 
         self.showStatusMessage('Finalize region growing...')
         # Ensure closed surface representation is not present (would slow down computations)

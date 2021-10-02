@@ -193,9 +193,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.toggleOutputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility2D)
         self.ui.toggleOutputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility3D)
         self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
-        self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)
-        
-
+        self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)        
 
         self.reportFolder = ""
 
@@ -843,7 +841,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         print("Starting '"+reportPath+"' ...")
         #slash/backlash replacements because of active directory
         os.startfile(reportPath.replace('/', '\\'))
-
+  
     def onApplyButton(self):
         """
         Run processing when user clicks "Apply" button.
@@ -1155,7 +1153,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         """
         Initialize parameter node with default settings.
         """
-        logging.info('setDefaultParameters')
         self.setThresholds(parameterNode, self.defaultThresholds, overwrite=False)
         if not parameterNode.GetParameter("ComputeImageIntensityStatistics"):
             parameterNode.SetParameter("ComputeImageIntensityStatistics", "true")
