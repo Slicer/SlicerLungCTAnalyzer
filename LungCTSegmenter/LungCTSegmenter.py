@@ -550,7 +550,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         storageNode = self.logic.inputVolume.GetStorageNode()
         if storageNode:
             inputFilename = storageNode.GetFileName()
-            baseFolder, tail = os.path.split(inputFilename)
+            if inputFilename:
+                baseFolder, tail = os.path.split(inputFilename)
+            else:
+                baseFolder = slicer.app.defaultScenePath
         else:
             baseFolder = slicer.app.defaultScenePath
         directory = baseFolder + "/LungCTSegmenter/"

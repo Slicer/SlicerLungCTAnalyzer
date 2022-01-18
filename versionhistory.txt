@@ -85,3 +85,11 @@ V 2.44
 V 2.44
 
 - Airway segmentation (CIP) implemented 
+
+V 2.45
+
+- do not remember 
+
+V 2.46
+
+- Checks inputFilename in saveFiducialsGloballyAndLocally to avoid exception 
