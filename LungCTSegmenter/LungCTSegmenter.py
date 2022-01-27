@@ -54,6 +54,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.shrinkMasks = False
       self.detailedMasks = False
       self.isSufficientNumberOfPointsPlaced = False
+      self.saveFiducials = False
 
 
   def setup(self):
@@ -103,6 +104,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Connect combo boxes 
       self.ui.kernelTypeComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
@@ -353,6 +355,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
+      self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
+      
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -401,6 +405,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
+      self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
       self.logic.airwaySegmentationKernelType = self.ui.kernelTypeComboBox.currentText
     
       self._parameterNode.EndModify(wasModified)
@@ -482,7 +487,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
-          self.saveFiducialsGlobalAndLocal()
+          if self.saveFiducials: 
+            self.saveFiducialsGlobalAndLocal()
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
           self.logic.detailedMasks = self.detailedMasks
@@ -513,7 +519,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.updateParameterNodeFromGUI()
       self.logic.updateSegmentation()
 
-  def saveFiducials(self, directory):
+  def _saveFiducials(self, directory):
     try:
         markupsNode = slicer.mrmlScene.GetFirstNodeByName('R')
         temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
@@ -541,7 +547,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     directory = slicer.mrmlScene.GetRootDirectory() + "/LungCTSegmenter/"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    self.saveFiducials(directory)
+    self._saveFiducials(directory)
     
     logging.info("Saving fiducials in volume directory ...")
     if not self.logic.inputVolume:
@@ -559,7 +565,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         directory = baseFolder + "/LungCTSegmenter/"
         if not os.path.exists(directory):
             os.makedirs(directory)
-        self.saveFiducials(directory)
+        self._saveFiducials(directory)
 
   def loadFiducials(self,directory):
 

@@ -97,23 +97,6 @@
       <string>Segmentation</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0" colspan="2">
-       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
-        <property name="toolTip">
-         <string>Find instructzions here during the segmentation procedure.  </string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0" colspan="2">
-       <widget class="QPushButton" name="startButton">
-        <property name="toolTip">
-         <string>Press this button to start the segmentation process. </string>
-        </property>
-        <property name="text">
-         <string>Start</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="0">
        <widget class="QCheckBox" name="detailedMasksCheckBox">
         <property name="toolTip">
@@ -137,17 +120,44 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="shrinkMasksCheckBox">
+      <item row="9" column="0" colspan="2">
+       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
         <property name="toolTip">
-         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
+         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
         </property>
         <property name="text">
-         <string>Auto shrink masks (1 mm)</string>
+         <string>Toggle segments visibility</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="0" colspan="2">
+      <item row="1" column="1">
+       <widget class="QComboBox" name="kernelTypeComboBox">
+        <property name="toolTip">
+         <string>ReconstructionKernelType parameter of airway segmentation. STANDARD offers highest details of the bronchial tree, but may produce leaks. LUNG is less detailed but more robust concerning leaks. B70f is low detailed has hardly any leaks. </string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
+        <property name="toolTip">
+         <string>Find instructzions here during the segmentation procedure.  </string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QPushButton" name="applyButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Run the algorithm.</string>
+        </property>
+        <property name="text">
+         <string>Apply</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="0" colspan="2">
        <widget class="ctkCollapsibleGroupBox" name="adjustPointsGroupBox">
         <property name="title">
          <string>Adjust points </string>
@@ -225,17 +235,7 @@
         </layout>
        </widget>
       </item>
-      <item row="8" column="0" colspan="2">
-       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
-        <property name="toolTip">
-         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
-        </property>
-        <property name="text">
-         <string>Toggle segments visibility</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
+      <item row="8" column="0">
        <widget class="QPushButton" name="cancelButton">
         <property name="enabled">
          <bool>false</bool>
@@ -248,23 +248,33 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="1">
-       <widget class="QPushButton" name="applyButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
+      <item row="5" column="0" colspan="2">
+       <widget class="QPushButton" name="startButton">
         <property name="toolTip">
-         <string>Run the algorithm.</string>
+         <string>Press this button to start the segmentation process. </string>
         </property>
         <property name="text">
-         <string>Apply</string>
+         <string>Start</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="kernelTypeComboBox">
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="shrinkMasksCheckBox">
         <property name="toolTip">
-         <string>ReconstructionKernelType parameter of airway segmentation. STANDARD offers highest details of the bronchial tree, but may produce leaks. LUNG is less detailed but more robust concerning leaks. B70f is low detailed has hardly any leaks. </string>
+         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
+        </property>
+        <property name="text">
+         <string>Auto shrink masks (1 mm)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="saveFiducialsCheckBox">
+        <property name="toolTip">
+         <string>Save fiducials that are created during mask segmentation in Slicer root and current data directory </string>
+        </property>
+        <property name="text">
+         <string>Save fiducials in root and data directory</string>
         </property>
        </widget>
       </item>
