@@ -55,6 +55,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.detailedMasks = False
       self.isSufficientNumberOfPointsPlaced = False
       self.saveFiducials = False
+      self.inputVolume = None
 
 
   def setup(self):
@@ -348,6 +349,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.isSufficientNumberOfPointsPlaced = True
 
       self.ui.startButton.enabled = not self.logic.segmentationStarted
+
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
@@ -460,6 +462,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       Run processing when user clicks "Start" button.
       """
+      if not self.logic.inputVolume: 
+        slicer.util.warningDisplay("Please load and select an input volume!\n")
+        return
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
           self.setInstructions("Initializing segmentation...")
@@ -766,6 +771,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         return np.clip(rgbBrighter, 0.0, 1.0)
 
     def startSegmentation(self):
+        if not self.inputVolume:
+          # prevent start
+          raise ValueError("No input volume. ")
+          return
         if self.segmentationStarted:
           # Already started
           return
@@ -841,6 +850,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
+        
+        
+
 
     def updateSeedSegmentFromMarkups(self, segmentName, markupsNode, color, radius, segmentId):
         if segmentId:
@@ -894,7 +906,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       threeDWidget = layoutManager.threeDWidget(0)
       threeDView = threeDWidget.threeDView()
       threeDView.resetFocalPoint()
-
 
     def removeTemporaryObjects(self):
         if self.resampledVolume:
@@ -1217,7 +1228,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.createDetailedMasks()
         
         if self.detailedAirways:
-            # involve CIP airway segmentation
+            # CIP airway segmentation
             self.showStatusMessage(' Creating airway segmentation in kernel mode ' + self.airwaySegmentationKernelType + ' ...')
             # Create temporary labelmap
             self.airwayLabelMap = slicer.util.getFirstNodeByClassByName("vtkMRMLLabelMapVolumeNode",
