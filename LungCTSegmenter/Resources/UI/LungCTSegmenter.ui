@@ -110,13 +110,13 @@
       <item row="1" column="0">
        <widget class="QCheckBox" name="detailedAirwaysCheckBox">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="toolTip">
          <string>Perform a CIP airway segmentation (takes between 80 -140 s). If not found, the Chest Imaging Platform extension will be installed once.  </string>
         </property>
         <property name="text">
-         <string>Airway segmentation (CIP)</string>
+         <string>Airway segmentation</string>
         </property>
        </widget>
       </item>
@@ -127,13 +127,6 @@
         </property>
         <property name="text">
          <string>Toggle segments visibility</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="kernelTypeComboBox">
-        <property name="toolTip">
-         <string>ReconstructionKernelType parameter of airway segmentation. STANDARD offers highest details of the bronchial tree, but may produce leaks. LUNG is less detailed but more robust concerning leaks. B70f is low detailed has hardly any leaks. </string>
         </property>
        </widget>
       </item>

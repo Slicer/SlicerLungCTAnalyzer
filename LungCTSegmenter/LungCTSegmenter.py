@@ -84,10 +84,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           placeWidget.placeButton().show()
           placeWidget.deleteButton().show()
           
-      # Populate combobox
-      list = ["STANDARD", "LUNG", "B70f"]
-      self.ui.kernelTypeComboBox.addItems(list);
-
       # Connections
 
       # These connections ensure that we update parameter node when scene is closed
@@ -106,9 +102,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-
-      # Connect combo boxes 
-      self.ui.kernelTypeComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -408,7 +401,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
-      self.logic.airwaySegmentationKernelType = self.ui.kernelTypeComboBox.currentText
     
       self._parameterNode.EndModify(wasModified)
 
@@ -470,8 +462,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
-          if self.createDetailedAirways:
-            self.checkCIPInstalled() 
+          #if self.createDetailedAirways:
+          #  self.checkCIPInstalled() 
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
@@ -601,7 +593,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if not self.logic.tracheaFiducials:
             self.logic.tracheaFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "T")
             self.logic.tracheaFiducials.CreateDefaultDisplayNodes()
-            self.logic.tracheaFiducials.GetDisplayNode().SetSelectedColor(self.logic.brighterColor(self.logic.tracheaColor))
+            self.logic.tracheaFiducials.GetDisplayNode().SetSelectedColor(self.logic.brighterColor(self.logic.unknownColor))
             self.logic.tracheaFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
             temporaryStorageNode.SetFileName(file_path)
             temporaryStorageNode.ReadData(self.logic.tracheaFiducials)
@@ -669,6 +661,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.rightLungColor = (0.5, 0.68, 0.5)
         self.leftLungColor = (0.95, 0.84, 0.57)
         self.tracheaColor = (0.71, 0.89, 1.0)
+        self.unknownColor = (0.39, 0.39, 0.5)
         self.segmentEditorWidget = None
         self.segmentationStarted = False
         self.segmentationFinished = False
@@ -687,8 +680,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("LungThresholdMin", "-1024")
         if not parameterNode.GetParameter("LungThresholdMax"):
           parameterNode.SetParameter("LungThresholdMax", "-200")
-        if not parameterNode.GetParameter("airwaySegmentationKernelType"):
-          parameterNode.SetParameter("airwaySegmentationKernelType", "STANDARD")
 
     @property
     def lungThresholdMin(self):
@@ -756,14 +747,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def tracheaFiducials(self, node):
         self.getParameterNode().SetNodeReferenceID("TracheaFiducials", node.GetID() if node else None)
 
-    @property
-    def airwaySegmentationKernelType(self):
-        return self.getParameterNode().GetParameter("AirwaySegmentationKernelType")
-
-    @airwaySegmentationKernelType.setter
-    def airwaySegmentationKernelType(self, _str):
-        self.getParameterNode().SetParameter("AirwaySegmentationKernelType", _str)
-
     def brighterColor(self, rgb):
         import numpy as np
         scaleFactor = 1.5
@@ -801,7 +784,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if not self.tracheaFiducials:
             self.tracheaFiducials = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode", "T")
             self.tracheaFiducials.CreateDefaultDisplayNodes()
-            self.tracheaFiducials.GetDisplayNode().SetSelectedColor(self.brighterColor(self.tracheaColor))
+            self.tracheaFiducials.GetDisplayNode().SetSelectedColor(self.brighterColor(self.unknownColor))
             self.tracheaFiducials.GetDisplayNode().SetPointLabelsVisibility(True)
 
         if not self.resampledVolume:
@@ -848,12 +831,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
 
+        if self.detailedAirways:
+            segID = None
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
+            if segID:
+                self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
+            newSeg = slicer.vtkSegment()
+            newSeg.SetName("airways")
+            newSeg.SetColor(self.tracheaColor)
+            self.outputSegmentation.GetSegmentation().AddSegment(newSeg,"airways")
+
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
         
-        
-
-
     def updateSeedSegmentFromMarkups(self, segmentName, markupsNode, color, radius, segmentId):
         if segmentId:
             self.outputSegmentation.GetSegmentation().RemoveSegment(segmentId)
@@ -885,7 +875,33 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       self.showStatusMessage('Update segmentation...')
       self.rightLungSegmentId = self.updateSeedSegmentFromMarkups("right lung", self.rightLungFiducials, self.rightLungColor, 10.0, self.rightLungSegmentId)
       self.leftLungSegmentId = self.updateSeedSegmentFromMarkups("left lung", self.leftLungFiducials, self.leftLungColor, 10.0, self.leftLungSegmentId)
-      self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("other", self.tracheaFiducials, self.tracheaColor, 2.0, self.tracheaSegmentId)
+      self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("other", self.tracheaFiducials, self.unknownColor, 2.0, self.tracheaSegmentId)
+
+      if self.detailedAirways:
+        if not segmentEditorWidget.effectByName("Local Threshold"):
+            slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
+        self.showStatusMessage('Airway segmentation ...')
+        airwaySegment = self.outputSegmentation.GetSegmentation().GetSegment("airway")
+        self.segmentEditorNode.SetSelectedSegmentID("airway")
+        self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
+        effect = self.segmentEditorWidget.activeEffect()
+        effect.setParameter("AutoThresholdMethod","OTSU")
+        effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
+        effect.setParameter("BrushType","DRAW")
+        effect.setParameter("Threshold.HistogramSetLower","LOWER")
+        effect.setParameter("MaximumThreshold","-900.86")
+        effect.setParameter("MinimumThreshold","-3023.96")
+        effect.setParameter("MinimumDiameterMm","2")
+        effect.setParameter("SegmentationAlgorithm","GrowCut")
+
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
+        pos = [0,0,0]
+        self.tracheaFiducials.GetNthFiducialPosition (0, pos)
+        ijkPoints = vtk.vtkPoints()
+        ijkPoints.InsertNextPoint(pos[0],pos[1],pos[2])
+        effect.self().preview(ijkPoints)
+
 
       # Activate region growing segmentation
       self.showStatusMessage('Region growing...')
@@ -1228,43 +1244,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.createDetailedMasks()
         
         if self.detailedAirways:
-            # CIP airway segmentation
-            self.showStatusMessage(' Creating airway segmentation in kernel mode ' + self.airwaySegmentationKernelType + ' ...')
-            # Create temporary labelmap
-            self.airwayLabelMap = slicer.util.getFirstNodeByClassByName("vtkMRMLLabelMapVolumeNode",
-                "AirwayLabelMap")
-            if not self.airwayLabelMap:
-                self.airwayLabelMap = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode",
-                    "AirwayLabelMap")
-            self.airwayLabelMap.CreateDefaultDisplayNodes()
-            # Set parameters
-            parameters = {}
-            parameters["inputVolume"] = self.inputVolume
-            parameters["seed"] = self.tracheaFiducials
-            parameters["airwayLabel"] = self.airwayLabelMap
-            parameters["reconstructionKernelType"] = self.airwaySegmentationKernelType
-            # Execute
-            segmentAirways = slicer.modules.segmentlungairways
-            cliNode = slicer.cli.runSync(segmentAirways, None, parameters)
-            # Process results
-            if cliNode.GetStatus() & cliNode.ErrorsMask:
-              # error
-              errorText = cliNode.GetErrorText()
-              slicer.mrmlScene.RemoveNode(cliNode)
-              raise ValueError("CLI execution failed: " + errorText)
-            # success
-            self.airwaySegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode","AirwaySegmentation")
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(self.airwayLabelMap, self.airwaySegmentation)
-            # display in 3D
-            self.airwaySegmentation.CreateClosedSurfaceRepresentation()
-            # hide "other" segment from result in order not to  overlap with airway segmentation 
-            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
-            sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(segID)
-            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(sourceSeg.GetName(),False)
-            # cleanup
-            slicer.mrmlScene.RemoveNode(self.airwayLabelMap)
-            slicer.mrmlScene.RemoveNode(cliNode)
-        
+            print("")   
+
+            
         # optimize display
         # self.hideVolumeRendering(self.labelmapVolumeNode)
         # self.showVolumeRendering(self.inputVolume)
