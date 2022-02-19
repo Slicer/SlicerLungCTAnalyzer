@@ -93,3 +93,7 @@ V 2.45
 V 2.46
 
 - Checks inputFilename in saveFiducialsGloballyAndLocally to avoid exception 
+
+V 2.47
+
+Segmenter: CIP airway segmentation removed, 'Local threshold' airway segmentation included.  

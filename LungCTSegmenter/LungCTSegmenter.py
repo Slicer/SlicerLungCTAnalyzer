@@ -83,7 +83,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           placeWidget.buttonsVisible=False
           placeWidget.placeButton().show()
           placeWidget.deleteButton().show()
-          
+
+      # Populate combobox
+      list = ["low detail", "medium detail", "high detail"]
+      self.ui.detailLevelComboBox.addItems(list);
+
       # Connections
 
       # These connections ensure that we update parameter node when scene is closed
@@ -96,6 +100,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect threshhold range sliders 
       self.ui.ThresholdRangeWidget.connect('valuesChanged(double,double)', self.onThresholdRangeWidgetChanged)
+      
+      # Connect combo boxes 
+      self.ui.detailLevelComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
       
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -351,7 +358,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
-      
+      self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -680,7 +687,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("LungThresholdMin", "-1024")
         if not parameterNode.GetParameter("LungThresholdMax"):
           parameterNode.SetParameter("LungThresholdMax", "-200")
-
+        if not parameterNode.GetParameter("airwaySegmentationDetailLevel"):
+          parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
     @property
     def lungThresholdMin(self):
         thresholdStr = self.getParameterNode().GetParameter("LungThresholdMin")
@@ -738,6 +746,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @leftLungFiducials.setter
     def leftLungFiducials(self, node):
         self.getParameterNode().SetNodeReferenceID("LeftLungFiducials", node.GetID() if node else None)
+
+    @property
+    def airwaySegmentationDetailLevel(self):
+        return self.getParameterNode().GetParameter("AirwaySegmentationDetailLevel")
+
+    @airwaySegmentationDetailLevel.setter
+    def airwaySegmentationDetailLevel(self, _str):
+        self.getParameterNode().SetParameter("AirwaySegmentationDetailLevel", _str)
 
     @property
     def tracheaFiducials(self):
@@ -831,16 +847,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
 
-        if self.detailedAirways:
-            segID = None
-            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
-            if segID:
-                self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
-            newSeg = slicer.vtkSegment()
-            newSeg.SetName("airways")
-            newSeg.SetColor(self.tracheaColor)
-            self.outputSegmentation.GetSegmentation().AddSegment(newSeg,"airways")
-
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
         
@@ -876,32 +882,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       self.rightLungSegmentId = self.updateSeedSegmentFromMarkups("right lung", self.rightLungFiducials, self.rightLungColor, 10.0, self.rightLungSegmentId)
       self.leftLungSegmentId = self.updateSeedSegmentFromMarkups("left lung", self.leftLungFiducials, self.leftLungColor, 10.0, self.leftLungSegmentId)
       self.tracheaSegmentId = self.updateSeedSegmentFromMarkups("other", self.tracheaFiducials, self.unknownColor, 2.0, self.tracheaSegmentId)
-
-      if self.detailedAirways:
-        if not segmentEditorWidget.effectByName("Local Threshold"):
-            slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
-        self.showStatusMessage('Airway segmentation ...')
-        airwaySegment = self.outputSegmentation.GetSegmentation().GetSegment("airway")
-        self.segmentEditorNode.SetSelectedSegmentID("airway")
-        self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
-        effect = self.segmentEditorWidget.activeEffect()
-        effect.setParameter("AutoThresholdMethod","OTSU")
-        effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
-        effect.setParameter("BrushType","DRAW")
-        effect.setParameter("Threshold.HistogramSetLower","LOWER")
-        effect.setParameter("MaximumThreshold","-900.86")
-        effect.setParameter("MinimumThreshold","-3023.96")
-        effect.setParameter("MinimumDiameterMm","2")
-        effect.setParameter("SegmentationAlgorithm","GrowCut")
-
-        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
-        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
-        pos = [0,0,0]
-        self.tracheaFiducials.GetNthFiducialPosition (0, pos)
-        ijkPoints = vtk.vtkPoints()
-        ijkPoints.InsertNextPoint(pos[0],pos[1],pos[2])
-        effect.self().preview(ijkPoints)
-
 
       # Activate region growing segmentation
       self.showStatusMessage('Region growing...')
@@ -1244,8 +1224,82 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.createDetailedMasks()
         
         if self.detailedAirways:
-            print("")   
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
+            self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
+            newSeg = slicer.vtkSegment()
+            newSeg.SetName("airways")
+            newSeg.SetColor(self.tracheaColor)
+            self.outputSegmentation.GetSegmentation().AddSegment(newSeg,"airways")
+            airwaySegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
 
+            if not self.segmentEditorWidget.effectByName("Local Threshold"):
+                slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
+            else:
+                self.showStatusMessage('Airway segmentation ...')
+                self.segmentEditorNode.SetSelectedSegmentID("airways")
+                self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("AutoThresholdMethod","OTSU")
+                effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
+                effect.setParameter("BrushType","DRAW")
+                effect.setParameter("Threshold.HistogramSetLower","LOWER")
+                effect.setParameter("MaximumThreshold","-900.86")
+                effect.setParameter("MinimumThreshold","-3023.96")
+                if self.airwaySegmentationDetailLevel == "low detail":
+                    effect.setParameter("MinimumDiameterMm","3")
+                elif self.airwaySegmentationDetailLevel == "medium detail":
+                    effect.setParameter("MinimumDiameterMm","2")
+                elif self.airwaySegmentationDetailLevel == "high detail":
+                    effect.setParameter("MinimumDiameterMm","1")
+                    
+                effect.setParameter("SegmentationAlgorithm","GrowCut")
+                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
+                
+                import numpy as np
+                markupsIndex = 0
+                # Get point coordinate in RAS
+                point_Ras = [0, 0, 0, 1]
+                self.tracheaFiducials.GetNthFiducialWorldCoordinates(markupsIndex, point_Ras)
+                
+                print("RAS trachea markup")
+                print(str(point_Ras))
+
+                # If volume node is transformed, apply that transform to get volume's RAS coordinates
+                transformRasToVolumeRas = vtk.vtkGeneralTransform()
+                slicer.vtkMRMLTransformNode.GetTransformBetweenNodes(None, self.inputVolume.GetParentTransformNode(), transformRasToVolumeRas)
+                point_VolumeRas = transformRasToVolumeRas.TransformPoint(point_Ras[0:3])
+
+                # Get voxel coordinates from physical coordinates
+                volumeRasToIjk = vtk.vtkMatrix4x4()
+                self.inputVolume.GetRASToIJKMatrix(volumeRasToIjk)
+                point_Ijk = [0, 0, 0, 1]
+                volumeRasToIjk.MultiplyPoint(np.append(point_VolumeRas,1.0), point_Ijk)
+                point_Ijk = [ int(round(c)) for c in point_Ijk[0:3] ]
+
+                # Print output
+                print("IJK trachea markup")
+                print(point_Ijk)
+
+                ijkPoints = vtk.vtkPoints()
+                #ijkPoints.InsertNextPoint(pos[0],pos[1],pos[2])
+                ijkPoints.InsertNextPoint(point_Ijk[0],point_Ijk[1],point_Ijk[2])
+
+                effect.self().apply(ijkPoints)
+                
+                self.showStatusMessage(f'Filling holes in airways ...')
+                self.segmentEditorNode.SetSelectedSegmentID("airways")
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
+                effect.setParameter("KernelSizeMm","3")
+                effect.setParameter("ApplyToAllVisibleSegments","0")
+                effect.setParameter("ColorSmudge","0")
+                effect.setParameter("EraseAllSegments","0")
+                effect.setParameter("GaussianStandardDeviationMm","3")
+                effect.setParameter("JointTaubinSmoothingFactor","0.5")
+                effect.self().onApply()
+                
             
         # optimize display
         # self.hideVolumeRendering(self.labelmapVolumeNode)
