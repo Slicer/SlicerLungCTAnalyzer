@@ -972,7 +972,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         ##effect.setParameter("MinimumSize","1000")
         #effect.setParameter("Operation","KEEP_LARGEST_ISLAND")
         #self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) # very important do do this, otherwise other segments become corrupted
-        #self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
+        #self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
         
         #effect.self().onApply()
 
@@ -1254,7 +1254,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     
                 effect.setParameter("SegmentationAlgorithm","GrowCut")
                 self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
-                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentEditorNode.PaintAllowedEverywhere)
+                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
                 
                 import numpy as np
                 markupsIndex = 0
