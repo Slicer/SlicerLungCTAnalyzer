@@ -2229,8 +2229,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-        self.segmentEditorNode.PaintAllowedEverywhere = True
-        self.segmentEditorNode.OverwriteAllSegments = True
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments)
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
         self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
