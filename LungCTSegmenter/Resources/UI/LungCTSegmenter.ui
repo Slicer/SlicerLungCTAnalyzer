@@ -113,7 +113,7 @@
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Includes a 'Local Threshold' airway segmentation.   </string>
+         <string>Perform a 'Local Threshold' airway segmentation. 'SegmentEditorExtraEffects' need to be installed.   </string>
         </property>
         <property name="text">
          <string>Airway segmentation</string>
