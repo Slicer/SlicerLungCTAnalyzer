@@ -296,12 +296,12 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Lung intensity range:</string>
+         <string>Lung thresholds:</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="ctkRangeWidget" name="ThresholdRangeWidget">
+       <widget class="ctkRangeWidget" name="LungThresholdRangeWidget">
         <property name="toolTip">
          <string>Select the threshold range to identify lung parenchyma.  In doubt do not touch. </string>
         </property>
@@ -312,27 +312,56 @@
          <double>1000.000000000000000</double>
         </property>
         <property name="minimumValue">
-         <double>-1000.000000000000000</double>
+         <double>-1500.000000000000000</double>
         </property>
         <property name="maximumValue">
          <double>-200.000000000000000</double>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="1" column="1">
+       <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
+        <property name="toolTip">
+         <string>Select the threshold range for airway detection. If airway segment is incomplete, increase the upper threshold. In case of leaks, decrease the upper threshold. Only effective on the final segmentation result and if airway segmentation is enabled. </string>
+        </property>
+        <property name="minimum">
+         <double>-1500.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1000.000000000000000</double>
+        </property>
+        <property name="minimumValue">
+         <double>-1500.000000000000000</double>
+        </property>
+        <property name="maximumValue">
+         <double>-900.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="setDefaultButton">
+        <property name="toolTip">
+         <string>Reset lung range and airway range to default values.</string>
+        </property>
+        <property name="text">
+         <string>Reset to default</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Airway thresholds: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
        <widget class="QPushButton" name="updateIntensityButton">
         <property name="toolTip">
          <string>Update current segmentation preview after lung intensity range changes</string>
         </property>
         <property name="text">
          <string>Update </string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="setDefaultButton">
-        <property name="text">
-         <string>Reset to default</string>
         </property>
        </widget>
       </item>

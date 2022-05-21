@@ -97,3 +97,7 @@ V 2.46
 V 2.47
 
 Segmenter: CIP airway segmentation removed, 'Local threshold' airway segmentation included.  
+
+V 2.48
+
+Implement AirwayThresholdRangeWidget and use airway thesholds in 'Local threshold' airway segmentation method.  

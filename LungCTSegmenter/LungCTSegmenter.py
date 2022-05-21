@@ -99,7 +99,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.inputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
       
       # Connect threshhold range sliders 
-      self.ui.ThresholdRangeWidget.connect('valuesChanged(double,double)', self.onThresholdRangeWidgetChanged)
+      self.ui.LungThresholdRangeWidget.connect('valuesChanged(double,double)', self.onLungThresholdRangeWidgetChanged)
+      self.ui.AirwayThresholdRangeWidget.connect('valuesChanged(double,double)', self.onAirwayThresholdRangeWidgetChanged)
       
       # Connect combo boxes 
       self.ui.detailLevelComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
@@ -124,14 +125,24 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       parser = configparser.SafeConfigParser()
       parser.read('LCTA.INI')
       if parser.has_option('LungThreshholdRange', 'minimumValue'): 
-          self.ui.ThresholdRangeWidget.minimumValue = int(float(parser.get('LungThreshholdRange','minimumValue')))
+          self.ui.LungThresholdRangeWidget.minimumValue = int(float(parser.get('LungThreshholdRange','minimumValue')))
       else: 
-          self.ui.ThresholdRangeWidget.minimumValue = -1000
+          self.ui.LungThresholdRangeWidget.minimumValue = -1500
 
       if parser.has_option('LungThreshholdRange', 'maximumValue'): 
-          self.ui.ThresholdRangeWidget.maximumValue = int(float(parser.get('LungThreshholdRange','maximumValue')))
+          self.ui.LungThresholdRangeWidget.maximumValue = int(float(parser.get('LungThreshholdRange','maximumValue')))
       else: 
-          self.ui.ThresholdRangeWidget.maximumValue = -200
+          self.ui.LungThresholdRangeWidget.maximumValue = -200
+
+      if parser.has_option('AirwayThreshholdRange', 'minimumValue'): 
+          self.ui.AirwayThresholdRangeWidget.minimumValue = int(float(parser.get('AirwayThreshholdRange','minimumValue')))
+      else: 
+          self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
+
+      if parser.has_option('AirwayThreshholdRange', 'maximumValue'): 
+          self.ui.AirwayThresholdRangeWidget.maximumValue = int(float(parser.get('AirwayThreshholdRange','maximumValue')))
+      else: 
+          self.ui.AirwayThresholdRangeWidget.maximumValue = -900
 
       # Make sure parameter node is initialized (needed for module reload)
       self.initializeParameterNode()
@@ -156,18 +167,32 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       parser.read('LCTA.INI')
 
       if parser.has_option('LungThreshholdRange', 'minimumValue'):
-          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.ThresholdRangeWidget.minimumValue))
+          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.LungThresholdRangeWidget.minimumValue))
       else: 
           if not parser.has_section('LungThreshholdRange'): 
             parser.add_section('LungThreshholdRange')
-          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.ThresholdRangeWidget.minimumValue))
+          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.LungThresholdRangeWidget.minimumValue))
 
       if parser.has_option('LungThreshholdRange', 'maximumValue'):
-          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.ThresholdRangeWidget.maximumValue))
+          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.LungThresholdRangeWidget.maximumValue))
       else: 
           if not parser.has_section('LungThreshholdRange'): 
             parser.add_section('LungThreshholdRange')
-          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.ThresholdRangeWidget.maximumValue))
+          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.LungThresholdRangeWidget.maximumValue))
+
+      if parser.has_option('AirwayThreshholdRange', 'minimumValue'):
+          parser.set('AirwayThreshholdRange', 'minimumValue',str(self.ui.AirwayThresholdRangeWidget.minimumValue))
+      else: 
+          if not parser.has_section('AirwayThreshholdRange'): 
+            parser.add_section('AirwayThreshholdRange')
+          parser.set('AirwayThreshholdRange', 'minimumValue',str(self.ui.AirwayThresholdRangeWidget.minimumValue))
+
+      if parser.has_option('AirwayThreshholdRange', 'maximumValue'):
+          parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
+      else: 
+          if not parser.has_section('AirwayThreshholdRange'): 
+            parser.add_section('AirwayThreshholdRange')
+          parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
 
       with open('LCTA.INI', 'w') as configfile:    # save
           parser.write(configfile)
@@ -215,16 +240,23 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def onSetDefaultButton(self):
-      self.ui.ThresholdRangeWidget.minimumValue = -1000
-      self.ui.ThresholdRangeWidget.maximumValue = -200
+      self.ui.LungThresholdRangeWidget.minimumValue = -1500
+      self.ui.LungThresholdRangeWidget.maximumValue = -200
+      self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
+      self.ui.AirwayThresholdRangeWidget.maximumValue = -900
       self.writeConfigParser()
       self.updateParameterNodeFromGUI()
 
-  def onThresholdRangeWidgetChanged(self):
+  def onLungThresholdRangeWidgetChanged(self):
  
       self.writeConfigParser()
       self.updateParameterNodeFromGUI()
       
+  def onAirwayThresholdRangeWidgetChanged(self):
+ 
+      self.writeConfigParser()
+      self.updateParameterNodeFromGUI()
+
   def onSceneEndClose(self, caller, event):
       """
       Called just after the scene is closed.
@@ -402,8 +434,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
-      self.logic.lungThresholdMin = self.ui.ThresholdRangeWidget.minimumValue
-      self.logic.lungThresholdMax = self.ui.ThresholdRangeWidget.maximumValue
+      self.logic.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
+      self.logic.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
+      self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
+      self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
@@ -684,9 +718,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         Initialize parameter node with default settings.
         """
         if not parameterNode.GetParameter("LungThresholdMin"):
-          parameterNode.SetParameter("LungThresholdMin", "-1024")
+          parameterNode.SetParameter("LungThresholdMin", "-1500")
         if not parameterNode.GetParameter("LungThresholdMax"):
           parameterNode.SetParameter("LungThresholdMax", "-200")
+        if not parameterNode.GetParameter("AirwayThresholdMin"):
+          parameterNode.SetParameter("AirwayThresholdMin", "-1500")
+        if not parameterNode.GetParameter("AirwayThresholdMax"):
+          parameterNode.SetParameter("AirwayThresholdMax", "-900")
         if not parameterNode.GetParameter("airwaySegmentationDetailLevel"):
           parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
     @property
@@ -706,6 +744,24 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @lungThresholdMax.setter
     def lungThresholdMax(self, value):
         self.getParameterNode().SetParameter("LungThresholdMax", str(value))
+
+    @property
+    def airwayThresholdMin(self):
+        thresholdStr = self.getParameterNode().GetParameter("AirwayThresholdMin")
+        return float(thresholdStr) if thresholdStr else -1500
+
+    @airwayThresholdMin.setter
+    def airwayThresholdMin(self, value):
+        self.getParameterNode().SetParameter("AirwayThresholdMin", str(value))
+
+    @property
+    def airwayThresholdMax(self):
+        thresholdStr = self.getParameterNode().GetParameter("AirwayThresholdMax")
+        return float(thresholdStr) if thresholdStr else -900
+
+    @airwayThresholdMax.setter
+    def airwayThresholdMax(self, value):
+        self.getParameterNode().SetParameter("AirwayThresholdMax", str(value))
 
     @property
     def inputVolume(self):
@@ -1239,12 +1295,17 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode.SetSelectedSegmentID("airways")
                 self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
                 effect = self.segmentEditorWidget.activeEffect()
+                
+                
                 effect.setParameter("AutoThresholdMethod","OTSU")
-                effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
-                effect.setParameter("BrushType","DRAW")
-                effect.setParameter("Threshold.HistogramSetLower","LOWER")
-                effect.setParameter("MaximumThreshold","-900.86")
-                effect.setParameter("MinimumThreshold","-3023.96")
+                effect.setParameter("AutoThresholdMode","SET_MIN_UPPER")
+                effect.setParameter("BrushType","CIRCLE")
+                effect.setParameter("FeatureSizeMm:","3")
+                effect.setParameter("HistogramSetLower","LOWER")
+                effect.setParameter("HistogramSetUpper","UPPER")
+                effect.setParameter("MaximumThreshold",self.airwayThresholdMax)
+                effect.setParameter("MinimumThreshold",self.airwayThresholdMin)
+                                
                 if self.airwaySegmentationDetailLevel == "low detail":
                     effect.setParameter("MinimumDiameterMm","3")
                 elif self.airwaySegmentationDetailLevel == "medium detail":
