@@ -386,6 +386,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
       self.ui.applyButton.enabled = self.isSufficientNumberOfPointsPlaced
+      if self.logic.segmentationFinished: 
+        self.ui.applyButton.enabled = False
+        self.ui.cancelButton.enabled = True
+        self.ui.startButton.enabled = False
+        
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
@@ -454,8 +459,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       segmentationDisplayNode = segmentationNode.GetDisplayNode()
       if segmentationDisplayNode.GetVisibility2D():
           segmentationDisplayNode.Visibility2DOff()
+          segmentationDisplayNode.Visibility3DOff()
       else:
           segmentationDisplayNode.Visibility2DOn()
+          segmentationDisplayNode.Visibility3DOn()
 
   def checkCIPInstalled(self):
       #  
@@ -531,6 +538,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.shrinkMasks = self.shrinkMasks
           self.logic.detailedMasks = self.detailedMasks
           self.logic.applySegmentation()
+          segmentationNode = self.logic.outputSegmentation
+          segmentationNode.CreateDefaultDisplayNodes()
+          segmentationDisplayNode = segmentationNode.GetDisplayNode()
+          segmentationDisplayNode.Visibility2DOn()
+          segmentationDisplayNode.Visibility3DOn()
           self.updateGUIFromParameterNode()
           qt.QApplication.restoreOverrideCursor()
       except Exception as e:
@@ -539,6 +551,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           import traceback
           traceback.print_exc()
       self.setInstructions('')
+      self.ui.applyButton.enabled = False
+      
 
   def onCancelButton(self):
       """
@@ -547,6 +561,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       try:
           self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
+          self.ui.toggleSegmentationVisibilityButton.enabled = False
+          self.ui.startButton.enabled = True
+          self.logic.segmentationStarted = False
+          self.logic.segmentationFinished = False
           self.updateGUIFromParameterNode()
       except Exception as e:
           slicer.util.errorDisplay("Failed to compute results: "+str(e))

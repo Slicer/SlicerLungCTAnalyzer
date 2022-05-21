@@ -101,3 +101,5 @@ Segmenter: CIP airway segmentation removed, 'Local threshold' airway segmentatio
 V 2.48
 
 Implement AirwayThresholdRangeWidget and use airway thesholds in 'Local threshold' airway segmentation method.  
+Improve post-segmentation workflow in LungCTSegmenter UI - enable 'Cancel/Reset', disable 'Start'
+Make 2D and 3D visibility failsafe (always on) after 'Apply'  

@@ -140,7 +140,7 @@
       <item row="0" column="0" colspan="2">
        <widget class="ctkFittedTextBrowser" name="instructionsLabel">
         <property name="toolTip">
-         <string>Find instructzions here during the segmentation procedure.  </string>
+         <string>Find instructions here during the segmentation procedure.  </string>
         </property>
        </widget>
       </item>
@@ -244,7 +244,7 @@
          <string>Cancel the current segmentation process.</string>
         </property>
         <property name="text">
-         <string>Cancel</string>
+         <string>Cancel / Reset</string>
         </property>
        </widget>
       </item>
@@ -322,7 +322,7 @@
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
         <property name="toolTip">
-         <string>Select the threshold range for airway detection. If airway segment is incomplete, increase the upper threshold. In case of leaks, decrease the upper threshold. Only effective on the final segmentation result and if airway segmentation is enabled. </string>
+         <string>Select the threshold range for airway detection. If airway segment is incomplete, decrease the upper threshold. In case of leaks, increase the upper threshold slightly. Only effective after 'Apply' and visible in the final segmentation. Only effective if airway segmentation is enabled. </string>
         </property>
         <property name="minimum">
          <double>-1500.000000000000000</double>
