@@ -111,3 +111,4 @@ ENH enhance markup re-usability in LungCTSegmenter workflow
 - do not store segmenter data in Slicer root
 - improve tooltexts
 Make 2D and 3D visibility failsafe (always on) after 'Apply'  
+- remove 'l' hotkey from Lung CT Segmenter for loading markups
