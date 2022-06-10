@@ -150,17 +150,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # Initial GUI update
       self.updateGUIFromParameterNode()
       
-      # Install keyboard shortcuts
-      self.installKeyboardShortcuts()
-      
-  def installKeyboardShortcuts(self):
-    self.shortcutLoadFiducials = qt.QShortcut(slicer.util.mainWindow())
-    self.shortcutLoadFiducials.setKey(qt.QKeySequence("l"))
-    self.shortcutLoadFiducials.connect( 'activated()', self.loadFiducialsLocalOrGlobal)
-
-  def removeKeyboardShortcuts(self):
-    self.shortcutLoadFiducials.activated.disconnect()
-
   def writeConfigParser(self):
       import configparser
       parser = configparser.SafeConfigParser()
@@ -204,7 +193,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.writeConfigParser()
       self.removeFiducialObservers()
       self.removeObservers()
-      self.removeKeyboardShortcuts()
+      # self.removeKeyboardShortcuts()
       self.logic = None
 
   def enter(self):
@@ -507,6 +496,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         return
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
+          if self.ui.loadLastFiducialsCheckBox.checked:
+            if not self.loadFiducialsDataDir(): 
+                self.loadFiducialsTempDir() 
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
@@ -532,8 +524,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
+          # always save a copy of the current markups in Slicer temp dir for later use
+          self.saveFiducialsTempDir()
           if self.saveFiducials: 
-            self.saveFiducialsGlobalAndLocal()
+            self.saveFiducialsDataDir()
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
           self.logic.detailedMasks = self.detailedMasks
@@ -559,6 +553,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Stop segmentation without applying it.
       """
       try:
+          self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
           self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
           self.ui.toggleSegmentationVisibilityButton.enabled = False
@@ -597,15 +592,16 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         import traceback
         traceback.print_exc()
       
-  def saveFiducialsGlobalAndLocal(self):
-    logging.info("Saving fiducials in root directory ...")
+  def saveFiducialsTempDir(self):
+    logging.info("Saving markups in temp directory ...")
     import os
-    directory = slicer.mrmlScene.GetRootDirectory() + "/LungCTSegmenter/"
+    directory = slicer.app.temporaryPath + "/LungCTSegmenter/"
     if not os.path.exists(directory):
         os.makedirs(directory)
     self._saveFiducials(directory)
-    
-    logging.info("Saving fiducials in volume directory ...")
+
+  def saveFiducialsDataDir(self):
+    logging.info("Saving markups in volume directory ...")
     if not self.logic.inputVolume:
         logging.info("Error. Cannot get input volume node reference, unable to write to its volume directory. ")
     else: 
@@ -664,35 +660,50 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     else:
         return False 
 
-
-  def loadFiducialsLocalOrGlobal(self):
+  def loadFiducialsTempDir(self):
     import os.path
 
     fiducialsLoadSuccess = False
-    # prefer local markups if available 
-    logging.info("Loading fiducials from volume directory ...")
-    if not self.logic.inputVolume:
-        logging.info("No input volume.")
-    else: 
-        storageNode = self.logic.inputVolume.GetStorageNode()
-        inputFilename = storageNode.GetFileName()
-        head, tail = os.path.split(inputFilename)
-        directory = head + "/LungCTSegmenter/"
-        if not os.path.exists(directory):
-            print("No fiducials in volume directory.")
-        else: 
-            fiducialsLoadSuccess= self.loadFiducials(directory)
-
+         
     # if not local markups available load last global  
-    if not fiducialsLoadSuccess: 
-        logging.info("Loading fiducials from root directory ...")
-        directory = slicer.mrmlScene.GetRootDirectory()+"/LungCTSegmenter/"
-        if os.path.exists(directory): 
-            fiducialsLoadSuccess = self.loadFiducials(directory)
+    # logging.info("Loading last markups from temp directory ...")
+    directory = slicer.app.temporaryPath + "/LungCTSegmenter/"
+    if os.path.exists(directory): 
+        fiducialsLoadSuccess = self.loadFiducials(directory)
+        print("Loading last markups from temp directory ok.")
 
     if fiducialsLoadSuccess: 
         # start segmentation process and allow user to move or add additional markups
         self.onStartButton()
+    return fiducialsLoadSuccess
+
+  def loadFiducialsDataDir(self):
+    import os.path
+
+    fiducialsLoadSuccess = False
+    # prefer local markups if available 
+    # logging.info("Trying to load markups from volume directory ...")
+    
+    if not self.logic.inputVolume:
+        logging.info("No input volume.")
+    else: 
+        storageNode = self.logic.inputVolume.GetStorageNode()
+        if storageNode: 
+            inputFilename = storageNode.GetFileName()
+            head, tail = os.path.split(inputFilename)
+            directory = head + "/LungCTSegmenter/"
+            if not os.path.exists(directory):
+                logging.info("No markup directory in data path.")
+            else: 
+                fiducialsLoadSuccess = self.loadFiducials(directory)
+                logging.info("Succesfully loaded markups from volume directory.")
+        else:
+            logging.info("No storage node, probably node loaded from server.")
+            
+    if fiducialsLoadSuccess: 
+        # start segmentation process and allow user to move or add additional markups
+        self.onStartButton()
+    return fiducialsLoadSuccess
 
 #
 # LungCTSegmenterLogic
@@ -1392,6 +1403,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         # Restore confirmation popup setting for editing a hidden segment
         slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", previousConfirmEditHiddenSegmentSetting)
+
 
         slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
