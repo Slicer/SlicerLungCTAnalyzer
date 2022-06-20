@@ -399,7 +399,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def updateFiducialObservations(self, oldFiducial, newFiducial):
       if oldFiducial == newFiducial:
           return
-      if not oldFiducial:
+      if oldFiducial:
           self.removeObserver(oldFiducial, slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, self.updateSeeds)
           self.removeObserver(oldFiducial, slicer.vtkMRMLMarkupsNode.PointPositionUndefinedEvent, self.updateSeeds)
       if newFiducial:
