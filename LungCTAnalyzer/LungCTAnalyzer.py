@@ -199,7 +199,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         import configparser
         parser = configparser.SafeConfigParser()
-        parser.read('LCTA.INI')
+        parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
         if parser.has_option('reportFolder', 'path'): 
             self.reportFolder = parser.get('reportFolder','path')
         else: 
@@ -208,7 +208,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             Path(self.reportFolder).mkdir(parents=True, exist_ok=True)
             parser.add_section('reportFolder')
             parser.set('reportFolder', 'path', self.reportFolder)
-            with open('LCTA.INI', 'w') as configfile:    # save
+            with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
                 parser.write(configfile)
 
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
@@ -219,7 +219,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parser.add_section('Updates')
             parser.set('Updates', 'check', str(True))
             self.checkForUpdates = True
-            with open('LCTA.INI', 'w') as configfile:    # save
+            with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
                 parser.write(configfile)
 
 
@@ -312,7 +312,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
  
         import configparser
         parser = configparser.SafeConfigParser()
-        parser.read('LCTA.INI')
+        parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
 
         if parser.has_option('Updates', 'check'): 
             if self.checkForUpdates: 
@@ -325,7 +325,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 parser.set('Updates','check',str(True))
             else: 
                 parser.set('Updates','check',str(False))
-        with open('LCTA.INI', 'w') as configfile:    # save
+        with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
             parser.write(configfile)
 
 
@@ -886,13 +886,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # save new path locally
         import configparser
         parser = configparser.SafeConfigParser()
-        parser.read('LCTA.INI')
+        parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
         if parser.has_option('reportFolder', 'path'): 
             parser.set('reportFolder', 'path', self.reportFolder)
         else: 
             parser.add_section('reportFolder')
             parser.set('reportFolder', 'path', self.reportFolder)
-        with open('LCTA.INI', 'w') as configfile:    # save
+        with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
             parser.write(configfile)
 
     def onSelectReportDirectoryButton(self):

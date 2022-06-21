@@ -123,7 +123,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       import configparser
 
       parser = configparser.SafeConfigParser()
-      parser.read('LCTA.INI')
+      parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
       if parser.has_option('LungThreshholdRange', 'minimumValue'): 
           self.ui.LungThresholdRangeWidget.minimumValue = int(float(parser.get('LungThreshholdRange','minimumValue')))
       else: 
@@ -153,7 +153,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def writeConfigParser(self):
       import configparser
       parser = configparser.SafeConfigParser()
-      parser.read('LCTA.INI')
+      parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
 
       if parser.has_option('LungThreshholdRange', 'minimumValue'):
           parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.LungThresholdRangeWidget.minimumValue))
@@ -183,7 +183,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parser.add_section('AirwayThreshholdRange')
           parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
 
-      with open('LCTA.INI', 'w') as configfile:    # save
+      with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
           parser.write(configfile)
 
   def cleanup(self):
