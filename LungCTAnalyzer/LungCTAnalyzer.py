@@ -681,6 +681,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def openFile(self, filename):
         if sys.platform == "win32":
+            filename.replace('/', '\\')
             os.startfile(filename)
         else:
             opener = "open" if sys.platform == "darwin" else "xdg-open"
@@ -849,7 +850,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Open in PDF viewer
         print("Starting '"+reportPath+"' ...")
         #slash/backlash replacements because of active directory
-        self.openFile(reportPath.replace('/', '\\'))
+        self.openFile(reportPath)
   
     def onApplyButton(self):
         """
