@@ -251,7 +251,7 @@
       <item row="1" column="1">
        <widget class="QComboBox" name="detailLevelComboBox">
         <property name="toolTip">
-         <string>This parameter is equivalent to the MinimumDiameterMn parameter of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorith. 'low detail': 3; 'medium detail': 2; 'high detail': 1. The recommended initial setting is: 'low detail'.  A good estimate for this parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Try to increase the detail level and/or  to decrease the upper airway threshold (see 'Advanced'). Airway leaks: Try to decrease the detail level' and/or increase the upper airway threshold. </string>
+         <string>This parameter is equivalent to  MinimumDiameterMn of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorith. 'low detail': 3; 'medium detail': 2; 'high detail': 1. The recommended initial setting is: 'low detail'.  A good estimate for this parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or  modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold. </string>
         </property>
        </widget>
       </item>
@@ -338,7 +338,7 @@
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
         <property name="toolTip">
-         <string>This parameter is equivalent to 'threshold range' in the airway segmentation 'Local Threshold-&gt; Growcut' algorithm. It is only effective if 'Airway segmentation' is enabled.  It is recommended to leave the lower threshold slider -&gt;  full left.  If airway segment is incomplete or leaking, modify the upper threshold slider slightly and stepwise (+/- 30). Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible: Try to increase the detail level (see  drop down menu above) and/or decrease the upper threshold. Airway leaks: Try to decrease the detail level and/or  increase the upper threshold. </string>
+         <string>This parameter is equivalent to 'threshold range' in the airway segmentation 'Local Threshold-&gt; Growcut' algorithm. It is only effective if 'Airway segmentation' is enabled.  It is recommended to leave the lower threshold slider -&gt;  full left.  If airway segment is incomplete or leaking, modify the upper threshold slider slightly and stepwise (+/- 30). Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible: Increase the detail level (see drop down menu above) and/or modify the upper threshold. Airway leaks: Decrease the detail level and/or modify the upper threshold. </string>
         </property>
         <property name="singleStep">
          <double>1.000000000000000</double>
