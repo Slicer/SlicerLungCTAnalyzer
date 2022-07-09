@@ -132,7 +132,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if parser.has_option('LungThreshholdRange', 'maximumValue'): 
           self.ui.LungThresholdRangeWidget.maximumValue = int(float(parser.get('LungThreshholdRange','maximumValue')))
       else: 
-          self.ui.LungThresholdRangeWidget.maximumValue = -200
+          self.ui.LungThresholdRangeWidget.maximumValue = -400
 
       if parser.has_option('AirwayThreshholdRange', 'minimumValue'): 
           self.ui.AirwayThresholdRangeWidget.minimumValue = int(float(parser.get('AirwayThreshholdRange','minimumValue')))
@@ -142,7 +142,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if parser.has_option('AirwayThreshholdRange', 'maximumValue'): 
           self.ui.AirwayThresholdRangeWidget.maximumValue = int(float(parser.get('AirwayThreshholdRange','maximumValue')))
       else: 
-          self.ui.AirwayThresholdRangeWidget.maximumValue = -900
+          self.ui.AirwayThresholdRangeWidget.maximumValue = -850
 
       # Make sure parameter node is initialized (needed for module reload)
       self.initializeParameterNode()
@@ -230,9 +230,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def onSetDefaultButton(self):
       self.ui.LungThresholdRangeWidget.minimumValue = -1500
-      self.ui.LungThresholdRangeWidget.maximumValue = -200
+      self.ui.LungThresholdRangeWidget.maximumValue = -400
       self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
-      self.ui.AirwayThresholdRangeWidget.maximumValue = -900
+      self.ui.AirwayThresholdRangeWidget.maximumValue = -850
       self.writeConfigParser()
       self.updateParameterNodeFromGUI()
 
@@ -749,11 +749,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("LungThresholdMin"):
           parameterNode.SetParameter("LungThresholdMin", "-1500")
         if not parameterNode.GetParameter("LungThresholdMax"):
-          parameterNode.SetParameter("LungThresholdMax", "-200")
+          parameterNode.SetParameter("LungThresholdMax", "-400")
         if not parameterNode.GetParameter("AirwayThresholdMin"):
           parameterNode.SetParameter("AirwayThresholdMin", "-1500")
         if not parameterNode.GetParameter("AirwayThresholdMax"):
-          parameterNode.SetParameter("AirwayThresholdMax", "-900")
+          parameterNode.SetParameter("AirwayThresholdMax", "-850")
         if not parameterNode.GetParameter("airwaySegmentationDetailLevel"):
           parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
     @property
@@ -768,7 +768,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @property
     def lungThresholdMax(self):
         thresholdStr = self.getParameterNode().GetParameter("LungThresholdMax")
-        return float(thresholdStr) if thresholdStr else -200
+        return float(thresholdStr) if thresholdStr else -400
 
     @lungThresholdMax.setter
     def lungThresholdMax(self, value):
@@ -786,7 +786,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @property
     def airwayThresholdMax(self):
         thresholdStr = self.getParameterNode().GetParameter("AirwayThresholdMax")
-        return float(thresholdStr) if thresholdStr else -900
+        return float(thresholdStr) if thresholdStr else -850
 
     @airwayThresholdMax.setter
     def airwayThresholdMax(self, value):
