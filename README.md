@@ -17,10 +17,8 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Operation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
-<br>
 <b>Questions ? </b><br>
 The best way to ask questions is using the [Slicer forum](https://discourse.slicer.org/).  go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
-<br>
 <br>
 
 <b>Details</b><br>
@@ -60,7 +58,6 @@ See also: https://www.slicer.org/wiki/CommercialUse<br>
 <br>
 <br>
 Ideas and realization: Rudolf Bumm (KSGR) and Andras Lasso (PERK)<br>
-<br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
 
@@ -77,8 +74,7 @@ Graphical user interface
 <br>
 CT Lung Analyzer with COVID-19 result table
 <br>
-Image reference: from COVID-19 patient under surveillance, published with patient's permission.<br>
-<br>
+Image data: COVID-19 patient under surveillance, with patient's permission.<br>
 <br>
 <b>Citations</b><br>
 <br>
