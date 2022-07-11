@@ -11,17 +11,17 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Video Lung CT Segmenter](https://youtu.be/U9PUX-jLF0A) <br>
 <br>
-[Video Lung CT Analyzer] (https://youtu.be/JcgMnDhlknM) <br>
+[Video Lung CT Analyzer](https://youtu.be/JcgMnDhlknM) <br>
 <br>
 <br>
-[Installation Tutorial]https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation<br>
+[Installation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
 <br>
 <br>
 [Operation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
 <br>
 <b>Questions ? </b><br>
-The best way to ask questions is using the Slicer forum (https://discourse.slicer.org/), go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
+The best way to ask questions is using the [Slicer forum](https://discourse.slicer.org/).  go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
 <br>
 <br>
 
@@ -85,7 +85,7 @@ Image reference: from COVID-19 patient under surveillance, published with patien
 <b>Citations</b><br>
 <br>
 For publications please include this text (modifying the initial part to describe your use case):<br>
-"We performed a volumetric analysis and/or visualization in [3D Slicer](http://www.slicer.org) via the [Lung CT Analyzer project](https://github.com/rbumm/SlicerLungCTAnalyzer/)"
+"We performed a volumetric analysis and/or visualization in 3D Slicer(http://www.slicer.org) via the Lung CT Analyzer project(https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
 This project is in active development and is not FDA approved
