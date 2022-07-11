@@ -9,17 +9,15 @@ This especially crucial in the light of the current COVID-19 pandemia with high 
 The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, 3D Slicer was chosen as development platform and the inbuild Python as script language.   
 <br>
-Video (Lung CT Segmenter): https://youtu.be/U9PUX-jLF0A <br>
+[Video Lung CT Segmenter](https://youtu.be/U9PUX-jLF0A) <br>
 <br>
-Video (Lung CT Analyzer): https://youtu.be/JcgMnDhlknM <br>
-<br>
-<br>
-<b>Installation Tutorial</b><br>
-https://github.com/rbumm/SlicerLungCTAnalyzer/wiki
+[Video Lung CT Analyzer] (https://youtu.be/JcgMnDhlknM) <br>
 <br>
 <br>
-<b>Operation Tutorial</b><br>
-https://github.com/rbumm/SlicerLungCTAnalyzer/wiki
+[Installation Tutorial]https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation<br>
+<br>
+<br>
+[Operation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
 <br>
 <b>Questions ? </b><br>
@@ -87,7 +85,7 @@ Image reference: from COVID-19 patient under surveillance, published with patien
 <b>Citations</b><br>
 <br>
 For publications please include this text (modifying the initial part to describe your use case):<br>
-"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
+"We performed a volumetric analysis and/or visualization in [3D Slicer](http://www.slicer.org) via the [Lung CT Analyzer project](https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
 This project is in active development and is not FDA approved
