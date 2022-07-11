@@ -13,9 +13,7 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Video Lung CT Analyzer](https://youtu.be/JcgMnDhlknM) <br>
 <br>
-<br>
 [Installation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
-<br>
 <br>
 [Operation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
@@ -88,7 +86,7 @@ For publications please include this text (modifying the initial part to describ
 "We performed a volumetric analysis and/or visualization in 3D Slicer(http://www.slicer.org) via the Lung CT Analyzer project(https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
-This project is in active development and is not FDA approved
+This project is in active development and is not FDA approved.
 <br>
 <br>
 Impressum: Prof. Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
