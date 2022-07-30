@@ -103,9 +103,6 @@ V 2.48
 Implement AirwayThresholdRangeWidget and use airway thesholds in 'Local threshold' airway segmentation method.  
 Improve post-segmentation workflow in LungCTSegmenter UI - enable 'Cancel/Reset', disable 'Start'
 
-V 2.50 
-save ini settings in slicer.app.slicerUserSettingsFilePath/LCTA.ini
-
 V 2.49
 ENH enhance markup re-usability in LungCTSegmenter workflow
 
@@ -115,3 +112,7 @@ ENH enhance markup re-usability in LungCTSegmenter workflow
 - improve tooltexts
 Make 2D and 3D visibility failsafe (always on) after 'Apply'  
 - remove 'l' hotkey from Lung CT Segmenter for loading markups
+
+V 2.50 
+save ini settings in slicer.app.slicerUserSettingsFilePath/LCTA.ini
+
