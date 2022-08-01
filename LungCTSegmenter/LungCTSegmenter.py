@@ -1255,6 +1255,25 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", qt.QMessageBox.No)
 
         segmentIds = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
+        segment = self.outputSegmentation.GetSegmentation().GetSegment(self.rightLungSegmentId)
+        segment.SetTag(segment.GetTerminologyEntryTagName(),
+            "Segmentation category and type - 3D Slicer General Anatomy list"
+            "~SCT^123037004^Anatomical Structure"
+            "~SCT^3341006^Right lung"
+            "~^^"
+            "~Anatomic codes - DICOM master list"
+            "~^^"
+            "~^^")
+        segment = self.outputSegmentation.GetSegmentation().GetSegment(self.leftLungSegmentId)
+        segment.SetTag(segment.GetTerminologyEntryTagName(),
+            "Segmentation category and type - 3D Slicer General Anatomy list"
+            "~SCT^123037004^Anatomical Structure"
+            "~SCT^44029006^Left lung"
+            "~^^"
+            "~Anatomic codes - DICOM master list"
+            "~^^"
+            "~^^")
+
         
         # fill holes
         for i, segmentId in enumerate(segmentIds):
@@ -1390,11 +1409,23 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("JointTaubinSmoothingFactor","0.5")
                 effect.self().onApply()
                 
+            segment = self.outputSegmentation.GetSegmentation().GetSegment(airwaySegID)
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+              "Segmentation category and type - 3D Slicer General Anatomy list"
+              "~SCT^123037004^Anatomical Structure"
+              "~SCT^44567001^Trachea"
+              "~^^"
+              "~Anatomic codes - DICOM master list"
+              "~^^"
+              "~^^")
             
         # optimize display
         # self.hideVolumeRendering(self.labelmapVolumeNode)
         # self.showVolumeRendering(self.inputVolume)
         
+        # Use a lower smoothing than the default 0.5 to ensure that thin airways are not suppressed in the 3D output
+        self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.2")
+
         self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
                         

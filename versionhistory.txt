@@ -116,3 +116,5 @@ Make 2D and 3D visibility failsafe (always on) after 'Apply'
 V 2.50 
 save ini settings in slicer.app.slicerUserSettingsFilePath/LCTA.ini
 
+V 2.51 
+add SNOMED International tags or lungs and trachea, set "Smoothing factor","0.2" not to suppress airway details
