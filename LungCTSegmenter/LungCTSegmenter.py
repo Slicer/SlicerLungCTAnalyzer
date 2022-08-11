@@ -1241,11 +1241,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # Ensure closed surface representation is not present (would slow down computations)
         self.outputSegmentation.RemoveClosedSurfaceRepresentation()
 
+        self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+
         effect = self.segmentEditorWidget.activeEffect()
         effect.self().onApply()
-
-        self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
-
 
         # disable intensity masking, otherwise vessels do not fill
         self.segmentEditorNode.SetMasterVolumeIntensityMask(False)
@@ -1362,9 +1363,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     effect.setParameter("MinimumDiameterMm","1")
                     
                 effect.setParameter("SegmentationAlgorithm","GrowCut")
-                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+                # do not modify lungs by airways to avoid postprocessing (tumor-like) effects on lung mask
+                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
                 self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-                
                 import numpy as np
                 markupsIndex = 0
                 # Get point coordinate in RAS
