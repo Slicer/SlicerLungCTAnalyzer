@@ -79,13 +79,13 @@ Image data: COVID-19 patient under surveillance, with patient's permission.<br>
 <b>Citations</b><br>
 <br>
 For publications please include this text (modifying the initial part to describe your use case):<br>
-"We performed a volumetric analysis and/or visualization in 3D Slicer(http://www.slicer.org) via the Lung CT Analyzer project(https://github.com/rbumm/SlicerLungCTAnalyzer/)"
+"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
 This project is in active development and is not FDA approved.
 <br>
 <br>
-Experimental AI lung and lobe segmentation is realized by implementation of Lungmask(https://github.com/JoHof/lungmask) with permission. 
+Experimental AI lung and lobe segmentation is realized by implementation of Lungmask (https://github.com/JoHof/lungmask) with permission. Thank you Johannes. 
 <br>
 Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
 <br>
