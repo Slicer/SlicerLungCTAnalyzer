@@ -84,6 +84,10 @@ For publications please include this text (modifying the initial part to describ
 <br>
 This project is in active development and is not FDA approved.
 <br>
+Experimental AI lung and lobe segmentation is realized by Lungmask(https://github.com/JoHof/lungmask) with permission. 
+<br>
+Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
+<br>
 <br>
 Impressum: Prof. Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
 <br>
