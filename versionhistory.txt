@@ -118,3 +118,6 @@ save ini settings in slicer.app.slicerUserSettingsFilePath/LCTA.ini
 
 V 2.51 
 add SNOMED International tags or lungs and trachea, set "Smoothing factor","0.2" not to suppress airway details
+
+V 2.52
+add experimental AI segmentation: lungmask U-net lung and lobe segmentation

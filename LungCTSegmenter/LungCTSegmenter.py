@@ -5,6 +5,9 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
+import SimpleITK as sitk
+import sitkUtils
+
 #
 # LungCTSegmenter
 #
@@ -21,11 +24,13 @@ class LungCTSegmenter(ScriptedLoadableModule):
     self.parent.dependencies = []
     self.parent.contributors = ["Rudolf Bumm (KSGR), Andras Lasso (PERK)"]
     self.parent.helpText = """
-This module can segment lungs from CT images from a few user-defined landmarks.
-See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.
+This module segments lungs and airways from chest CT either with a few user-defined landmarks or by involving AI. 
+See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
+<br>
+AI segmentation involves <a href="https://github.com/JoHof/lungmask">Lungmask U-net</a>: See Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
 """
     self.parent.acknowledgementText = """
-This file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. """
+This extension was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Lungmask (U-net models and code) by Johannes Hofmanninger are used with permission."""
 
     # Sample data is already registered by LungCTAnalyzer module, so there is no need to add here
 
@@ -51,6 +56,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._tracheaFiducials = None
       self._updatingGUIFromParameterNode = False
       self.createDetailedAirways = False
+      self.useAI = False
       self.shrinkMasks = False
       self.detailedMasks = False
       self.isSufficientNumberOfPointsPlaced = False
@@ -107,6 +113,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.useAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -381,6 +388,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.startButton.enabled = False
         
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
+      self.ui.useAICheckBox.checked = self.useAI
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
@@ -433,6 +441,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
       self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
+      self.useAI = self.ui.useAICheckBox.checked 
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
@@ -453,40 +462,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           segmentationDisplayNode.Visibility2DOn()
           segmentationDisplayNode.Visibility3DOn()
 
-  def checkCIPInstalled(self):
-      #  
-      extensionName = 'Chest_Imaging_Platform'
-      em = slicer.app.extensionsManagerModel()
-      logging.info('Checking existence of CIP ...')
-      if not em.isExtensionInstalled(extensionName):
-          logging.info('CIP not found. Installing CIP ...')
-          if not slicer.util.confirmYesNoDisplay("The Chest Imaging Platform is needed to do airway segmentation. Do you want to install it ?", windowTitle=None, parent=None):
-              logging.info('User cancelled CIP installation.')
-              self.createDetailedAirways = False
-              self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
-              return
-          else: 
-              extensionMetaData = em.retrieveExtensionMetadataByName(extensionName)
-              if slicer.app.majorVersion*100+slicer.app.minorVersion < 413:
-                  # Slicer-4.11
-                  itemId = extensionMetaData['item_id']
-                  url = f"{em.serverUrl().toString()}/download?items={itemId}"
-              else:
-                  # Slicer-4.13
-                  itemId = extensionMetaData['_id']
-                  url = f"{em.serverUrl().toString()}/api/v1/item/{itemId}/download"
-              extensionPackageFilename = slicer.app.temporaryPath+'/'+itemId
-              slicer.util.downloadFile(url, extensionPackageFilename)
-              em.installExtension(extensionPackageFilename)
-              if not slicer.util.confirmYesNoDisplay("A restart of Slicer is needed. Do you want to continue?", windowTitle=None, parent=None):
-                  self.createDetailedAirways = False
-                  self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
-                  return
-              else: 
-                  slicer.util.restart()
-      else: 
-          logging.info('CIP found.')
-
   def onStartButton(self):
       """
       Run processing when user clicks "Start" button.
@@ -502,9 +477,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
-          #if self.createDetailedAirways:
-          #  self.checkCIPInstalled() 
           self.logic.detailedAirways = self.createDetailedAirways
+          self.logic.useAI = self.useAI
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
@@ -524,6 +498,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
+          self.logic.useAI = self.useAI
           # always save a copy of the current markups in Slicer temp dir for later use
           self.saveFiducialsTempDir()
           if self.saveFiducials: 
@@ -736,6 +711,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationStarted = False
         self.segmentationFinished = False
         self.detailedAirways = False
+        self.useAI = False
         self.shrinkMasks = False
         self.detailedMasks = False
         
@@ -1014,6 +990,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
         slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("Lung segmentation"))
+        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("AI lung segmentation"))
+        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("AI lobe segmentation"))
         
         self.removeTemporaryObjects()
 
@@ -1228,6 +1206,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
       displayNode.SetVisibility(False)
 
+    def postprocessAISegmentation(self, outputSegmentation, _nth, segmentName):
+        outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
+        self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+        self.showStatusMessage(f'Smoothing AI lung segmentation ' + segmentName + '' )
+        self.segmentEditorNode.SetSelectedSegmentID(outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName))
+        self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+        effect = self.segmentEditorWidget.activeEffect()
+        effect.setParameter("SmoothingMethod","GAUSSIAN")
+        effect.setParameter("GaussianStandardDeviationMm","2")
+        effect.self().onApply()
+
     def applySegmentation(self):
 
         if not self.segmentEditorWidget.activeEffect():
@@ -1274,8 +1265,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             "~Anatomic codes - DICOM master list"
             "~^^"
             "~^^")
-
-        
         # fill holes
         for i, segmentId in enumerate(segmentIds):
             self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
@@ -1305,7 +1294,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.outputSegmentation.Modified()
         self.outputSegmentation.EndModify(wasModified)
 
-        # Final smoothing
+        # smoothing
         for i, segmentId in enumerate(segmentIds):
             self.showStatusMessage(f'Smoothing ({i+1}/{len(segmentIds)})...')
             self.segmentEditorNode.SetSelectedSegmentID(segmentId)
@@ -1441,9 +1430,96 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
 
+        _doAI = False
+        if self.useAI:
+            import torch
+            if not torch.cuda.is_available():
+                logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
+                if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last several 3-10 minutes. Are you sure you want to continue AI segmentation?"):
+                    _doAI = False
+                    logging.info('AI processing cancelled by user.')
+                else:
+                    _doAI = True
+            else: 
+                _doAI = True
+                logging.info('Pytorch CUDA is available. AI will use GPU processing.')
+
+        if _doAI:
+
+            # Import the required libraries
+            self.showStatusMessage(' Importing lungmask AI ...')
+            try:
+                import lungmask
+            except ModuleNotFoundError:
+                slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
+                import lungmask
+            
+            from lungmask import mask                
+
+            self.showStatusMessage(' Creating lungs with AI ...')
+            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+
+            segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
+            
+            # Create temporary labelmap
+            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
+
+            # Fill temporary labelmap by AI numpy
+            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
+
+            # Import labelmap to segmentation
+            outputLungSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode","AI lung segmentation")
+            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, outputLungSegmentation)
+            
+            # Postprocess lungs
+            self.postprocessAISegmentation(outputLungSegmentation,0,"right lung")
+            self.postprocessAISegmentation(outputLungSegmentation,1,"left lung")
+
+            outputLungSegmentation.GetDisplayNode().SetOpacity3D(0.5)
+            outputLungSegmentation.GetDisplayNode().SetVisibility(True)
+            
+            outputLungSegmentation.CreateClosedSurfaceRepresentation()
+
+            # Delete temporary labelmap
+            slicer.mrmlScene.RemoveNode(labelVolumeNode)
+
+
+            self.showStatusMessage(' Creating lung lobes with AI ...')
+            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+            model = mask.get_model('unet','LTRCLobes')
+            segmentation_np = mask.apply(inputVolumeSitk, model)
+            
+            # Create temporary labelmap
+            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
+
+            # Fill temporary labelmap by AI numpy
+            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
+
+            # Import labelmap to segmentation
+            outputLobeSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode","AI lobe segmentation")
+            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, outputLobeSegmentation)
+
+            # Postprocess lobes
+            self.postprocessAISegmentation(outputLobeSegmentation,0,"left upper lobe")
+            self.postprocessAISegmentation(outputLobeSegmentation,1,"left lower lobe")
+            self.postprocessAISegmentation(outputLobeSegmentation,2,"right upper lobe")
+            self.postprocessAISegmentation(outputLobeSegmentation,3,"right middle lobe")
+            self.postprocessAISegmentation(outputLobeSegmentation,4,"right lower lobe")
+
+            outputLobeSegmentation.GetDisplayNode().SetOpacity3D(0.5)
+            outputLobeSegmentation.GetDisplayNode().SetVisibility(True)
+            
+            outputLobeSegmentation.CreateClosedSurfaceRepresentation()
+
+            # Delete temporary labelmap
+            slicer.mrmlScene.RemoveNode(labelVolumeNode)
+
+                
         self.showStatusMessage(' Cleaning up ...')
         self.removeTemporaryObjects()
-                
+
         self.segmentationStarted = False
         self.segmentationFinished = True
 
