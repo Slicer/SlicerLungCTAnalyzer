@@ -39,8 +39,7 @@ Affected left lung volume (infiltrated + collapsed left volume, % of left lung v
 Affected total lung volume (infiltrated + collapsed total volume, % of total lung volume) <br>
 <br></i>
 
-Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
-Intrapulmonary airways are not subtracted. <br>
+Vessel volume is subtracted from lung volumes, intrapulmonary airways are not subtracted. <br>
 <br>
 LCTA has been developed and tested with 3D Slicer V 4.11.200930 and is comppatible with Slicer 5. 
 
@@ -58,6 +57,8 @@ The code presented here is distributed under the Apache license (https://www.apa
 <br>
 <br>
 Experimental AI lung and lobe segmentation is realized by implementation of Lungmask (https://github.com/JoHof/lungmask) with permission. Thank you Johannes. 
+<br>
+<br>
 <b>Screenshots:</b> <br>
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
