@@ -41,7 +41,7 @@ Affected total lung volume (infiltrated + collapsed total volume, % of total lun
 
 Vessel volume is subtracted from lung volumes, intrapulmonary airways are not subtracted. <br>
 <br>
-LCTA has been developed and tested with 3D Slicer V 4.11.200930 and is comppatible with Slicer 5. 
+LCTA has been developed and tested with 3D Slicer V 4.11.200930 and is compatible with Slicer 5. 
 
 <b>Limitations</b><br>
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
@@ -87,7 +87,7 @@ If you use the deep learning function from this software in your research, pleas
 Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
 <br>
 <br>
-This project is in active development and is not FDA approved.
+This project is in active development and not FDA approved.
 <br>
 <br>
 Impressum: Prof. Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
