@@ -1284,6 +1284,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
+        elif segmentName == "airways":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+              "Segmentation category and type - 3D Slicer General Anatomy list"
+              "~SCT^123037004^Anatomical Structure"
+              "~SCT^44567001^Trachea"
+              "~^^"
+              "~Anatomic codes - DICOM master list"
+              "~^^"
+              "~^^")
 
     def applySegmentation(self):
 
