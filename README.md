@@ -41,7 +41,7 @@ Affected total lung volume (infiltrated + collapsed total volume, % of total lun
 
 Vessel volume is subtracted from lung volumes, intrapulmonary airways are not subtracted. <br>
 <br>
-LCTA has been developed and tested with 3D Slicer V 4.11.200930 and is compatible with Slicer 5. 
+LCTA has been developed and tested with 3D Slicer 5.03 stable.
 
 <b>Limitations</b><br>
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 

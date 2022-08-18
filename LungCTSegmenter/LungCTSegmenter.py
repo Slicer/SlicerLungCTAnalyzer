@@ -1218,6 +1218,72 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("SmoothingMethod","GAUSSIAN")
         effect.setParameter("GaussianStandardDeviationMm","2")
         effect.self().onApply()
+        
+        _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+        segment = outputSegmentation.GetSegmentation().GetSegment(_segID)
+        if segmentName == "right lung": 
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^3341006^Right lung"
+                "~^^"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "left lung":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^44029006^Left lung"
+                "~^^"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "left upper lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^45653009^Upper lobe of Lung"
+                "~SCT^7771000^Left"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "left lower lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^90572001^Lower lobe of lung"
+                "~SCT^7771000^Left"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "right upper lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^45653009^Upper lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "right middle lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^72481006^Middle lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        else if segmentName == "right lower lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^90572001^Lower lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
 
     def applySegmentation(self):
 
@@ -1435,7 +1501,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             import torch
             if not torch.cuda.is_available():
                 logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
-                if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last several 3-10 minutes. Are you sure you want to continue AI segmentation?"):
+                if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last 3-10 minutes. Are you sure you want to continue AI segmentation?"):
                     _doAI = False
                     logging.info('AI processing cancelled by user.')
                 else:
