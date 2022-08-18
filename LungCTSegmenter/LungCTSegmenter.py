@@ -1211,7 +1211,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-        self.showStatusMessage(f'Smoothing AI lung segmentation ' + segmentName + '' )
+        self.showStatusMessage(f'Smoothing AI lung segmentation {segmentName}')
         self.segmentEditorNode.SetSelectedSegmentID(outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName))
         self.segmentEditorWidget.setActiveEffectByName("Smoothing")
         effect = self.segmentEditorWidget.activeEffect()
@@ -1230,7 +1230,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "left lung":
+        elif segmentName == "left lung":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
@@ -1239,7 +1239,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "left upper lobe":
+        elif segmentName == "left upper lobe":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
@@ -1248,7 +1248,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "left lower lobe":
+        elif segmentName == "left lower lobe":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
@@ -1257,7 +1257,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "right upper lobe":
+        elif segmentName == "right upper lobe":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
@@ -1266,7 +1266,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "right middle lobe":
+        elif segmentName == "right middle lobe":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
@@ -1275,7 +1275,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
-        else if segmentName == "right lower lobe":
+        elif segmentName == "right lower lobe":
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
