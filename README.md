@@ -58,7 +58,7 @@ The code presented here is distributed under the Apache license (https://www.apa
 <br>
 Deep learning lung and lobe segmentation is realized by implementation of 'Lungmask' AI models and algorithms (https://github.com/JoHof/lungmask) with permission. 
 <br>
-Thank you Johannes Hofoldinger. 
+Thank you Johannes Hofmanninger. 
 <br>
 <br>
 <b>Screenshots:</b> <br>
