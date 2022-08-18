@@ -22,7 +22,9 @@ The best way to ask questions is using the [Slicer forum](https://discourse.slic
 <br>
 
 <b>Details</b><br>
-The software uses freely definable threshold ranges to identify five regions of interest: "Bulla/emphysema","Inflated","Infiltrated", "Collapsed" and "Lung Vessel". 
+Lung Segmentation can be archieved bei either placing a few markups on the lung or using the inbuild deep learning lung and lobe segmentation algorithm.
+Manually assisted airway segmentation is supported. 
+The Lung Analyzer uses freely definable threshold ranges to identify five regions of interest: "Bulla/emphysema","Inflated","Infiltrated", "Collapsed" and "Lung Vessel". 
 Segments are generated using 3DSlicer's segment editor "Threshold" and "Grow from Seeds" function. The volume of each segment is calculated by using 3DSlicer's "Segment statistics" function. 
 The results are then superimposed to the CT 2D views in standard colors: "Bulla" = black, "Inflated" = blue, "Infiltrated" = yellow, "Collapsed" = pink and "Vessel" = red. 
 In addition, spatial reconstruction (3D) of the diseased lung segments is available. The total results of the segmentation include:<br>
@@ -43,12 +45,9 @@ Comment: The AF-Q parameter was discontinued after realizing it´s non-linearity
 Vessel volume is subtracted from right lung volume, left lung volume and total lung volume to compensate for this anatomic compartment.
 Intrapulmonary airways are not yet measured by LCTA and are not compensated for in the results. <br>
 <br>
-<b>First Results</b><br>
-If used with sensible thresholds, LCTA is feasible, easy to use and reproducible. Spacial reconstruction of the segments yield impressive visual results.  Production of lung masks in the "Lung Segmenter" is done in about 2 minutes after defining a few fiducials on the right and left lung and one additional on the tracea.  Running LCTA itself  only takes 5-6 seconds, running LCTA with 3D reconstruction takes about 1-2  minutes. LCTA has been developed and tested with 3D Slicer V 4.11.200930. 
+LCTA has been developed and tested with 3D Slicer V 4.11.200930 and is comppatible with Slicer 5. 
 
 <b>Limitations</b><br>
-Lung volumes represent areas within the lung masks only. This induces a marginal volume error. 
-Lung vessels have a thin infiltration-like parenchyma cover around them. This induces a small volume error.  
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse<br>
 <br>
@@ -60,7 +59,11 @@ See also: https://www.slicer.org/wiki/CommercialUse<br>
 Ideas and realization: Rudolf Bumm (KSGR) and Andras Lasso (PERK)<br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
-
+<br>
+Experimental AI lung and lobe segmentation is realized by implementation of Lungmask (https://github.com/JoHof/lungmask) with permission. Thank you Johannes. 
+<br>
+Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
+<br>
 <b>Screenshots:</b> <br>
 <br>
 ![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
@@ -83,11 +86,6 @@ For publications please include this text (modifying the initial part to describ
 <br>
 <br>
 This project is in active development and is not FDA approved.
-<br>
-<br>
-Experimental AI lung and lobe segmentation is realized by implementation of Lungmask (https://github.com/JoHof/lungmask) with permission. Thank you Johannes. 
-<br>
-Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
 <br>
 <br>
 Impressum: Prof. Rudolf Bumm, Department of Surgery, Kantonsspital Graubünden (KSGR), Loestrasse 170, Chur, Switzerland
