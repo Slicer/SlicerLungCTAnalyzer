@@ -56,7 +56,9 @@ Ideas and realization: Rudolf Bumm (KSGR) and Andras Lasso (PERK)<br>
 The code presented here is distributed under the Apache license (https://www.apache.org/licenses/LICENSE-2.0).<br> 
 <br>
 <br>
-Experimental AI lung and lobe segmentation is realized by implementation of Lungmask (https://github.com/JoHof/lungmask) with permission. Thank you Johannes. 
+Deep learning lung and lobe segmentation is realized by implementation of 'Lungmask' AI models and algorithms (https://github.com/JoHof/lungmask) with permission. 
+<br>
+Thank you Johannes Hofoldinger. 
 <br>
 <br>
 <b>Screenshots:</b> <br>
