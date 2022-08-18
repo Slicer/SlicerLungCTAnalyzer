@@ -1,11 +1,10 @@
 # Lung CT Analyzer
 
-Lung CT Analyzer is a 3D Slicer extension for segmentation and spatial reconstruction of infiltrated, emphysematic and collapsed lung areas in CT scans. 
+Lung CT Analyzer is a 3D Slicer extension for lung, lobe and airway segmentation as well as spatial reconstruction of infiltrated, emphysematic and collapsed lung areas. 
 
 <b>Introduction</b><br>
 The extent of pulmonary infiltrations as well as the presence of areas like emphysema or bullae are usually analyzed visually in CT scans. 
-Abnormalities can not be quantified in numbers or milliliters and thus it is difficult to objectively compare results.  
-This especially crucial in the light of the current COVID-19 pandemia with high case loads of patients with severe lung infiltrations, who need meticulous follow up over time.   
+Abnormalities can not be quantified in numbers or milliliters making it difficult to objectively compare results. In the current COVID-19 pandemia high case loads of patients with severe lung infiltrations, who need meticulous follow up over time, accumulate.   
 The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
 3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, 3D Slicer was chosen as development platform and the inbuild Python as script language.   
 <br>
@@ -22,8 +21,8 @@ The best way to ask questions is using the [Slicer forum](https://discourse.slic
 <br>
 
 <b>Details</b><br>
-Lung Segmentation can be archieved bei either placing a few markups on the lung or using the inbuild deep learning lung and lobe segmentation algorithm.
-Manually assisted airway segmentation is supported. 
+Lung segmentation can be archieved bei either placing a few markups on the lung or using a deep learning lung and lobe segmentation algorithm.
+A sensitive and manually assisted growcut airway segmentation is supported. 
 The Lung Analyzer uses freely definable threshold ranges to identify five regions of interest: "Bulla/emphysema","Inflated","Infiltrated", "Collapsed" and "Lung Vessel". 
 Segments are generated using 3DSlicer's segment editor "Threshold" and "Grow from Seeds" function. The volume of each segment is calculated by using 3DSlicer's "Segment statistics" function. 
 The results are then superimposed to the CT 2D views in standard colors: "Bulla" = black, "Inflated" = blue, "Infiltrated" = yellow, "Collapsed" = pink and "Vessel" = red. 
