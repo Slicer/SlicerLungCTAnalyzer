@@ -342,7 +342,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           else:
               self.setInstructions('Click "Start" to initiate point placement.')
       else:
-          
           slicer.app.processEvents()
           rightLungF = self.logic.rightLungFiducials.GetNumberOfDefinedControlPoints()
           leftLungF = self.logic.leftLungFiducials.GetNumberOfDefinedControlPoints()
@@ -351,19 +350,19 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           
           # Segmentation is in progress
           self.ui.adjustPointsGroupBox.enabled = True
-          if  rightLungF < 3:
+          if  rightLungF < 3 and not self.useAI:
               self.setInstructionPlaceMorePoints("right lung", 0, 3, rightLungF)
               self.ui.rightLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
-          elif leftLungF < 3:
+          elif leftLungF < 3 and not self.useAI:
               self.setInstructionPlaceMorePoints("left lung", 0, 3, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
-          elif rightLungF < 6:
+          elif rightLungF < 6 and not self.useAI:
               self.setInstructionPlaceMorePoints("right lung", 3, 6, rightLungF)
               self.ui.rightLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
-          elif leftLungF < 6:
+          elif leftLungF < 6 and not self.useAI:
               self.setInstructionPlaceMorePoints("left lung", 3, 6, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
@@ -372,7 +371,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.ui.tracheaPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
           else:
-              self.setInstructions('Verify that segmentation is complete. Click "Apply" to finalize.')
+              if self.useAI:
+                  self.setInstructions('Click "Apply" to finalize.')
+                  self.ui.tracheaPlaceWidget.placeModeEnabled = False
+                  self.ui.adjustPointsGroupBox.enabled = True
+              else:
+                  self.setInstructions('Verify that segmentation is complete. Click "Apply" to finalize.')
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
               self.isSufficientNumberOfPointsPlaced = True
 
@@ -403,6 +407,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       # All the GUI updates are done
       self._updatingGUIFromParameterNode = False
+      
 
   def updateFiducialObservations(self, oldFiducial, newFiducial):
       if oldFiducial == newFiducial:
@@ -931,6 +936,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
       """
       Finalize the previewed segmentation.
       """
+      
+      if self.useAI: 
+        return
 
       if (not self.rightLungFiducials or self.rightLungFiducials.GetNumberOfControlPoints() < 6
           or not self.leftLungFiducials or self.leftLungFiducials.GetNumberOfControlPoints() < 6
@@ -1026,20 +1034,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("SmoothModel","0")
 
         effect.self().onApply()
-        
-        # systematically remove small unwanted leftover islands at the surface cut borderlines 
-
-        #self.segmentEditorNode.SetSelectedSegmentID(id)
-        #self.segmentEditorWidget.setActiveEffectByName("Islands")
-        #effect = self.segmentEditorWidget.activeEffect()
-        ##effect.setParameter("MinimumSize","1000")
-        #effect.setParameter("Operation","KEEP_LARGEST_ISLAND")
-        #self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) # very important do do this, otherwise other segments become corrupted
-        #self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-        
-        #effect.self().onApply()
-
-        
         
 
     def createSubSegment(self,segmentId,name): 
@@ -1189,16 +1183,23 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     def postprocessAISegmentation(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
+        _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
-        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
         self.showStatusMessage(f'Smoothing AI lung segmentation {segmentName}')
-        self.segmentEditorNode.SetSelectedSegmentID(outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName))
+        self.segmentEditorNode.SetSelectedSegmentID(_segID)
         self.segmentEditorWidget.setActiveEffectByName("Smoothing")
         effect = self.segmentEditorWidget.activeEffect()
         effect.setParameter("SmoothingMethod","GAUSSIAN")
         effect.setParameter("GaussianStandardDeviationMm","2")
         effect.self().onApply()
+
+        displayNode = outputSegmentation.GetDisplayNode()
+        # Set overall opacity of the segmentation
+        displayNode.SetOpacity3D(1.0)  
+        # Set opacity of a single segment
+        displayNode.SetSegmentOpacity3D(_segID, 0.3)  
         
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         segment = outputSegmentation.GetSegmentation().GetSegment(_segID)
@@ -1277,105 +1278,180 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     def applySegmentation(self):
 
-        if not self.segmentEditorWidget.activeEffect():
+        if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
             return
 
         import time
         startTime = time.time()
 
-        self.showStatusMessage('Finalize region growing...')
-        # Ensure closed surface representation is not present (would slow down computations)
-        self.outputSegmentation.RemoveClosedSurfaceRepresentation()
+        if not self.useAI: 
+            self.showStatusMessage('Finalize region growing...')
+            # Ensure closed surface representation is not present (would slow down computations)
+            self.outputSegmentation.RemoveClosedSurfaceRepresentation()
 
-        self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
-        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
-        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+            self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+            self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
+            self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
 
-        effect = self.segmentEditorWidget.activeEffect()
-        effect.self().onApply()
-
-        # disable intensity masking, otherwise vessels do not fill
-        self.segmentEditorNode.SetMasterVolumeIntensityMask(False)
-
-        # Prevent confirmation popup for editing a hidden segment
-        previousConfirmEditHiddenSegmentSetting = slicer.app.settings().value("Segmentations/ConfirmEditHiddenSegment")
-        slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", qt.QMessageBox.No)
-
-        segmentIds = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
-        segment = self.outputSegmentation.GetSegmentation().GetSegment(self.rightLungSegmentId)
-        segment.SetTag(segment.GetTerminologyEntryTagName(),
-            "Segmentation category and type - 3D Slicer General Anatomy list"
-            "~SCT^123037004^Anatomical Structure"
-            "~SCT^3341006^Right lung"
-            "~^^"
-            "~Anatomic codes - DICOM master list"
-            "~^^"
-            "~^^")
-        segment = self.outputSegmentation.GetSegmentation().GetSegment(self.leftLungSegmentId)
-        segment.SetTag(segment.GetTerminologyEntryTagName(),
-            "Segmentation category and type - 3D Slicer General Anatomy list"
-            "~SCT^123037004^Anatomical Structure"
-            "~SCT^44029006^Left lung"
-            "~^^"
-            "~Anatomic codes - DICOM master list"
-            "~^^"
-            "~^^")
-        # fill holes
-        for i, segmentId in enumerate(segmentIds):
-            self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
-            self.segmentEditorNode.SetSelectedSegmentID(segmentId)
-            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
             effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
-            effect.setParameter("KernelSizeMm","12")
             effect.self().onApply()
 
-        # switch to full-resolution segmentation (this is quick, there is no need for progress message)
-        self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
-        referenceGeometryString = self.outputSegmentation.GetSegmentation().GetConversionParameter(slicer.vtkSegmentationConverter.GetReferenceImageGeometryParameterName())
-        referenceGeometryImageData = slicer.vtkOrientedImageData()
-        slicer.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImageData, False)
-        wasModified = self.outputSegmentation.StartModify()
-        for i, segmentId in enumerate(segmentIds):
-            currentSegment = self.outputSegmentation.GetSegmentation().GetSegment(segmentId)
-            # Get master labelmap from segment
-            currentLabelmap = currentSegment.GetRepresentation("Binary labelmap")
-            # Resample
-            if not slicer.vtkOrientedImageDataResample.ResampleOrientedImageToReferenceOrientedImage(
-              currentLabelmap, referenceGeometryImageData, currentLabelmap, False, True):
-              raise ValueError("Failed to resample segment " << currentSegment.GetName())
-        self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
-        # Trigger display update
-        self.outputSegmentation.Modified()
-        self.outputSegmentation.EndModify(wasModified)
+            # disable intensity masking, otherwise vessels do not fill
+            self.segmentEditorNode.SetMasterVolumeIntensityMask(False)
 
-        # smoothing
-        for i, segmentId in enumerate(segmentIds):
-            self.showStatusMessage(f'Smoothing ({i+1}/{len(segmentIds)})...')
-            self.segmentEditorNode.SetSelectedSegmentID(segmentId)
-            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("SmoothingMethod","GAUSSIAN")
-            effect.setParameter("GaussianStandardDeviationMm","2")
-            effect.self().onApply()
-        
-        if self.shrinkMasks: 
-            # Final shrinking masks by 1 mm
+            # Prevent confirmation popup for editing a hidden segment
+            previousConfirmEditHiddenSegmentSetting = slicer.app.settings().value("Segmentations/ConfirmEditHiddenSegment")
+            slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", qt.QMessageBox.No)
+
+            segmentIds = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
+            
+            segment = self.outputSegmentation.GetSegmentation().GetSegment(self.rightLungSegmentId)
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^3341006^Right lung"
+                "~^^"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+            segment = self.outputSegmentation.GetSegmentation().GetSegment(self.leftLungSegmentId)
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^44029006^Left lung"
+                "~^^"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+
+            # fill holes
             for i, segmentId in enumerate(segmentIds):
-                self.showStatusMessage(f'Final shrinking ({i+1}/{len(segmentIds)})...')
+                self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
                 self.segmentEditorNode.SetSelectedSegmentID(segmentId)
-                self.segmentEditorWidget.setActiveEffectByName("Margin")
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
                 effect = self.segmentEditorWidget.activeEffect()
-                effect.setParameter("MarginSizeMm","-1")
+                effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
+                effect.setParameter("KernelSizeMm","12")
                 effect.self().onApply()
+
+            # switch to full-resolution segmentation (this is quick, there is no need for progress message)
+            self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
+            referenceGeometryString = self.outputSegmentation.GetSegmentation().GetConversionParameter(slicer.vtkSegmentationConverter.GetReferenceImageGeometryParameterName())
+            referenceGeometryImageData = slicer.vtkOrientedImageData()
+            slicer.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImageData, False)
+            wasModified = self.outputSegmentation.StartModify()
+            for i, segmentId in enumerate(segmentIds):
+                currentSegment = self.outputSegmentation.GetSegmentation().GetSegment(segmentId)
+                # Get master labelmap from segment
+                currentLabelmap = currentSegment.GetRepresentation("Binary labelmap")
+                # Resample
+                if not slicer.vtkOrientedImageDataResample.ResampleOrientedImageToReferenceOrientedImage(
+                  currentLabelmap, referenceGeometryImageData, currentLabelmap, False, True):
+                  raise ValueError("Failed to resample segment " << currentSegment.GetName())
+            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+            # Trigger display update
+            self.outputSegmentation.Modified()
+            self.outputSegmentation.EndModify(wasModified)
+
+            # smoothing
+            for i, segmentId in enumerate(segmentIds):
+                self.showStatusMessage(f'Smoothing ({i+1}/{len(segmentIds)})...')
+                self.segmentEditorNode.SetSelectedSegmentID(segmentId)
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("SmoothingMethod","GAUSSIAN")
+                effect.setParameter("GaussianStandardDeviationMm","2")
+                effect.self().onApply()
+            
+            if self.shrinkMasks: 
+                # Final shrinking masks by 1 mm
+                for i, segmentId in enumerate(segmentIds):
+                    self.showStatusMessage(f'Final shrinking ({i+1}/{len(segmentIds)})...')
+                    self.segmentEditorNode.SetSelectedSegmentID(segmentId)
+                    self.segmentEditorWidget.setActiveEffectByName("Margin")
+                    effect = self.segmentEditorWidget.activeEffect()
+                    effect.setParameter("MarginSizeMm","-1")
+                    effect.self().onApply()
+            
+            if self.detailedMasks: 
+                self.createDetailedMasks()
         
-        if self.detailedMasks: 
-            self.createDetailedMasks()
+        _doAI = False
+        if self.useAI:
+            import torch
+            if not torch.cuda.is_available():
+                logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
+                if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last 3-10 minutes. Are you sure you want to continue AI segmentation?"):
+                    _doAI = False
+                    logging.info('AI processing cancelled by user.')
+                else:
+                    _doAI = True
+            else: 
+                _doAI = True
+                logging.info('Pytorch CUDA is available. AI will use GPU processing.')
+
+        if _doAI:
+
+            # Import the required libraries
+            self.showStatusMessage(' Importing lungmask AI ...')
+            try:
+                import lungmask
+            except ModuleNotFoundError:
+                slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
+                import lungmask
+            
+            from lungmask import mask                
+
+            self.showStatusMessage(' Creating lungs with AI ...')
+            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+
+            segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
+            
+            # Create temporary labelmap
+            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
+
+            # Fill temporary labelmap by AI numpy
+            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
+
+            # Import labelmap to segmentation
+            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, self.outputSegmentation)
         
+            # Delete temporary labelmap
+            slicer.mrmlScene.RemoveNode(labelVolumeNode)
+
+            self.showStatusMessage(' Creating lung lobes with AI ...')
+            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+            model = mask.get_model('unet','LTRCLobes')
+            segmentation_np = mask.apply(inputVolumeSitk, model)
+            
+            # Create temporary labelmap
+            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
+
+            # Fill temporary labelmap by AI numpy
+            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
+
+            # Import labelmap to segmentation
+            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, self.outputSegmentation)
+
+            # Delete temporary labelmap
+            slicer.mrmlScene.RemoveNode(labelVolumeNode)
+
+            # Postprocess lungs and lobes
+            self.postprocessAISegmentation(self.outputSegmentation,0,"right lung")
+            self.postprocessAISegmentation(self.outputSegmentation,1,"left lung")
+            self.postprocessAISegmentation(self.outputSegmentation,2,"left upper lobe")
+            self.postprocessAISegmentation(self.outputSegmentation,3,"left lower lobe")
+            self.postprocessAISegmentation(self.outputSegmentation,4,"right upper lobe")
+            self.postprocessAISegmentation(self.outputSegmentation,5,"right middle lobe")
+            self.postprocessAISegmentation(self.outputSegmentation,6,"right lower lobe")
+            
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
-            self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
+            if segID: 
+                self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
             newSeg = slicer.vtkSegment()
             newSeg.SetName("airways")
             newSeg.SetColor(self.tracheaColor)
@@ -1386,10 +1462,29 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
             else:
                 self.showStatusMessage('Airway segmentation ...')
+                self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+
+                # switch to full-resolution segmentation (this is quick, there is no need for progress message)
+                self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
+                referenceGeometryString = self.outputSegmentation.GetSegmentation().GetConversionParameter(slicer.vtkSegmentationConverter.GetReferenceImageGeometryParameterName())
+                referenceGeometryImageData = slicer.vtkOrientedImageData()
+                slicer.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImageData, False)
+                wasModified = self.outputSegmentation.StartModify()
+                currentSegment = self.outputSegmentation.GetSegmentation().GetSegment(airwaySegID)
+                # Get master labelmap from segment
+                currentLabelmap = currentSegment.GetRepresentation("Binary labelmap")
+                # Resample
+                if not slicer.vtkOrientedImageDataResample.ResampleOrientedImageToReferenceOrientedImage(
+                  currentLabelmap, referenceGeometryImageData, currentLabelmap, False, True):
+                  raise ValueError("Failed to resample segment " << currentSegment.GetName())
+                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+                # Trigger display update
+                self.outputSegmentation.Modified()
+                self.outputSegmentation.EndModify(wasModified)
+
                 self.segmentEditorNode.SetSelectedSegmentID("airways")
                 self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
                 effect = self.segmentEditorWidget.activeEffect()
-                
                 
                 effect.setParameter("AutoThresholdMethod","OTSU")
                 effect.setParameter("AutoThresholdMode","SET_MIN_UPPER")
@@ -1467,109 +1562,29 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             
         
         # Use a lower smoothing than the default 0.5 to ensure that thin airways are not suppressed in the 3D output
-        self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.2")
-
-        self.outputSegmentation.GetDisplayNode().SetOpacity3D(0.5)
-        self.outputSegmentation.GetDisplayNode().SetVisibility(True)
+        self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.3")
                         
+        self.outputSegmentation.GetDisplayNode().SetVisibility(True)
+
         self.showStatusMessage(' Creating 3D ...')
         self.outputSegmentation.CreateClosedSurfaceRepresentation()
 
+        # Only show lungs when in AI mode because we have lobes
+        if self.useAI: 
+            segmentation = self.outputSegmentation.GetSegmentation()
+            rightLungID = segmentation.GetSegmentIdBySegmentName("right lung")
+            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(rightLungID,False)
+            leftLungID = segmentation.GetSegmentIdBySegmentName("left lung")
+            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(leftLungID,False)
+        
         # Restore confirmation popup setting for editing a hidden segment
-        slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", previousConfirmEditHiddenSegmentSetting)
-
+        if not self.useAI: 
+            slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", previousConfirmEditHiddenSegmentSetting)
 
         slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
 
-        _doAI = False
-        if self.useAI:
-            import torch
-            if not torch.cuda.is_available():
-                logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
-                if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last 3-10 minutes. Are you sure you want to continue AI segmentation?"):
-                    _doAI = False
-                    logging.info('AI processing cancelled by user.')
-                else:
-                    _doAI = True
-            else: 
-                _doAI = True
-                logging.info('Pytorch CUDA is available. AI will use GPU processing.')
-
-        if _doAI:
-
-            # Import the required libraries
-            self.showStatusMessage(' Importing lungmask AI ...')
-            try:
-                import lungmask
-            except ModuleNotFoundError:
-                slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
-                import lungmask
-            
-            from lungmask import mask                
-
-            self.showStatusMessage(' Creating lungs with AI ...')
-            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-
-            segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
-            
-            # Create temporary labelmap
-            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
-
-            # Fill temporary labelmap by AI numpy
-            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
-
-            # Import labelmap to segmentation
-            outputLungSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode","AI lung segmentation")
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, outputLungSegmentation)
-            
-            # Postprocess lungs
-            self.postprocessAISegmentation(outputLungSegmentation,0,"right lung")
-            self.postprocessAISegmentation(outputLungSegmentation,1,"left lung")
-
-            outputLungSegmentation.GetDisplayNode().SetOpacity3D(0.5)
-            outputLungSegmentation.GetDisplayNode().SetVisibility(True)
-            
-            outputLungSegmentation.CreateClosedSurfaceRepresentation()
-
-            # Delete temporary labelmap
-            slicer.mrmlScene.RemoveNode(labelVolumeNode)
-
-
-            self.showStatusMessage(' Creating lung lobes with AI ...')
-            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-            model = mask.get_model('unet','LTRCLobes')
-            segmentation_np = mask.apply(inputVolumeSitk, model)
-            
-            # Create temporary labelmap
-            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
-
-            # Fill temporary labelmap by AI numpy
-            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
-
-            # Import labelmap to segmentation
-            outputLobeSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode","AI lobe segmentation")
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, outputLobeSegmentation)
-
-            # Postprocess lobes
-            self.postprocessAISegmentation(outputLobeSegmentation,0,"left upper lobe")
-            self.postprocessAISegmentation(outputLobeSegmentation,1,"left lower lobe")
-            self.postprocessAISegmentation(outputLobeSegmentation,2,"right upper lobe")
-            self.postprocessAISegmentation(outputLobeSegmentation,3,"right middle lobe")
-            self.postprocessAISegmentation(outputLobeSegmentation,4,"right lower lobe")
-
-            outputLobeSegmentation.GetDisplayNode().SetOpacity3D(0.5)
-            outputLobeSegmentation.GetDisplayNode().SetVisibility(True)
-            
-            outputLobeSegmentation.CreateClosedSurfaceRepresentation()
-
-            # Delete temporary labelmap
-            slicer.mrmlScene.RemoveNode(labelVolumeNode)
-
-                
         self.showStatusMessage(' Cleaning up ...')
         self.removeTemporaryObjects()
 
