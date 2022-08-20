@@ -1187,25 +1187,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.trimSegmentWithCube(lower.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
 
-    def showVolumeRendering(self,volumeNode):
-      #print("Show volume rendering of node " + volumeNode.GetName())
-      volRenLogic = slicer.modules.volumerendering.logic()
-      displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
-      displayNode.SetVisibility(True)
-      scalarRange = volumeNode.GetImageData().GetScalarRange()
-      if scalarRange[1]-scalarRange[0] < 1500:
-        # Small dynamic range, probably MRI
-        displayNode.GetVolumePropertyNode().Copy(volRenLogic.GetPresetByName("MR-Default"))
-      else:
-        # Larger dynamic range, probably CT
-        displayNode.GetVolumePropertyNode().Copy(volRenLogic.GetPresetByName("CT-Chest-Contrast-Enhanced"))
-    
-    def hideVolumeRendering(self,volumeNode):
-      #print("Show volume rendering of node " + volumeNode.GetName())
-      volRenLogic = slicer.modules.volumerendering.logic()
-      displayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(volumeNode)
-      displayNode.SetVisibility(False)
-
     def postprocessAISegmentation(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
@@ -1484,9 +1465,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
               "~^^"
               "~^^")
             
-        # optimize display
-        # self.hideVolumeRendering(self.labelmapVolumeNode)
-        # self.showVolumeRendering(self.inputVolume)
         
         # Use a lower smoothing than the default 0.5 to ensure that thin airways are not suppressed in the 3D output
         self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.2")
