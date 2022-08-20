@@ -1100,13 +1100,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 markupsNode.AddFiducialFromArray(centroid_ras, segmentName)
                 
                 self.showStatusMessage('Creating special masks ...')
-                ventral = self.createSubSegment(segmentId, "ventral")
-                dorsal = self.createSubSegment(segmentId, "dorsal")
+                anterior = self.createSubSegment(segmentId, "anterior")
+                posterior = self.createSubSegment(segmentId, "posterior")
                 upper = self.createSubSegment(segmentId, "upper")
                 middle = self.createSubSegment(segmentId, "middle")
                 lower = self.createSubSegment(segmentId, "lower")
                 
-                ####### ventral
+                ####### anterior
                 
                 r = centroid_ras[0]
                 a = centroid_ras[1] - (sagittalLungDiameter/2.)
@@ -1117,10 +1117,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 crop_a = (sagittalLungDiameter/2.)
                 crop_s = coronalLungDiameter
                 
-                self.showStatusMessage(' Cropping ventral mask ...')
-                self.trimSegmentWithCube(ventral.GetName(),r,a,s,crop_r,crop_a,crop_s)
+                self.showStatusMessage(' Cropping anterior mask ...')
+                self.trimSegmentWithCube(anterior.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
-                ####### dorsal
+                ####### posterior
                 
                 r = centroid_ras[0]
                 a = centroid_ras[1] + (sagittalLungDiameter/2.)
@@ -1130,8 +1130,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 crop_a = (sagittalLungDiameter/2.)
                 crop_s = coronalLungDiameter
 
-                self.showStatusMessage(' Cropping dorsal mask ...')
-                self.trimSegmentWithCube(dorsal.GetName(),r,a,s,crop_r,crop_a,crop_s)
+                self.showStatusMessage(' Cropping posterior mask ...')
+                self.trimSegmentWithCube(posterior.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
                 ####### upper
                 
