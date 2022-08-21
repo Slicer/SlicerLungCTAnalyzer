@@ -1207,8 +1207,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
-                "~SCT^3341006^Right lung"
-                "~^^"
+                "~SCT^39607008^Lung"
+                "~SCT^24028007^Right"
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
@@ -1216,8 +1216,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
-                "~SCT^44029006^Left lung"
-                "~^^"
+                "~SCT^39607008^Lung"
+                "~SCT^7771000^Left"
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
@@ -1310,8 +1310,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
-                "~SCT^3341006^Right lung"
-                "~^^"
+                "~SCT^39607008^Lung"
+                "~SCT^24028007^Right"
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
@@ -1319,8 +1319,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
-                "~SCT^44029006^Left lung"
-                "~^^"
+                "~SCT^39607008^Lung"
+                "~SCT^7771000^Left"
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
@@ -1407,6 +1407,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
 
             segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
+            #emptySegment = slicer.vtkSegment()
+            #emptySegment.SetName("right lung")
+            #self.outputSegmentation.GetSegmentation().AddSegment(emptySegment)
+            #segmentId = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+            #slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_np, self.outputSegmentation, segmentId, self.inputVolume)
             
             # Create temporary labelmap
             labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
@@ -1417,11 +1422,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
             # Import labelmap to segmentation
             slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, self.outputSegmentation)
+
+            # Postprocess lungs and lobes
+            self.postprocessAISegmentation(self.outputSegmentation,0,"right lung")
+            self.postprocessAISegmentation(self.outputSegmentation,1,"left lung")
         
             # Delete temporary labelmap
             slicer.mrmlScene.RemoveNode(labelVolumeNode)
 
-            self.showStatusMessage(' Creating lung lobes with AI ...')
+            #self.showStatusMessage(' Creating lung lobes with AI ...')
             inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
             model = mask.get_model('unet','LTRCLobes')
             segmentation_np = mask.apply(inputVolumeSitk, model)
@@ -1440,8 +1449,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             slicer.mrmlScene.RemoveNode(labelVolumeNode)
 
             # Postprocess lungs and lobes
-            self.postprocessAISegmentation(self.outputSegmentation,0,"right lung")
-            self.postprocessAISegmentation(self.outputSegmentation,1,"left lung")
             self.postprocessAISegmentation(self.outputSegmentation,2,"left upper lobe")
             self.postprocessAISegmentation(self.outputSegmentation,3,"left lower lobe")
             self.postprocessAISegmentation(self.outputSegmentation,4,"right upper lobe")
