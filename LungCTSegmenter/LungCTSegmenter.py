@@ -1276,6 +1276,21 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
               "~^^"
               "~^^")
 
+
+    def addSegmentFromNumpyArray(self, outputSegmentation, input_np, segmentName, labelValue, inputVolume):
+        emptySegment = slicer.vtkSegment()
+        emptySegment.SetName(segmentName)
+        outputSegmentation.GetSegmentation().AddSegment(emptySegment)
+        emptySegment = slicer.vtkSegment()
+
+        import numpy as np
+        segment_np = np.zeros(input_np.shape)
+        segment_np[ input_np==labelValue ] = 1
+
+        segmentId = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+        slicer.util.updateSegmentBinaryLabelmapFromArray(segment_np, outputSegmentation, segmentId, inputVolume)
+
+
     def applySegmentation(self):
 
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
@@ -1405,49 +1420,28 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
             self.showStatusMessage(' Creating lungs with AI ...')
             inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-
             segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
-            #emptySegment = slicer.vtkSegment()
-            #emptySegment.SetName("right lung")
-            #self.outputSegmentation.GetSegmentation().AddSegment(emptySegment)
-            #segmentId = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
-            #slicer.util.updateSegmentBinaryLabelmapFromArray(segmentation_np, self.outputSegmentation, segmentId, self.inputVolume)
-            
-            # Create temporary labelmap
-            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
 
-            # Fill temporary labelmap by AI numpy
-            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
-
-            # Import labelmap to segmentation
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, self.outputSegmentation)
+            # add lung segments
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
 
             # Postprocess lungs and lobes
             self.postprocessAISegmentation(self.outputSegmentation,0,"right lung")
             self.postprocessAISegmentation(self.outputSegmentation,1,"left lung")
         
-            # Delete temporary labelmap
-            slicer.mrmlScene.RemoveNode(labelVolumeNode)
-
-            #self.showStatusMessage(' Creating lung lobes with AI ...')
+            self.showStatusMessage(' Creating lung lobes with AI ...')
             inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
             model = mask.get_model('unet','LTRCLobes')
             segmentation_np = mask.apply(inputVolumeSitk, model)
+
+            # add lobe segments
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
+            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)
             
-            # Create temporary labelmap
-            labelVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-            slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelVolumeNode, self.inputVolume)
-
-            # Fill temporary labelmap by AI numpy
-            slicer.util.updateVolumeFromArray(labelVolumeNode, segmentation_np)
-
-            # Import labelmap to segmentation
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelVolumeNode, self.outputSegmentation)
-
-            # Delete temporary labelmap
-            slicer.mrmlScene.RemoveNode(labelVolumeNode)
-
             # Postprocess lungs and lobes
             self.postprocessAISegmentation(self.outputSegmentation,2,"left upper lobe")
             self.postprocessAISegmentation(self.outputSegmentation,3,"left lower lobe")
