@@ -13,9 +13,9 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Video Lung CT Analyzer](https://youtu.be/JcgMnDhlknM) <br>
 <br>
-[Installation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
+[Installation manual](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
 <br>
-[Operating Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
+[Instruction manual](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
 <br>
 <b>Details</b><br>
