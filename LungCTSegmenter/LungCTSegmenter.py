@@ -1569,6 +1569,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         self.showStatusMessage(' Creating 3D ...')
         self.outputSegmentation.CreateClosedSurfaceRepresentation()
+        # center 3D view
+        layoutManager = slicer.app.layoutManager()
+        threeDWidget = layoutManager.threeDWidget(0)
+        threeDView = threeDWidget.threeDView()
+        threeDView.resetFocalPoint()
+
 
         # Only show lungs when in AI mode because we have lobes
         if self.useAI: 
