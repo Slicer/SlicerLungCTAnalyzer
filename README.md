@@ -1,12 +1,13 @@
 # Lung CT Analyzer
 
-Lung CT Analyzer is a 3D Slicer extension for lung, lobe and airway segmentation as well as spatial reconstruction of infiltrated, emphysematic and collapsed lung areas. 
+Lung CT Analyzer is a 3D Slicer extension for lung, lobe and airway segmentation as well as spatial reconstruction of infiltrated, emphysematic and collapsed lung. 
 
 <b>Introduction</b><br>
-The extent of pulmonary infiltrations as well as the presence of areas like emphysema or bullae are usually analyzed visually in CT scans. 
-Abnormalities can not be quantified in numbers or milliliters making it difficult to objectively compare results. In the current COVID-19 pandemia high case loads of patients with severe lung infiltrations, who need meticulous follow up over time, accumulate.   
+In lung CT, the extent of pulmonary infiltration, ground glass opacity, consolitation and emphysema are usually analyzed visually. 
+Abnormalities can not be quantified in numbers or milliliters making it difficult to objectively compare results. 
+In the current COVID-19 pandemia high case loads of patients with severe lung infiltrations accumulate and need meticulous follow up over time.   
 The aim of this project (Lung CT Analyzer, LCTA) was to develop a software program that enables three-dimensional segmentation of lung CT data and calculate individual volumes of pulmonary infiltrates and emphysema. 
-3D Slicer (1) is an established and freely available 3D imaging platform for scientific use. Therefore, 3D Slicer was chosen as development platform and the inbuild Python as script language.   
+3D Slicer (1) is an established and freely available 3D imaging platform for scientific use and was chosen as development platform. Slicers inbuild Python was used as script language.   
 <br>
 [Video Lung CT Segmenter](https://youtu.be/U9PUX-jLF0A) <br>
 <br>
@@ -14,12 +15,9 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Installation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
 <br>
-[Operation Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
+[Operating Tutorial](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
-<b>Questions ? </b><br>
-The best way to ask questions is using the [Slicer forum](https://discourse.slicer.org/).  go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
 <br>
-
 <b>Details</b><br>
 Lung segmentation can be archieved by either placing a few markups on the lung or by using a deep learning lung and lobe segmentation algorithm (see below).
 A sensitive and manually assisted growcut airway segmentation is supported. 
@@ -42,7 +40,12 @@ Affected total lung volume (infiltrated + collapsed total volume, % of total lun
 Vessel volume is subtracted from lung volumes, intrapulmonary airways are not subtracted. <br>
 <br>
 LCTA has been developed and tested with 3D Slicer 5. The latest stable release is recommended.
-
+<br>
+<br>
+<b>Questions ? </b><br>
+The best way to ask questions is using the [Slicer forum](https://discourse.slicer.org/).  go "Support", create a topic, mention "@rbumm" or add the "lungctanalyzer" keyword. I recommend to do both. 
+<br>
+<br>
 <b>Limitations</b><br>
 3D Slicer is not FDA approved. It is the users responsibility to ensure compliance with applicable rules and regulations. 
 See also: https://www.slicer.org/wiki/CommercialUse<br>
