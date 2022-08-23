@@ -1181,7 +1181,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.trimSegmentWithCube(lower.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
 
-    def postprocessAISegmentation(self, outputSegmentation, _nth, segmentName):
+    def postprocessSegment(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
@@ -1290,6 +1290,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         segmentId = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         slicer.util.updateSegmentBinaryLabelmapFromArray(segment_np, outputSegmentation, segmentId, inputVolume)
 
+    def normalizeImageHU(self, img, air, fat):
+        air_HU = -1000
+        fat_HU = -100
+        
+        delta_air_fat_HU = abs(air_HU - fat_HU)
+        delta_air = abs(air - air_HU)
+        delta_fat_air_rgb = abs(fat - air)
+        ratio = delta_air_fat_HU / delta_fat_air_rgb
+        
+        img = img - air
+        img = img * ratio
+        img = img + air_HU
+        return img
 
     def applySegmentation(self):
 
@@ -1321,25 +1334,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
             segmentIds = [self.rightLungSegmentId, self.leftLungSegmentId, self.tracheaSegmentId]
             
-            segment = self.outputSegmentation.GetSegmentation().GetSegment(self.rightLungSegmentId)
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^39607008^Lung"
-                "~SCT^24028007^Right"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-            segment = self.outputSegmentation.GetSegmentation().GetSegment(self.leftLungSegmentId)
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^39607008^Lung"
-                "~SCT^7771000^Left"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-
             # fill holes
             for i, segmentId in enumerate(segmentIds):
                 self.showStatusMessage(f'Filling holes ({i+1}/{len(segmentIds)})...')
@@ -1391,6 +1385,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             
             if self.detailedMasks: 
                 self.createDetailedMasks()
+
+            # Postprocess lungs and set tags
+            self.postprocessSegment(self.outputSegmentation,0,"right lung")
+            self.postprocessSegment(self.outputSegmentation,1,"left lung")
         
         _doAI = False
         if self.useAI:
@@ -1426,9 +1424,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
             self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
 
-            # Postprocess lungs and lobes
-            self.postprocessAISegmentation(self.outputSegmentation,0,"right lung")
-            self.postprocessAISegmentation(self.outputSegmentation,1,"left lung")
+            # Postprocess lungs 
+            self.postprocessSegment(self.outputSegmentation,0,"right lung")
+            self.postprocessSegment(self.outputSegmentation,1,"left lung")
         
             self.showStatusMessage(' Creating lung lobes with AI ...')
             inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
@@ -1443,11 +1441,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)
             
             # Postprocess lungs and lobes
-            self.postprocessAISegmentation(self.outputSegmentation,2,"left upper lobe")
-            self.postprocessAISegmentation(self.outputSegmentation,3,"left lower lobe")
-            self.postprocessAISegmentation(self.outputSegmentation,4,"right upper lobe")
-            self.postprocessAISegmentation(self.outputSegmentation,5,"right middle lobe")
-            self.postprocessAISegmentation(self.outputSegmentation,6,"right lower lobe")
+            self.postprocessSegment(self.outputSegmentation,2,"left upper lobe")
+            self.postprocessSegment(self.outputSegmentation,3,"left lower lobe")
+            self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
+            self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
+            self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
             
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
