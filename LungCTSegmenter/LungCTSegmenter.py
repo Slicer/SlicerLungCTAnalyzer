@@ -1184,6 +1184,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def postprocessSegment(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+        _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         
         if self.useAI:
             self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
@@ -1407,48 +1408,68 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
 
         if _doAI:
-
-            # Import the required libraries
-            self.showStatusMessage(' Importing lungmask AI ...')
-            try:
-                import lungmask
-            except ModuleNotFoundError:
-                slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
-                import lungmask
             
-            from lungmask import mask                
-
-            self.showStatusMessage(' Creating lungs with AI ...')
-            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-            segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
-
-            # add lung segments
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
-
-            # Postprocess lungs 
-            self.postprocessSegment(self.outputSegmentation,0,"right lung")
-            self.postprocessSegment(self.outputSegmentation,1,"left lung")
-        
-            self.showStatusMessage(' Creating lung lobes with AI ...')
-            inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-            model = mask.get_model('unet','LTRCLobes')
-            segmentation_np = mask.apply(inputVolumeSitk, model)
-
-            # add lobe segments
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
-            self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)
+            _programAI = "lungmask"
             
-            # Postprocess lungs and lobes
-            self.postprocessSegment(self.outputSegmentation,2,"left upper lobe")
-            self.postprocessSegment(self.outputSegmentation,3,"left lower lobe")
-            self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
-            self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
-            self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
+            if _programAI == "lungmask":
+                # Import the required libraries
+                self.showStatusMessage(' Importing lungmask AI ...')
+                try:
+                    import lungmask
+                except ModuleNotFoundError:
+                    slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
+                    import lungmask
+                
+                from lungmask import mask                
+
+                self.showStatusMessage(' Creating lungs with AI ...')
+                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
+
+                # add lung segments
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
+
+                # Postprocess lungs 
+                self.postprocessSegment(self.outputSegmentation,0,"right lung")
+                self.postprocessSegment(self.outputSegmentation,1,"left lung")
             
+                self.showStatusMessage(' Creating lung lobes with AI ...')
+                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                model = mask.get_model('unet','LTRCLobes')
+                segmentation_np = mask.apply(inputVolumeSitk, model)
+
+                # add lobe segments
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
+                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)
+                
+                # Postprocess lungs and lobes
+                self.postprocessSegment(self.outputSegmentation,2,"left upper lobe")
+                self.postprocessSegment(self.outputSegmentation,3,"left lower lobe")
+                self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
+                self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
+                self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
+            
+            if _programAI == "totalsegmentator":
+                # Import the required libraries
+                self.showStatusMessage(' Importing totalsegmentator AI ...')
+                try:
+                    import totalsegmentator
+                except ModuleNotFoundError:
+                    slicer.util.pip_install("TotalSegmentator")
+                    import totalsegmentator
+
+                #from totalsegmentator import mask
+
+                self.showStatusMessage(' Creating segmentations with AI ...')
+                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                #segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
+                # Work in progress ...
+
+
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
