@@ -1409,7 +1409,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         if _doAI:
             
-            _programAI = "lungmask"
+            _programAI = "totalsegmentator"
             
             if _programAI == "lungmask":
                 # Import the required libraries
@@ -1434,7 +1434,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,0,"right lung")
                 self.postprocessSegment(self.outputSegmentation,1,"left lung")
             
-                self.showStatusMessage(' Creating lung lobes with AI ...')
+                self.showStatusMessage(' Creating lung lobes with lungmask AI ...')
                 inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 model = mask.get_model('unet','LTRCLobes')
                 segmentation_np = mask.apply(inputVolumeSitk, model)
@@ -1452,6 +1452,79 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
                 self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
+
+            if _programAI == "totalsegmentator":
+                # Import the required libraries
+                self.showStatusMessage(' Importing totalsegmentator AI ...')
+                logging.info('Importing totalsegmentator AI ...')
+
+                try:
+                    import matplotlib
+                except ModuleNotFoundError:
+                    slicer.util.pip_install("matplotlib")
+                    import matplotlib
+
+                try:
+                    import totalsegmentator
+                except ModuleNotFoundError:
+                    slicer.util.pip_install("TotalSegmentator")
+
+                from totalsegmentator.libs import setup_nnunet, download_pretrained_weights
+                from totalsegmentator.statistics import get_basic_statistics_for_entire_dir, get_radiomics_features_for_entire_dir
+
+                import numpy as np
+                #import nibabel as nib
+                self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
+                tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
+                #inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                myStorageNode = self.inputVolume.CreateDefaultStorageNode()
+                myStorageNode.SetFileName(tempDir + "input.nii.gz")
+                myStorageNode.WriteData(self.inputVolume)
+                
+                setup_nnunet()
+
+                from totalsegmentator.nnunet import nnUNet_predict_image  # this has to be after setting new env vars
+
+                fast = True
+                if fast:
+                    task_id = 256
+                    resample = 3.0
+                    trainer = "nnUNetTrainerV2_ep8000_nomirror"
+                    logging.info("Using 'fast' option: resampling to lower resolution (3mm)")
+                else:
+                    task_id = [251, 252, 253, 254, 255]
+                    resample = 1.5
+                    trainer = "nnUNetTrainerV2_ep4000_nomirror"
+                    logging.info("Using 'slow' option (default)")
+
+                print("Downloading trainers ...")  
+                if type(task_id) is list:
+                    for tid in task_id:
+                        download_pretrained_weights(tid)
+                else:
+                    download_pretrained_weights(task_id)
+                
+                inputPath = tempDir + "input.nii.gz"
+                outputDir = tempDir 
+                folds = [0]  # None
+                model="3d_fullres"
+                tta = False
+                multilabel_image = True
+                nora_tag = None
+                preview = False
+                nr_threads_resampling = 1
+                nr_threads_saving = 6
+                quiet = False
+                verbose = False
+                test = False
+                logging.info("Starting segmentation ...")  
+                seg = nnUNet_predict_image(inputPath, outputDir, task_id)
+                #seg = nnUNet_predict_image(inputPath, outputDir, task_id, model, folds,
+                #                     trainer, tta, multilabel_image, resample,
+                #                     nora_tag, preview, nr_threads_resampling, 
+                #                     nr_threads_saving, quiet, verbose, test)
+                logging.info("Segmentation done.")  
+
 
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
