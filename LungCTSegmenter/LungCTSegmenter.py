@@ -1409,7 +1409,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         if _doAI:
             
-            _programAI = "totalsegmentator"
+            _programAI = "lungmask"
             
             if _programAI == "lungmask":
                 # Import the required libraries
