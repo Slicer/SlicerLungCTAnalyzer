@@ -1452,23 +1452,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
                 self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
-            
-            if _programAI == "totalsegmentator":
-                # Import the required libraries
-                self.showStatusMessage(' Importing totalsegmentator AI ...')
-                try:
-                    import totalsegmentator
-                except ModuleNotFoundError:
-                    slicer.util.pip_install("TotalSegmentator")
-                    import totalsegmentator
-
-                #from totalsegmentator import mask
-
-                self.showStatusMessage(' Creating segmentations with AI ...')
-                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-                #segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
-                # Work in progress ...
-
 
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
