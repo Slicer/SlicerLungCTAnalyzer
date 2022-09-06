@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 import logging
 import vtk, qt, ctk, slicer
@@ -504,6 +505,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       try:
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.useAI = self.useAI
+          if self.useAI:
+            self.logic.engineAI = "lungmask"
           # always save a copy of the current markups in Slicer temp dir for later use
           self.saveFiducialsTempDir()
           if self.saveFiducials: 
@@ -717,6 +720,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentationFinished = False
         self.detailedAirways = False
         self.useAI = False
+        self.engineAI = "None"
         self.shrinkMasks = False
         self.detailedMasks = False
         
@@ -828,6 +832,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @tracheaFiducials.setter
     def tracheaFiducials(self, node):
         self.getParameterNode().SetNodeReferenceID("TracheaFiducials", node.GetID() if node else None)
+
+    @property
+    def engineAI(self):
+        return self.getParameterNode().GetParameter("EngineAI")
+
+    @engineAI.setter
+    def engineAI(self, _name):
+        self.getParameterNode().SetParameter("EngineAI", _name)
 
     def brighterColor(self, rgb):
         import numpy as np
@@ -1307,6 +1319,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         img = img + air_HU
         return img
 
+    def get_script_path(self):
+        return os.path.dirname(os.path.realpath(sys.argv[0]))
+
     def applySegmentation(self):
 
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
@@ -1408,10 +1423,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
 
         if _doAI:
-            
-            _programAI = "lungmask"
-            
-            if _programAI == "lungmask":
+            print(self.engineAI)
+            if self.engineAI == "lungmask":
                 # Import the required libraries
                 self.showStatusMessage(' Importing lungmask AI ...')
                 try:
@@ -1453,7 +1466,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
 
-            if _programAI == "totalsegmentator":
+            elif self.engineAI == "totalsegmentator":
+                # Work in progress, testing, not working yet
+
                 # Import the required libraries
                 self.showStatusMessage(' Importing totalsegmentator AI ...')
                 logging.info('Importing totalsegmentator AI ...')
@@ -1471,12 +1486,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
                 from totalsegmentator.libs import setup_nnunet, download_pretrained_weights
                 from totalsegmentator.statistics import get_basic_statistics_for_entire_dir, get_radiomics_features_for_entire_dir
-
-                import numpy as np
-                #import nibabel as nib
+    
                 self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
                 tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
-                #inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 myStorageNode = self.inputVolume.CreateDefaultStorageNode()
                 myStorageNode.SetFileName(tempDir + "input.nii.gz")
                 myStorageNode.WriteData(self.inputVolume)
@@ -1518,14 +1530,16 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 verbose = False
                 test = False
                 logging.info("Starting segmentation ...")  
-                seg = nnUNet_predict_image(inputPath, outputDir, task_id)
+
+                seg = nnUNet_predict_image(inputPath, outputDir, task_id, model, folds)
                 #seg = nnUNet_predict_image(inputPath, outputDir, task_id, model, folds,
                 #                     trainer, tta, multilabel_image, resample,
                 #                     nora_tag, preview, nr_threads_resampling, 
                 #                     nr_threads_saving, quiet, verbose, test)
-                logging.info("Segmentation done.")  
-
-
+                logging.info("Segmentation done.")
+            else:
+                logging.info("No AI engine defined.")  
+            
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
@@ -1699,9 +1713,11 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         """Run as few or as many tests as needed here.
         """
         self.setUp()
-        self.test_LungCTSegmenter1()
+        self.test_LungCTSegmenterNormal()
+        slicer.mrmlScene.Clear(0)
+        self.test_LungCTSegmenterLungmaskAI()
 
-    def test_LungCTSegmenter1(self):
+    def test_LungCTSegmenterNormal(self):
         """ Ideally you should have several levels of tests.  At the lowest level
         tests should exercise the functionality of the logic with different inputs
         (both valid and invalid).  At higher levels your tests should emulate the
@@ -1798,8 +1814,96 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         print(_volumeRightLungMask)
         print(_volumeLeftLungMask)
         # assert vs known volumes of the chest CT dataset
-        self.assertEqual(_volumeRightLungMask, 3322) 
-        self.assertEqual(_volumeLeftLungMask, 3227)
+        self.assertEqual(_volumeRightLungMask, 3227) 
+        self.assertEqual(_volumeLeftLungMask, 3138)
+
+
+        self.delayDisplay('Test passed')
+
+
+    def test_LungCTSegmenterLungmaskAI(self):
+        """ Ideally you should have several levels of tests.  At the lowest level
+        tests should exercise the functionality of the logic with different inputs
+        (both valid and invalid).  At higher levels your tests should emulate the
+        way the user would interact with your code and confirm that it still works
+        the way you intended.
+        One of the most important features of the tests is that it should alert other
+        developers when their changes will have an impact on the behavior of your
+        module.  For example, if a developer removes a feature that you depend on,
+        your test should break so they know that the feature is needed.
+        """
+
+        self.delayDisplay("Starting the test")
+
+        # Get/create input data
+
+        import SampleData
+        #registerSampleData()
+        inputVolume = SampleData.downloadSample('CTChest')
+        self.delayDisplay('Loaded test data set')
+
+        logging.info('Delete clutter markers ....')
+        allSegmentNodes = slicer.util.getNodes('vtkMRMLMarkupsFiducialNode*').values()
+        for ctn in allSegmentNodes:
+            #logging.info('Name:>' + ctn.GetName()+'<')
+            teststr = ctn.GetName()
+            if '_marker' in teststr:
+            #logging.info('Found:' + ctn.GetName())
+                slicer.mrmlScene.RemoveNode(ctn)
+                #break        
+        # Create new marker
+        markupsTracheaNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
+        markupsTracheaNode.SetName("T")
+
+        # add one fiducial 
+        markupsTracheaNode.CreateDefaultDisplayNodes()
+        markupsTracheaNode.AddFiducial(-4.,-14.,-90.)
+
+        # Test the module logic
+
+        logic = LungCTSegmenterLogic()
+
+        # Test algorithm 
+        self.delayDisplay("Processing, please wait ...")
+
+        logic.removeTemporaryObjects()
+        logic.tracheaFiducials = markupsTracheaNode
+        logic.detailedAirways = False
+        logic.useAI = True
+        logic.engineAI = "lungmask"
+
+        logic.startSegmentation()
+        logic.updateSegmentation()
+        logic.applySegmentation()
+        
+        #logic.process(inputVolume, -1000.,-200.,False)
+        resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
+
+        # Compute stats
+        import SegmentStatistics
+        
+        segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+       
+        segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
+        segStatLogic.getParameterNode().SetParameter("ScalarVolume", logic.inputVolume.GetID())
+        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+        segStatLogic.computeStatistics()
+        segStatLogic.exportToTable(resultsTableNode)
+
+        #resultsTableNode = slicer.util.getNode('_maskResultsTable')
+        _volumeLeftUpperLobe = round(float(resultsTableNode.GetCellText(0,3)))
+        _volumeLeftLowerLobe = round(float(resultsTableNode.GetCellText(1,3)))
+        _volumeRightUpperLobe = round(float(resultsTableNode.GetCellText(2,3)))
+        _volumeRightMiddleLobe = round(float(resultsTableNode.GetCellText(3,3)))
+        _volumeRightLowerLobe = round(float(resultsTableNode.GetCellText(4,3)))
+        # assert vs known volumes of lobes from the chest CT dataset
+        self.assertEqual(_volumeLeftUpperLobe, 1472) 
+        self.assertEqual(_volumeLeftLowerLobe, 1658)
+        self.assertEqual(_volumeRightUpperLobe, 1424)
+        self.assertEqual(_volumeRightMiddleLobe, 493)
+        self.assertEqual(_volumeRightLowerLobe, 1308)
 
 
         self.delayDisplay('Test passed')
