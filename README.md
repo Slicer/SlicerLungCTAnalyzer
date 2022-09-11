@@ -92,7 +92,6 @@ Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in rout
 <br>
 If you use the TotalSegmentator nn-Unet function from this software in your research, please cite: 
 <br>
-<br>
 Wasserthal J., Meyer M., , Hanns-Christian Breit H.C., Cyriac J., Shan Y., Segeroth, M.: TotalSegmentator: robust segmentation of 104 anatomical structures in CT images. https://arxiv.org/abs/2208.05868
 <br>
 <br>
