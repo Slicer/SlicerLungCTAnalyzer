@@ -39,7 +39,7 @@ AI segmentation involves
 <br><br>
 and<br>
 <br>
-<a href="https://github.com/wasserth/TotalSegmentator">Totalsegmentator</a><br>See Wasserthal J., Meyer M., , Hanns-Christian Breit H.C., , Cyriac J., Shan Y., Segeroth, M.: TotalSegmentator: robust segmentation of 104 anatomical structures in CT images. 
+<a href="https://github.com/wasserth/TotalSegmentator">Totalsegmentator</a><br>See Wasserthal J., Meyer M., , Hanns-Christian Breit H.C., Cyriac J., Shan Y., Segeroth, M.: TotalSegmentator: robust segmentation of 104 anatomical structures in CT images. 
 <a href="https://arxiv.org/abs/2208.05868">https://arxiv.org/abs/2208.05868</a>
 
 """

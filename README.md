@@ -85,9 +85,15 @@ For publications please include this text (modifying the initial part to describ
 "We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
 <br>
 <br>
-If you use the deep learning function from this software in your research, please cite: 
+If you use the lungmask U-net function from this software in your research, please cite: 
 <br>
 Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
+<br>
+<br>
+If you use the TotalSegmentator nn-Unet function from this software in your research, please cite: 
+<br>
+<br>
+Wasserthal J., Meyer M., , Hanns-Christian Breit H.C., Cyriac J., Shan Y., Segeroth, M.: TotalSegmentator: robust segmentation of 104 anatomical structures in CT images. https://arxiv.org/abs/2208.05868
 <br>
 <br>
 This project is in active development and not FDA approved.
