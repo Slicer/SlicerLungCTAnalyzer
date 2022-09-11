@@ -307,7 +307,7 @@
          <bool>false</bool>
         </property>
         <property name="toolTip">
-         <string>Select the experimental AI engine. 'lungmask' (U-net) will create lungs and lobes, 'TotalSegmentator' (nn-Unet) will produce lung lobes, trachea, pulmonary artery and the left atrium of the heart.  Both engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+). Pytorch must be preinstalled in Slicer's Python. </string>
+         <string>Select the experimental AI engine. 'lungmask' (U-net) will create lungs and lobes, 'TotalSegmentator' (nn-Unet) will produce lung lobes, trachea, bronchi, a vessel mask, pulmonary artery and the left atrium of the heart.  Both engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+). Pytorch must be preinstalled in Slicer's Python. </string>
         </property>
         <property name="currentText">
          <string/>

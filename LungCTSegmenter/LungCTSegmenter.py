@@ -1635,8 +1635,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
                 slicer.util.logProcessOutput(proc)
                 # we must do this twice to get vessel segmentation (testing)
-                #proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                #slicer.util.logProcessOutput(proc)
+                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
@@ -1646,9 +1646,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("trachea",tempDir + "segmentation/trachea.nii.gz",self.outputSegmentation, self.tracheaColor)
                 self.importTotalSegmentatorSegment("pulmonary artery",tempDir + "segmentation/pulmonary_artery.nii.gz",self.outputSegmentation, self.pulmonaryArteryColor)
                 self.importTotalSegmentatorSegment("left atrium of heart",tempDir + "segmentation/heart_atrium_left.nii.gz",self.outputSegmentation, self.pulmonaryVeinColor)
-                #self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
-                #self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
-                #self.importTotalSegmentatorSegment("airways",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
+                self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
+                self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
+                self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
                 # restore directory 
                 os.chdir(beforeDir)
