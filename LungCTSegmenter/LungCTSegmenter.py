@@ -1637,6 +1637,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 # we must do this twice to get vessel segmentation (testing)
                 proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
                 slicer.util.logProcessOutput(proc)
+                # create all segments in one NIFTI file 
+                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
+                slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
@@ -1650,10 +1653,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
                 self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
+                # load segmentation joint file for additional reference of other structures
+                from os.path import exists
+                _sourcepath = tempDir + "segmentation/s01.nii.gz"
+                file_exists = exists(_sourcepath)
+                if file_exists:
+                    subSeg = slicer.util.loadSegmentation(_sourcepath)
                 # restore directory 
                 os.chdir(beforeDir)
                 logging.info("Segmentation done.")
-                logging.info("A set of 104 segmentations has been saved in: "+  tempDir + "segmentation")
+                logging.info("A set of 107 segmentations has been saved in: "+  tempDir + "segmentation")
+                logging.info("'s01.ni.gz' contains all detected classes in one file.")
+                
             else:
                 logging.info("No AI engine defined.")  
         
