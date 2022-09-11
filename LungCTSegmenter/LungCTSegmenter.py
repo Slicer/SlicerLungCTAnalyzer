@@ -91,9 +91,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           placeWidget.placeButton().show()
           placeWidget.deleteButton().show()
 
-      # Populate combobox
+      # Populate comboboxes
       list = ["low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
+
+      list = ["lungmask", "TotalSegmentator"]
+      self.ui.engineAIComboBox.addItems(list);
 
       # Connections
 
@@ -111,6 +114,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect combo boxes 
       self.ui.detailLevelComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
+      self.ui.engineAIComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
       
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -127,6 +131,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.setDefaultButton.connect('clicked(bool)', self.onSetDefaultButton)
       
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
+      self.ui.engineAIComboBox.enabled = False
       
       import configparser
 
@@ -398,6 +403,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
       self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
+      self.logic.engineAI = self.ui.engineAIComboBox.currentText
+      
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -448,6 +455,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
+      self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
@@ -506,8 +514,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.useAI = self.useAI
           if self.useAI:
-            self.logic.engineAI = "lungmask"
-            #self.logic.engineAI = "totalsegmentator"
+            self.logic.engineAI = self.ui.engineAIComboBox.currentText
           # always save a copy of the current markups in Slicer temp dir for later use
           self.saveFiducialsTempDir()
           if self.saveFiducials: 
@@ -753,6 +760,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("AirwayThresholdMax", "-850")
         if not parameterNode.GetParameter("airwaySegmentationDetailLevel"):
           parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
+        if not parameterNode.GetParameter("engineAI"):
+          parameterNode.SetParameter("engineAI", "lungmask")
     @property
     def lungThresholdMin(self):
         thresholdStr = self.getParameterNode().GetParameter("LungThresholdMin")
@@ -1577,7 +1586,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
 
-            elif self.engineAI == "totalsegmentator":
+            elif self.engineAI == "TotalSegmentator":
                 # Work in progress, testing
    
                 # Import the required libraries

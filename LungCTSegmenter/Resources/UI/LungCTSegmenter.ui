@@ -93,6 +93,9 @@
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="outputsCollapsibleButton">
+     <property name="toolTip">
+      <string/>
+     </property>
      <property name="text">
       <string>Segmentation</string>
      </property>
@@ -271,7 +274,7 @@
       <item row="9" column="0">
        <widget class="QCheckBox" name="useAICheckBox">
         <property name="toolTip">
-         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net'. The function is experimental and requires a strong GPU.  If CUDA is not enabled on your computer, CPU processing will need 3-10 minutes. During a first run, 'lungmask' will be pip-installed from GitHub in Slicer's Python automatically. On Windows, it may also be required to manually install Pytorch beforehand.</string>
+         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
         </property>
         <property name="text">
          <string>use AI (experimental)</string>
@@ -295,6 +298,19 @@
         </property>
         <property name="text">
          <string>Load last saved markups</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QComboBox" name="engineAIComboBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Select the experimental AI engine. 'lungmask' (U-net) will create lungs and lobes, 'TotalSegmentator' (nn-Unet) will produce  a lung mask, lobes, airways, ribs, scapula and a pulmonary vessel mask. Prerequisites: Both engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+). Pytorch must be preinstalled in Slicer's Python. </string>
+        </property>
+        <property name="currentText">
+         <string/>
         </property>
        </widget>
       </item>
