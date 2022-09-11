@@ -88,7 +88,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.52
+        self.version = 2.53
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None

@@ -121,3 +121,7 @@ add SNOMED International tags or lungs and trachea, set "Smoothing factor","0.2"
 
 V 2.52
 add experimental AI segmentation: lungmask U-net lung and lobe segmentation
+
+V 2.53
+add experimental AI segmentation: TotalSegmentator nn-Unet lung, lobe, airway and vessel segmentation
+make the experimental engine selectable 
