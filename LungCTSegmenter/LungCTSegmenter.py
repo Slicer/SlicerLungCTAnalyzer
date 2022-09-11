@@ -27,7 +27,11 @@ class LungCTSegmenter(ScriptedLoadableModule):
     self.parent.helpText = """
 This module segments lungs and airways from chest CT either with a few user-defined landmarks or by involving AI. 
 See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
-<br>
+
+"""
+    self.parent.acknowledgementText = """
+This extension was originally developed by Rudolf Bumm (KSKR) and Andras Lasso (PERK). 
+<br><br>
 AI segmentation involves
 <br><br>
 <a href="https://github.com/JoHof/lungmask">Lungmask U-net</a><br>See Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). 
@@ -39,8 +43,6 @@ and<br>
 <a href="https://arxiv.org/abs/2208.05868">https://arxiv.org/abs/2208.05868</a>
 
 """
-    self.parent.acknowledgementText = """
-This extension was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Lungmask (U-net models and code) by Johannes Hofmanninger are used with permission."""
 
     # Sample data is already registered by LungCTAnalyzer module, so there is no need to add here
 
