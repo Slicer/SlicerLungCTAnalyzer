@@ -28,7 +28,16 @@ class LungCTSegmenter(ScriptedLoadableModule):
 This module segments lungs and airways from chest CT either with a few user-defined landmarks or by involving AI. 
 See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
 <br>
-AI segmentation involves <a href="https://github.com/JoHof/lungmask">Lungmask U-net</a>: See Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). https://doi.org/10.1186/s41747-020-00173-2
+AI segmentation involves
+<br><br>
+<a href="https://github.com/JoHof/lungmask">Lungmask U-net</a><br>See Hofmanninger, J., Prayer, F., Pan, J. et al. Automatic lung segmentation in routine imaging is primarily a data diversity problem, not a methodology problem. Eur Radiol Exp 4, 50 (2020). 
+<a href="https://doi.org/10.1186/s41747-020-00173-2">https://doi.org/10.1186/s41747-020-00173-2</a>
+<br><br>
+and<br>
+<br>
+<a href="https://github.com/wasserth/TotalSegmentator">Totalsegmentator</a><br>See Jakob Wasserthal, Manfred Meyer, Hanns-Christian Breit, Joshy Cyriac, Shan Yang, Martin Segeroth: TotalSegmentator: robust segmentation of 104 anatomical structures in CT images. 
+<a href="https://arxiv.org/abs/2208.05868">https://arxiv.org/abs/2208.05868</a>
+
 """
     self.parent.acknowledgementText = """
 This extension was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Lungmask (U-net models and code) by Johannes Hofmanninger are used with permission."""
@@ -1436,8 +1445,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                   "~Anatomic codes - DICOM master list"
                   "~^^"
                   "~^^")
-            else:
-                print(_name + " not found.")
+            #else:
+            #    print(_name + " not handled during SetTag.")
         else:
             print(_sourcepath + " not found.")
             
@@ -1585,6 +1594,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
                 self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
+                logging.info("Segmentation done.")
 
             elif self.engineAI == "TotalSegmentator":
                 # Work in progress, testing
@@ -1597,7 +1607,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.pip_install("TotalSegmentator")
                 
                 # Make sure we are working with latest models during testing
-                slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
+                #slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
                 
                 # Write temporary volume file in NIFT format as input for TotalSegmentator
                 self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
@@ -1622,25 +1632,29 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 # its functions throw exceptions                  
                 proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
                 slicer.util.logProcessOutput(proc)
-                # we must do this twice to get vessel segmentation
-                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                slicer.util.logProcessOutput(proc)
+                # we must do this twice to get vessel segmentation (testing)
+                #proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                #slicer.util.logProcessOutput(proc)
                 
-                self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
                 self.importTotalSegmentatorSegment("right lower lobe",tempDir + "segmentation/lung_lower_lobe_right.nii.gz",self.outputSegmentation, self.rightLowerLobeColor)
                 self.importTotalSegmentatorSegment("left upper lobe",tempDir + "segmentation/lung_upper_lobe_left.nii.gz",self.outputSegmentation, self.leftUpperLobeColor)
                 self.importTotalSegmentatorSegment("left lower lobe",tempDir + "segmentation/lung_lower_lobe_left.nii.gz",self.outputSegmentation, self.leftLowerLobeColor)
-                self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
-                self.importTotalSegmentatorSegment("airways",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
+                self.importTotalSegmentatorSegment("trachea",tempDir + "segmentation/trachea.nii.gz",self.outputSegmentation, self.tracheaColor)
+                self.importTotalSegmentatorSegment("pulmonary artery",tempDir + "segmentation/pulmonary_artery.nii.gz",self.outputSegmentation, self.pulmonaryArteryColor)
+                self.importTotalSegmentatorSegment("left atrium of heart",tempDir + "segmentation/heart_atrium_left.nii.gz",self.outputSegmentation, self.pulmonaryVeinColor)
+                #self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
+                #self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
+                #self.importTotalSegmentatorSegment("airways",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
                 # restore directory 
                 os.chdir(beforeDir)
                 logging.info("Segmentation done.")
+                logging.info("A set of 104 segmentations has been saved in: "+  tempDir + "segmentation")
             else:
                 logging.info("No AI engine defined.")  
-            
+        
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
