@@ -1042,8 +1042,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
         slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("Lung segmentation"))
-        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("AI lung segmentation"))
-        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("AI lobe segmentation"))
+        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("TotalSegmentator"))
         
         self.removeTemporaryObjects()
 
@@ -1247,81 +1246,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         displayNode.SetOpacity3D(1.0)  
         # Set opacity of a single segment
         displayNode.SetSegmentOpacity3D(_segID, 0.3)  
+        self.setAnatomicalTag(self.outputSegmentation, segmentName, _segID)
         
-        _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
-        segment = outputSegmentation.GetSegmentation().GetSegment(_segID)
-        if segmentName == "right lung": 
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^39607008^Lung"
-                "~SCT^24028007^Right"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "left lung":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^39607008^Lung"
-                "~SCT^7771000^Left"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "left upper lobe":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^45653009^Upper lobe of Lung"
-                "~SCT^7771000^Left"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "left lower lobe":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^90572001^Lower lobe of lung"
-                "~SCT^7771000^Left"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "right upper lobe":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^45653009^Upper lobe of lung"
-                "~SCT^24028007^Right"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "right middle lobe":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^72481006^Middle lobe of lung"
-                "~SCT^24028007^Right"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "right lower lobe":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-                "Segmentation category and type - 3D Slicer General Anatomy list"
-                "~SCT^123037004^Anatomical Structure"
-                "~SCT^90572001^Lower lobe of lung"
-                "~SCT^24028007^Right"
-                "~Anatomic codes - DICOM master list"
-                "~^^"
-                "~^^")
-        elif segmentName == "airways":
-            segment.SetTag(segment.GetTerminologyEntryTagName(),
-              "Segmentation category and type - 3D Slicer General Anatomy list"
-              "~SCT^123037004^Anatomical Structure"
-              "~SCT^44567001^Trachea"
-              "~^^"
-              "~Anatomic codes - DICOM master list"
-              "~^^"
-              "~^^")
 
 
     def addSegmentFromNumpyArray(self, outputSegmentation, input_np, segmentName, labelValue, inputVolume):
@@ -1353,109 +1279,111 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     def get_script_path(self):
         return os.path.dirname(os.path.realpath(sys.argv[0]))
+
+    def setAnatomicalTag(self, _outputsegmentation, _name, _segID):
+        segment = _outputsegmentation.GetSegmentation().GetSegment(_segID)
+        if _name == "right lung": 
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^39607008^Lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "left lung":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^39607008^Lung"
+                "~SCT^7771000^Left"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "left upper lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^45653009^Upper lobe of Lung"
+                "~SCT^7771000^Left"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "left lower lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^90572001^Lower lobe of lung"
+                "~SCT^7771000^Left"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "right upper lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^45653009^Upper lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "right middle lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^72481006^Middle lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "right lower lobe":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+                "Segmentation category and type - 3D Slicer General Anatomy list"
+                "~SCT^123037004^Anatomical Structure"
+                "~SCT^90572001^Lower lobe of lung"
+                "~SCT^24028007^Right"
+                "~Anatomic codes - DICOM master list"
+                "~^^"
+                "~^^")
+        elif _name == "airways":
+            segment.SetTag(segment.GetTerminologyEntryTagName(),
+              "Segmentation category and type - 3D Slicer General Anatomy list"
+              "~SCT^123037004^Anatomical Structure"
+              "~SCT^44567001^Trachea"
+              "~^^"
+              "~Anatomic codes - DICOM master list"
+              "~^^"
+              "~^^")
+        #else:
+        #    print(_name + " not handled during SetTag.")
         
-                        
+                       
     def importTotalSegmentatorSegment(self, _name, _sourcepath, _outputsegmentation, _color):
         from os.path import exists
         file_exists = exists(_sourcepath)
         if file_exists:
             subSeg = slicer.util.loadSegmentation(_sourcepath)
             sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_1")
-            subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetColor(_color)
-            subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(_name)
-            _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(subSeg.GetSegmentation(), sourceSegmentId)
-            slicer.mrmlScene.RemoveNode(subSeg)
-
-            if _name.find("lobe"):
+            if sourceSegmentId:
+                subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetColor(_color)
+                subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(_name)
+                _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(subSeg.GetSegmentation(), sourceSegmentId)
                 _segID = _outputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_name)
+                self.setAnatomicalTag(_outputsegmentation, _name, _segID)              
                 displayNode = _outputsegmentation.GetDisplayNode()
                 # Set overall opacity of the segmentation
                 displayNode.SetOpacity3D(1.0)  
-                # Set opacity of a single segment
-                displayNode.SetSegmentOpacity3D(_segID, 0.3)  
-
-            segment = _outputsegmentation.GetSegmentation().GetSegment(_segID)
-            if _name == "right lung": 
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^39607008^Lung"
-                    "~SCT^24028007^Right"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "left lung":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^39607008^Lung"
-                    "~SCT^7771000^Left"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "left upper lobe":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^45653009^Upper lobe of Lung"
-                    "~SCT^7771000^Left"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "left lower lobe":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^90572001^Lower lobe of lung"
-                    "~SCT^7771000^Left"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "right upper lobe":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^45653009^Upper lobe of lung"
-                    "~SCT^24028007^Right"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "right middle lobe":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^72481006^Middle lobe of lung"
-                    "~SCT^24028007^Right"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "right lower lobe":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                    "Segmentation category and type - 3D Slicer General Anatomy list"
-                    "~SCT^123037004^Anatomical Structure"
-                    "~SCT^90572001^Lower lobe of lung"
-                    "~SCT^24028007^Right"
-                    "~Anatomic codes - DICOM master list"
-                    "~^^"
-                    "~^^")
-            elif _name == "airways":
-                segment.SetTag(segment.GetTerminologyEntryTagName(),
-                  "Segmentation category and type - 3D Slicer General Anatomy list"
-                  "~SCT^123037004^Anatomical Structure"
-                  "~SCT^44567001^Trachea"
-                  "~^^"
-                  "~Anatomic codes - DICOM master list"
-                  "~^^"
-                  "~^^")
-            #else:
-            #    print(_name + " not handled during SetTag.")
+                # make lobes semitransparent
+                if _name.find("lobe") > -1 or _name.find("lung") > -1:
+                    # Set opacity of a single segment
+                    displayNode.SetSegmentOpacity3D(_segID, 0.3)  
+            slicer.mrmlScene.RemoveNode(subSeg)
         else:
             print(_sourcepath + " not found.")
-            
+
 
 
     def applySegmentation(self):
-
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
             return
@@ -1598,29 +1526,35 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
                 logging.info("Segmentation done.")
 
-            elif self.engineAI == "TotalSegmentator":
-                # Work in progress, testing
-   
+            elif self.engineAI == "TotalSegmentator":            
                 # Import the required libraries
                 self.showStatusMessage(' Importing totalsegmentator AI ...')
                 try:
                     import totalsegmentator
                 except ModuleNotFoundError:
                     slicer.util.pip_install("TotalSegmentator")
-                
-                # Make sure we are working with latest models during testing
+                    import totalsegmentator
+            
+                # Testing: Make sure we are working with latest version
                 #slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
-                
+
+                # _run set False for debugging without new TotalSegmentator run 
+                _run = True
+
+                tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
+                if _run: 
+                    # remove outut directory and files
+                    import shutil
+                    dir_path = tempDir + r"segmentation"
+                    shutil.rmtree(dir_path)
+                                
                 # Write temporary volume file in NIFT format as input for TotalSegmentator
                 self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
-                tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
                 myStorageNode = self.inputVolume.CreateDefaultStorageNode()
                 myStorageNode.SetFileName(tempDir + "input.nii.gz")
                 myStorageNode.WriteData(self.inputVolume)
                 logging.info("Input volume written to " + tempDir + "input.nii.gz")
-                
-                import os
-                
+                                
                 beforeDir = os.getcwd()
                 # get Slicer home bin folder
                 slicerHomeBinDir = slicer.app.slicerHome
@@ -1628,18 +1562,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 # change to script directory
                 os.chdir(slicerHomeDir + r"/lib/Python/Scripts")
                 #print(os.getcwd())
-
-                # run TotalSegmentator from a console process because after 
-                # import totalsegmentator 
-                # its functions throw exceptions                  
-                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
-                slicer.util.logProcessOutput(proc)
-                # we must do this twice to get vessel segmentation (testing)
-                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                slicer.util.logProcessOutput(proc)
-                # create all segments in one NIFTI file 
-                proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
-                slicer.util.logProcessOutput(proc)
+                
+                if _run:
+                    # run TotalSegmentator from a console process because after 
+                    # import totalsegmentator 
+                    # its functions throw exceptions                  
+                    proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
+                    slicer.util.logProcessOutput(proc)
+                    # we must do this twice to get vessel segmentation (testing)
+                    #proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                    #slicer.util.logProcessOutput(proc)
+                    # create all segments in one NIFTI file 
+                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
+                    slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
@@ -1659,11 +1594,24 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 file_exists = exists(_sourcepath)
                 if file_exists:
                     subSeg = slicer.util.loadSegmentation(_sourcepath)
-                # restore directory 
+                    subSeg.SetName("TotalSegmentator")
+                    # rename segments according to TotalSegmenator class names 
+                    from totalsegmentator.map_to_binary import class_map
+                    #print(class_map)
+                    #masks = class_map["total"].values()
+                    masks = class_map.values()
+                    for idx, mask in enumerate(masks):
+                        sourceSegmentId = None
+                        sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_" + str(idx + 1))
+                        if sourceSegmentId:
+                            subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(mask) 
+                    # turn off visibility by default                            
+                    subSeg.GetDisplayNode().SetVisibility(False)                            
+
+
+                # restore to previous directory state 
                 os.chdir(beforeDir)
                 logging.info("Segmentation done.")
-                logging.info("A set of 107 segmentations has been saved in: "+  tempDir + "segmentation")
-                logging.info("'s01.ni.gz' contains all detected classes in one file.")
                 
             else:
                 logging.info("No AI engine defined.")  
