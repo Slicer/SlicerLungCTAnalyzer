@@ -1580,6 +1580,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # create all segments in one NIFTI file 
                     proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
                     slicer.util.logProcessOutput(proc)
+                    # create all segments in one NIFTI file 
+                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
+                    slicer.util.logProcessOutput(proc)
+                    # combine segments into right lung
+                    proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right")
+                    slicer.util.logProcessOutput(proc)
+                    # combine segments into left lung
+                    proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left")
+                    slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
@@ -1590,6 +1599,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("pulmonary artery",tempDir + "segmentation/pulmonary_artery.nii.gz",self.outputSegmentation, self.pulmonaryArteryColor)
                 self.importTotalSegmentatorSegment("left atrium of heart",tempDir + "segmentation/heart_atrium_left.nii.gz",self.outputSegmentation, self.pulmonaryVeinColor)
                 self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
+                self.importTotalSegmentatorSegment("right lung",tempDir + "segmentation/lung_right.nii.gz",self.outputSegmentation, self.rightLungColor)
+                self.importTotalSegmentatorSegment("left lung",tempDir + "segmentation/lung_left.nii.gz",self.outputSegmentation, self.leftLungColor)
                 self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
                 self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
@@ -1603,8 +1614,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # rename segments according to TotalSegmenator class names 
                     from totalsegmentator.map_to_binary import class_map
                     #print(class_map)
-                    #masks = class_map["total"].values()
-                    masks = class_map.values()
+                    masks = class_map["total"].values()
                     for idx, mask in enumerate(masks):
                         sourceSegmentId = None
                         sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_" + str(idx + 1))
