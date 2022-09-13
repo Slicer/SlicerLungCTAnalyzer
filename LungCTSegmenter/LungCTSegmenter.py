@@ -1532,21 +1532,26 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 try:
                     import totalsegmentator
                 except ModuleNotFoundError:
-                    slicer.util.pip_install("TotalSegmentator")
+                    slicer.util.pip_install("git+https://github.com/wasserth/TotalSegmentator.git")
                     import totalsegmentator
             
                 # Testing: Make sure we are working with latest version
-                #slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
+                slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
 
                 # _run set False for debugging without new TotalSegmentator run 
                 _run = True
 
                 tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
-                if _run: 
-                    # remove outut directory and files
-                    import shutil
-                    dir_path = tempDir + r"segmentation"
-                    shutil.rmtree(dir_path)
+                if _run:
+                    # check if temp output folder exists
+                    if os.path.isdir(tempDir + r"segmentation"):                
+                        # remove temp output directory and files
+                        import shutil
+                        dir_path = tempDir + r"segmentation"
+                        try:
+                            shutil.rmtree(dir_path)
+                        except OSError as e:
+                            print("Unable to delete temporary ouput folder diue to error:  %s : %s" % (dir_path, e.strerror))
                                 
                 # Write temporary volume file in NIFT format as input for TotalSegmentator
                 self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
@@ -1567,11 +1572,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # run TotalSegmentator from a console process because after 
                     # import totalsegmentator 
                     # its functions throw exceptions                  
-                    proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
+                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
                     slicer.util.logProcessOutput(proc)
-                    # we must do this twice to get vessel segmentation (testing)
-                    #proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                    #slicer.util.logProcessOutput(proc)
+                    # we must do this twice to get vessel segmentation 
+                    proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                    slicer.util.logProcessOutput(proc)
                     # create all segments in one NIFTI file 
                     proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
                     slicer.util.logProcessOutput(proc)
@@ -1588,7 +1593,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
                 self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
-                # load segmentation joint file for additional reference of other structures
+                # load segmentation joint file 
                 from os.path import exists
                 _sourcepath = tempDir + "segmentation/s01.nii.gz"
                 file_exists = exists(_sourcepath)
