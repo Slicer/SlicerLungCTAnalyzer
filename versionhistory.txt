@@ -128,3 +128,7 @@ make the experimental engine selectable
 
 V 2.54
 maintanace
+
+V 2.55
+Switch back to fourupview when cancel/reset is pressed
+Automatically set lung CT window/level preset when Segmenter is initialized

@@ -284,7 +284,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       # Parameter node stores all user choices in parameter values, node selections, etc.
       # so that when the scene is saved and reloaded, these settings are restored.
-
+      
+      self.logic = LungCTSegmenterLogic()
       self.setParameterNode(self.logic.getParameterNode())
 
       # Select default input nod#es if nothing is selected yet to save a few clicks for the user
@@ -292,6 +293,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
           if firstVolumeNode:
               self.logic.inputVolume = firstVolumeNode
+              # Set lung CT window / level of inputVolume 
+              displayNode = self.logic.inputVolume.GetDisplayNode()
+              displayNode.AutoWindowLevelOff()
+              displayNode.SetWindowLevel(1400, -500)
       #if not self.logic.outputSegmentation:
       #    firstSegmentationNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
       #    if firstSegmentationNode:
@@ -920,8 +925,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # Get window / level of inputVolume 
         displayNode = self.inputVolume.GetDisplayNode()
         displayNode.AutoWindowLevelOff()
-        window = displayNode.GetWindow()
-        level = displayNode.GetLevel()
+        displayNode.SetWindowLevel(1400, -500)
 
         # Create resampled volume with fixed 2.0mm spacing (for faster, standardized workflow)
 
@@ -933,9 +937,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # Set window / level of inputVolume in resampledVolume 
         displayNode = self.resampledVolume.GetDisplayNode()
         displayNode.AutoWindowLevelOff()
-        displayNode.SetWindow(window)
-        displayNode.SetLevel(level)
-
+        displayNode.SetWindowLevel(1400, -500)
 
         if not self.outputSegmentation:
             self.outputSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Lung segmentation")
