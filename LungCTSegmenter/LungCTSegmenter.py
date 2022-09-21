@@ -287,15 +287,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.setParameterNode(self.logic.getParameterNode())
 
-      # Select default input nodes if nothing is selected yet to save a few clicks for the user
+      # Select default input nod#es if nothing is selected yet to save a few clicks for the user
       if not self.logic.inputVolume:
           firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
           if firstVolumeNode:
               self.logic.inputVolume = firstVolumeNode
-      if not self.logic.outputSegmentation:
-          firstSegmentationNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
-          if firstSegmentationNode:
-              self.logic.outputSegmentation = firstSegmentationNode
+      #if not self.logic.outputSegmentation:
+      #    firstSegmentationNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
+      #    if firstSegmentationNode:
+      #        self.logic.outputSegmentation = firstSegmentationNode
 
   def setParameterNode(self, inputParameterNode):
       """
@@ -1576,9 +1576,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.logProcessOutput(proc)
                     # we must do this twice to get vessel segmentation 
                     proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                    slicer.util.logProcessOutput(proc)
-                    # create all segments in one NIFTI file 
-                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
                     slicer.util.logProcessOutput(proc)
                     # create all segments in one NIFTI file 
                     proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
