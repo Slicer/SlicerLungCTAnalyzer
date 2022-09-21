@@ -563,6 +563,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.segmentationStarted = False
           self.logic.segmentationFinished = False
           self.updateGUIFromParameterNode()
+          slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
       except Exception as e:
           slicer.util.errorDisplay("Failed to compute results: "+str(e))
           import traceback
