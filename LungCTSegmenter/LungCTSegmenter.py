@@ -106,7 +106,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       list = ["low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
 
-      list = ["lungmask", "TotalSegmentator"]
+      list = ["lungmask", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all" ]
       self.ui.engineAIComboBox.addItems(list);
 
       # Connections
@@ -1529,7 +1529,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
                 logging.info("Segmentation done.")
 
-            elif self.engineAI == "TotalSegmentator":            
+            elif self.engineAI.find("TotalSegmentator") == 0:            
                 # Import the required libraries
                 self.showStatusMessage(' Importing totalsegmentator AI ...')
                 try:
@@ -1577,18 +1577,20 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # its functions throw exceptions                  
                     proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
                     slicer.util.logProcessOutput(proc)
-                    # we must do this twice to get vessel segmentation 
-                    proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
-                    slicer.util.logProcessOutput(proc)
-                    # create all segments in one NIFTI file 
-                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
-                    slicer.util.logProcessOutput(proc)
-                    # combine segments into right lung
-                    proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right")
-                    slicer.util.logProcessOutput(proc)
-                    # combine segments into left lung
-                    proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left")
-                    slicer.util.logProcessOutput(proc)
+                    if self.engineAI == "TotalSegmentator all" :  
+                        # create all segments in one NIFTI file 
+                        proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
+                        slicer.util.logProcessOutput(proc)
+                    if self.engineAI == "TotalSegmentator lung extended" or self.engineAI == "TotalSegmentator all" :  
+                        # we must do this twice to get vessel segmentation 
+                        proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                        slicer.util.logProcessOutput(proc)
+                        # combine segments into right lung
+                        proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right")
+                        slicer.util.logProcessOutput(proc)
+                        # combine segments into left lung
+                        proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left")
+                        slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
