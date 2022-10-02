@@ -144,30 +144,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
       self.ui.engineAIComboBox.enabled = False
       
-      import configparser
-
-      parser = configparser.SafeConfigParser()
-      parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
-      if parser.has_option('LungThreshholdRange', 'minimumValue'): 
-          self.ui.LungThresholdRangeWidget.minimumValue = int(float(parser.get('LungThreshholdRange','minimumValue')))
-      else: 
-          self.ui.LungThresholdRangeWidget.minimumValue = -1500
-
-      if parser.has_option('LungThreshholdRange', 'maximumValue'): 
-          self.ui.LungThresholdRangeWidget.maximumValue = int(float(parser.get('LungThreshholdRange','maximumValue')))
-      else: 
-          self.ui.LungThresholdRangeWidget.maximumValue = -400
-
-      if parser.has_option('AirwayThreshholdRange', 'minimumValue'): 
-          self.ui.AirwayThresholdRangeWidget.minimumValue = int(float(parser.get('AirwayThreshholdRange','minimumValue')))
-      else: 
-          self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
-
-      if parser.has_option('AirwayThreshholdRange', 'maximumValue'): 
-          self.ui.AirwayThresholdRangeWidget.maximumValue = int(float(parser.get('AirwayThreshholdRange','maximumValue')))
-      else: 
-          self.ui.AirwayThresholdRangeWidget.maximumValue = -850
-
       # Make sure parameter node is initialized (needed for module reload)
       self.initializeParameterNode()
 
@@ -418,9 +394,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
-      self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
-      self.logic.engineAI = self.ui.engineAIComboBox.currentText
-      
+      self.ui.detailLevelComboBox.currentText = self.logic.airwaySegmentationDetailLevel
+      self.ui.engineAIComboBox.currentText = self.logic.engineAI
+      self.ui.LungThresholdRangeWidget.minimumValue = self.logic.lungThresholdMin
+      self.ui.LungThresholdRangeWidget.maximumValue = self.logic.lungThresholdMax 
+      self.ui.AirwayThresholdRangeWidget.minimumValue = self.logic.airwayThresholdMin
+      self.ui.AirwayThresholdRangeWidget.maximumValue = self.logic.airwayThresholdMax       
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -475,6 +454,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
+      self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
+      self.logic.engineAI = self.ui.engineAIComboBox.currentText
     
       self._parameterNode.EndModify(wasModified)
 
