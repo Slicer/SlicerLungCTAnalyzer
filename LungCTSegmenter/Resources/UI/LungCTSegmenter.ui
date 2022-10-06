@@ -307,7 +307,7 @@
          <bool>false</bool>
         </property>
         <property name="toolTip">
-         <string>Select the experimental AI engine. 'lungmask' (U-net) will create lungs and lobes, 'TotalSegmentator' (nnU-Net) will create lung lobes, trachea, pulmonary artery and the left atrium of the heart.  Both engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+).</string>
+         <string>Select the  AI engine. 'lungmask' (U-Net) will create lungs and lobes, 'MONAILabel' (U-Net) lungs and airways, 'TotalSegmentator' (nnU-Net) lung lobes, trachea, pulmonary artery and the left atrium of the heart.  All engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+).</string>
         </property>
         <property name="currentText">
          <string/>

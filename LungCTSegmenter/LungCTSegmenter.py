@@ -106,7 +106,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       list = ["low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
 
-      list = ["lungmask", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all" ]
+      list = ["lungmask", "MONAILabel", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all"]
       self.ui.engineAIComboBox.addItems(list);
 
       # Connections
@@ -1365,7 +1365,22 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         else:
             print(_sourcepath + " not found.")
 
+    def saveVolTemp(self, inputVolume):
+        import time
+        import tempfile
 
+        # Temporary folder path
+        tempVolDir = slicer.app.temporaryPath + "/LungCTSegmenter/"
+        # Select the volume node you are trying to work with
+        volNode = inputVolume
+        image_id = volNode.GetName()
+        # Absolute path of the temporary volume file
+        in_file = tempfile.NamedTemporaryFile(suffix= '.nrrd', dir = tempVolDir).name
+        # save the volume node
+        start = time.time()
+        slicer.util.saveNode(volNode, in_file)
+        logging.info(f"Saved Input Node into {in_file} in {time.time() - start:3.1f}s")
+        return tempVolDir, image_id, in_file
 
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
@@ -1512,7 +1527,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
             elif self.engineAI.find("TotalSegmentator") == 0:            
                 # Import the required libraries
-                self.showStatusMessage(' Importing totalsegmentator AI ...')
+                self.showStatusMessage(' Importing Totalsegmentator AI ...')
                 try:
                     import totalsegmentator
                 except ModuleNotFoundError:
@@ -1538,7 +1553,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                             print("Unable to delete temporary ouput folder diue to error:  %s : %s" % (dir_path, e.strerror))
                                 
                 # Write temporary volume file in NIFT format as input for TotalSegmentator
-                self.showStatusMessage(' Creating segmentations with TotalSementator AI ...')
+                self.showStatusMessage(' Creating segmentations with TotalSegmentator AI ...')
                 myStorageNode = self.inputVolume.CreateDefaultStorageNode()
                 myStorageNode.SetFileName(tempDir + "input.nii.gz")
                 myStorageNode.WriteData(self.inputVolume)
@@ -1603,14 +1618,55 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_" + str(idx + 1))
                         if sourceSegmentId:
                             subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(mask) 
-                    # turn off visibility by default                            
-                    subSeg.GetDisplayNode().SetVisibility(False)                            
+                    # turn off visibility by default
+                    subSeg.GetDisplayNode().SetVisibility(False)
 
 
                 # restore to previous directory state 
                 os.chdir(beforeDir)
                 logging.info("Segmentation done.")
                 
+            elif self.engineAI.find("MONAILabel") == 0:
+                self.showStatusMessage(' Creating segmentations with MONAILabel ...')
+                logic = slicer.util.getModuleLogic('MONAILabel')
+                # connect to server
+                try:
+                    #check if Monailabel is connected correctly
+                    server_add = "http://127.0.0.1:8000"
+                    logic.setServer(server_url=server_add)
+                    MONAILabelClient = logic.info()
+                    print(MONAILabelClient)
+                except Exception as e:
+                    slicer.util.errorDisplay("Unable to connect to MONAILabel server on http://127.0.0.1:8000"+str(e))
+                    import traceback
+                    traceback.print_exc()
+                else:
+                    # save the volume and get the path
+                    tempVolDir, image_id, in_file = self.saveVolTemp(self.inputVolume)
+                    model = "segmentation_lung"
+                    params = {'largest_cc': True}
+                    # infer
+                    result_file, params = logic.infer(model, in_file, params)
+                    # load the autosegmented segmentation file in Slicer
+                    tempResultSegmentation = slicer.util.loadSegmentation(result_file)
+                    # copy segments to lung segmentation and tag them
+                    self.outputSegmentation.GetSegmentation().DeepCopy(tempResultSegmentation.GetSegmentation())
+                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_1")
+                    segment.SetName("right lung")
+                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+                    self.setAnatomicalTag(self.outputSegmentation, "right lung", segID)
+                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_2")
+                    segment.SetName("left lung")
+                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung")
+                    self.setAnatomicalTag(self.outputSegmentation, "left lung", segID)
+                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_3")
+                    segment.SetName("airways")
+                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
+                    self.setAnatomicalTag(self.outputSegmentation, "airways", segID)
+                    # cleanup
+                    if os.path.exists(in_file):
+                      os.remove(in_file)
+                    slicer.mrmlScene.RemoveNode(tempResultSegmentation)
             else:
                 logging.info("No AI engine defined.")  
         
@@ -1741,16 +1797,17 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         threeDView.resetFocalPoint()
 
 
-        # Only show lungs when in AI mode because we have lobes
+        # Only show lungs when in AI mode when have lobes
         if self.useAI: 
-            segmentation = self.outputSegmentation.GetSegmentation()
-            rightLungID = segmentation.GetSegmentIdBySegmentName("right lung")
-            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(rightLungID,False)
-            leftLungID = segmentation.GetSegmentIdBySegmentName("left lung")
-            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(leftLungID,False)
-            lungID = segmentation.GetSegmentIdBySegmentName("lung")
-            self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungID,False)
-        
+            if self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right upper lobe"):
+                segmentation = self.outputSegmentation.GetSegmentation()
+                rightLungID = segmentation.GetSegmentIdBySegmentName("right lung")
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(rightLungID,False)
+                leftLungID = segmentation.GetSegmentIdBySegmentName("left lung")
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(leftLungID,False)
+                lungID = segmentation.GetSegmentIdBySegmentName("lung")
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungID,False)
+                
         # Restore confirmation popup setting for editing a hidden segment
         if not self.useAI: 
             slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", previousConfirmEditHiddenSegmentSetting)
