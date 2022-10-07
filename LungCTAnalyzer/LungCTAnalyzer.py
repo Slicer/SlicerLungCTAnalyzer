@@ -1125,8 +1125,11 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         else: 
             storageNode = inputVolume.GetStorageNode()
             inputFilename = storageNode.GetFileName()
-            head, tail = os.path.split(inputFilename)
-            with open(head+"/LCTAThresholdDict.txt", "w+") as text_file:
+            inputFilePath = storageNode.GetAbsoluteFilePath(inputFilename)
+            head, tail = os.path.split(inputFilePath)
+            if not os.path.isdir(head):
+                os.mkdir(head)
+            with open(head + "/LCTAThresholdDict.txt", "w+") as text_file:
                 text_file.write(str(thresholds))
         slicer.util.delayDisplay("Thresholds saved globally and locally.",3000)
 
@@ -1145,16 +1148,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         else: 
             storageNode = inputVolume.GetStorageNode()
             inputFilename = storageNode.GetFileName()
-            head, tail = os.path.split(inputFilename)
+            inputFilePath = storageNode.GetAbsoluteFilePath(inputFilename)
+            head, tail = os.path.split(inputFilePath)
             file_exists = os.path.isfile(head+"/LCTAThresholdDict.txt")
             if file_exists: 
                 with open(head+"/LCTAThresholdDict.txt", "r") as text_file:
                     contents = text_file.read()
                     thresholds = ast.literal_eval(contents)
                     self.setThresholds(self.getParameterNode(), thresholds)
-                    slicer.util.delayDisplay("Local thresholds used from "+head+"/LCTAThresholdDict.txt",3000)
+                    slicer.util.delayDisplay("Local thresholds loaded from "+head+"/LCTAThresholdDict.txt",3000)
             else: 
-                slicer.util.delayDisplay('Global thresholds loaded.',3000)
+                slicer.util.delayDisplay('No thresholds found.',3000)
 
 
 

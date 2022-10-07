@@ -541,6 +541,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Stop segmentation without applying it.
       """
       try:
+          print("Cancel.")
           self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
           self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
