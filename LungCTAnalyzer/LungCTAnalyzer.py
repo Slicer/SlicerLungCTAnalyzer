@@ -1097,8 +1097,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode = None
         self.segmentEditorWidget = None
         
-
-
     def showStatusMessage(self, msg, timeoutMsec=500):
         slicer.util.showStatusMessage(msg, timeoutMsec)
         slicer.app.processEvents()
@@ -1121,7 +1119,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
          
         inputVolume = parameterNode.GetNodeReference("InputVolume")
         if not inputVolume:
-            print("Error. Cannot get input volume node reference and unable to write thresholed to the volume directory. ")
+            print("Error. Cannot get input volume node, unable to write threshold to volume directory. ")
         else: 
             storageNode = inputVolume.GetStorageNode()
             inputFilename = storageNode.GetFileName()
@@ -1132,8 +1130,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             with open(head + "/LCTAThresholdDict.txt", "w+") as text_file:
                 text_file.write(str(thresholds))
         slicer.util.delayDisplay("Thresholds saved globally and locally.",3000)
-
-
 
     def loadCustomThresholds(self):
         import ast
@@ -1159,8 +1155,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     slicer.util.delayDisplay("Local thresholds loaded from "+head+"/LCTAThresholdDict.txt",3000)
             else: 
                 slicer.util.delayDisplay('No thresholds found.',3000)
-
-
 
 
     def setDefaultParameters(self, parameterNode):
@@ -2269,7 +2263,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget.setActiveEffectByName("Smoothing")
             effect = self.segmentEditorWidget.activeEffect()
             effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
-            effect.setParameter("KernelSizeMm","3")
+            spacing = self.inputVolume.GetSpacing()
+            kernelSize = spacing[0] * 3.
+            effect.setParameter("KernelSizeMm",str(kernelSize))
             effect.self().onApply()
 
         # Delete temporary segment editor
