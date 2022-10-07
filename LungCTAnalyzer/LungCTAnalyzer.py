@@ -88,7 +88,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.55
+        self.version = 2.56
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -1313,7 +1313,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             result = float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"])
         except: 
             # not found
-            result = -1
+            result = 0.
         return result
 
     def getResultsFor(self, area):

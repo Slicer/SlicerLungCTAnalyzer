@@ -132,3 +132,6 @@ maintanace
 V 2.55
 Switch back to fourupview when cancel/reset is pressed
 Automatically set lung CT window/level preset when Segmenter is initialized
+
+V 2.56
+Support Micro-CT (rodents)  
