@@ -1271,8 +1271,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 segmentName = f"{segmentProperty['name']} {side}"
                 rowIndex = segmentNameColumn.LookupValue(segmentName)
                 lowerThresholdName, upperThresholdName = segmentProperty["thresholds"]
-                minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
-                maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
+                if rowIndex >=0:
+                    minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
+                    maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
         self.resultsTable.GetTable().Modified()
 
 
@@ -1284,8 +1285,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                         segmentName = f"{segmentProperty['name']} {side} {subSegmentProperty['name']}"
                         rowIndex = segmentNameColumn.LookupValue(segmentName)
                         lowerThresholdName, upperThresholdName = segmentProperty["thresholds"]
-                        minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
-                        maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
+                        if rowIndex >=0:
+                            minThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(lowerThresholdName)))
+                            maxThrCol.SetValue(rowIndex, float(parameterNode.GetParameter(upperThresholdName)))
             self.resultsTable.GetTable().Modified()
 
         # Add patient information as node metadata (available if volume is loaded from DICOM)
@@ -1310,7 +1312,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         result = 0.
         try:       
             # print(segId)        
-            result = round(float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"]))
+            result = float(self.outputStats[segId,"ScalarVolumeSegmentStatisticsPlugin.volume_cm3"])
         except: 
             # not found
             result = -1
@@ -1445,29 +1447,40 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.collapsedLeftVolume = self.getVol("Collapsed left")
         self.collapsedTotalVolume = self.collapsedRightVolume + self.collapsedLeftVolume
 
-        self.rightLungVolumePerc = round(self.rightLungVolume * 100. / self.totalLungVolume)
-        self.leftLungVolumePerc = round(self.leftLungVolume * 100. / self.totalLungVolume)
+        if self.totalLungVolume:
+            self.rightLungVolumePerc = round(self.rightLungVolume * 100. / self.totalLungVolume)
+            self.leftLungVolumePerc = round(self.leftLungVolume * 100. / self.totalLungVolume)
+        else: 
+            self.rightLungVolumePerc = self.leftLungVolumePerc = 0
+        
         self.totalLungVolumePerc = 100.
 
-        self.functionalRightVolumePerc = round(100 * self.functionalRightVolume / self.rightLungVolume)
-        self.functionalLeftVolumePerc = round(100 * self.functionalLeftVolume / self.leftLungVolume)
-        self.functionalTotalVolumePerc = round(100 * self.functionalTotalVolume / self.totalLungVolume)
-
-        self.affectedRightVolumePerc = round(100 * self.affectedRightVolume / self.rightLungVolume)
-        self.affectedLeftVolumePerc = round(100 * self.affectedLeftVolume / self.leftLungVolume)
-        self.affectedTotalVolumePerc = round(100 * self.affectedTotalVolume / self.totalLungVolume)
-
-        self.emphysemaRightVolumePerc = round(100 * self.emphysemaRightVolume / self.rightLungVolume,1)
-        self.emphysemaLeftVolumePerc = round(100 * self.emphysemaLeftVolume / self.leftLungVolume,1)
-        self.emphysemaTotalVolumePerc = round(100 * self.emphysemaTotalVolume / self.totalLungVolume,1)
-
-        self.infiltratedRightVolumePerc = round(100 * self.infiltratedRightVolume / self.rightLungVolume,1)
-        self.infiltratedLeftVolumePerc = round(100 * self.infiltratedLeftVolume / self.leftLungVolume,1)
-        self.infiltratedTotalVolumePerc = round(100 * self.infiltratedTotalVolume / self.totalLungVolume,1)
-
-        self.collapsedRightVolumePerc = round(100 * self.collapsedRightVolume / self.rightLungVolume,1)
-        self.collapsedLeftVolumePerc = round(100 * self.collapsedLeftVolume / self.leftLungVolume,1)
-        self.collapsedTotalVolumePerc = round(100 * self.collapsedTotalVolume / self.totalLungVolume,1)
+        if self.rightLungVolume:
+            self.functionalRightVolumePerc = round(100 * self.functionalRightVolume / self.rightLungVolume)
+            self.affectedRightVolumePerc = round(100 * self.affectedRightVolume / self.rightLungVolume)
+            self.emphysemaRightVolumePerc = round(100 * self.emphysemaRightVolume / self.rightLungVolume,1)
+            self.infiltratedRightVolumePerc = round(100 * self.infiltratedRightVolume / self.rightLungVolume,1)
+            self.collapsedRightVolumePerc = round(100 * self.collapsedRightVolume / self.rightLungVolume,1)
+        else:
+            self.functionalRightVolumePerc = self.affectedRightVolumePerc = self.emphysemaRightVolumePerc = self.infiltratedRightVolumePerc = self.collapsedRightVolumePerc = 0
+        
+        if self.leftLungVolume:
+            self.functionalLeftVolumePerc = round(100 * self.functionalLeftVolume / self.leftLungVolume)
+            self.affectedLeftVolumePerc = round(100 * self.affectedLeftVolume / self.leftLungVolume)
+            self.emphysemaLeftVolumePerc = round(100 * self.emphysemaLeftVolume / self.leftLungVolume,1)
+            self.infiltratedLeftVolumePerc = round(100 * self.infiltratedLeftVolume / self.leftLungVolume,1)
+            self.collapsedLeftVolumePerc = round(100 * self.collapsedLeftVolume / self.leftLungVolume,1)
+        else:
+            self.functionalLeftVolumePerc = self.affectedLeftVolumePerc = self.emphysemaLeftVolumePerc = self.infiltratedLeftVolumePerc = self.collapsedLeftVolumePerc = 0
+        
+        if self.totalLungVolume:
+            self.functionalTotalVolumePerc = round(100 * self.functionalTotalVolume / self.totalLungVolume)
+            self.affectedTotalVolumePerc = round(100 * self.affectedTotalVolume / self.totalLungVolume)
+            self.emphysemaTotalVolumePerc = round(100 * self.emphysemaTotalVolume / self.totalLungVolume,1)
+            self.infiltratedTotalVolumePerc = round(100 * self.infiltratedTotalVolume / self.totalLungVolume,1)
+            self.collapsedTotalVolumePerc = round(100 * self.collapsedTotalVolume / self.totalLungVolume,1)
+        else:
+            self.functionalTotalVolumePerc = self.affectedTotalVolumePerc = self.emphysemaTotalVolumePerc = self.infiltratedTotalVolumePerc = self.collapsedTotalVolumePerc = 0
 
 
     def createCovidResultsTable(self):
@@ -2254,24 +2267,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
             effect.setParameter("KernelSizeMm","3")
             effect.self().onApply()
-            
-            # grow vessels slightly to counteract perivascular 'collapse' 
-            #self.showStatusMessage(f'Growing segment "Vessels {side}" ...')
-            #self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
-            #self.segmentEditorWidget.setActiveEffectByName("Margin")
-            #effect = self.segmentEditorWidget.activeEffect()
-            #effect.setParameter("MarginSizeMm","0.3")
-            #effect.self().onApply()
-
-            # remove insignificant infiltates 
-            #self.showStatusMessage(f'Removing small islands in segment "Infiltration {side}" ...')
-            #self.segmentEditorNode.SetSelectedSegmentID(f'Infiltration {side}')
-            #self.segmentEditorWidget.setActiveEffectByName("Islands")
-            #effect = self.segmentEditorWidget.activeEffect()
-            #effect.setParameter("SmoothingMethod","REMOVE_SMALL_ISLANDS")
-            #effect.setParameter("Islands.MinimumSize","1000")
-            #effect.self().onApply()
-
 
         # Delete temporary segment editor
         logging.info('Deleting temporary segment editor ... ')
@@ -2310,8 +2305,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget = None
             slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
             self.segmentEditorNode = None
-
-
 
         # infiltrationRightVentralId = slicer.mrmlScene.GetFirstNodeByName("Infiltration Right Ventral")
         
