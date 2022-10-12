@@ -549,6 +549,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.ui.startButton.enabled = True
           self.logic.segmentationStarted = False
           self.logic.segmentationFinished = False
+          self.logic.rightLungFiducials = self.logic.leftLungFiducials = self.logic.tracheaFiducials = None
           self.updateGUIFromParameterNode()
           slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
       except Exception as e:
