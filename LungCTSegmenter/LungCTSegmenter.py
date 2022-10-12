@@ -1467,10 +1467,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             # Postprocess lungs and set tags
             self.postprocessSegment(self.outputSegmentation,0,"right lung")
             self.postprocessSegment(self.outputSegmentation,1,"left lung")
-        
         _doAI = False
         if self.useAI:
-            import torch
+            # Install PyTorch
+            import PyTorchUtils
+            torchLogic = PyTorchUtils.PyTorchUtilsLogic()
+            if not torchLogic.torchInstalled():
+                logging.info('PyTorch module not found')
+                torch = torchLogic.installTorch(askConfirmation=True)
+                if torch is None:
+                  raise ValueError('PyTorch extension needs to be installed to use this module.')
+            else:
+                import torch
             if not torch.cuda.is_available():
                 logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
                 if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last 3-10 minutes. Are you sure you want to continue AI segmentation?"):
@@ -1481,7 +1489,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             else: 
                 _doAI = True
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
-
         if _doAI:
             if self.engineAI == "lungmask":
                 # Import the required libraries
