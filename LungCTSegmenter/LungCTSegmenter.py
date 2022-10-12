@@ -1470,13 +1470,16 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         _doAI = False
         if self.useAI:
             # Install PyTorch
+            if not hasattr(slicer.modules, 'pytorchutils'):
+                slicer.util.messageBox("AI segmentation requires the PyTorchUtils module in the PyTorch extension. Install Pytorch and restart Slicer.")
+                return
             import PyTorchUtils
             torchLogic = PyTorchUtils.PyTorchUtilsLogic()
             if not torchLogic.torchInstalled():
-                logging.info('PyTorch module not found')
+                logging.info('Torchlogic module not found')
                 torch = torchLogic.installTorch(askConfirmation=True)
                 if torch is None:
-                  raise ValueError('PyTorch extension needs to be installed to use this module.')
+                  raise ValueError('Torch needs to be installed to use this module.')
             else:
                 import torch
             if not torch.cuda.is_available():
