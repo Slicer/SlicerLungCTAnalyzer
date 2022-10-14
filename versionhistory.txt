@@ -104,7 +104,7 @@ Implement AirwayThresholdRangeWidget and use airway thesholds in 'Local threshol
 Improve post-segmentation workflow in LungCTSegmenter UI - enable 'Cancel/Reset', disable 'Start'
 
 V 2.49
-ENH enhance markup re-usability in LungCTSegmenter workflow
+enhance markup re-usability in LungCTSegmenter workflow
 
 - always save a copy of segmenter markups in Slicer temp directory for later use when pressing "Apply"
 - add new checkbox "load last saved markups" effective when pressing "Start" 
@@ -135,3 +135,10 @@ Automatically set lung CT window/level preset when Segmenter is initialized
 
 V 2.56
 Support Micro-CT (rodents)  
+
+V 2.57
+Segmenter: 
+AI: support all lungmask AI models
+AI: support inference from MONAILabel lung_segmentation server
+start processing immediately if AI checked only and start button pressed
+ 

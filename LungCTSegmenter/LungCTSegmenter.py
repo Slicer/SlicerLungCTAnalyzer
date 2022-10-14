@@ -106,7 +106,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       list = ["low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
 
-      list = ["lungmask", "MONAILabel", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all"]
+      list = ["lungmask R231", "lungmask LTRCLobes", "lungmask LTRCLobes_R231", "lungmask R231CovidWeb", "MONAILabel", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all"]
       self.ui.engineAIComboBox.addItems(list);
 
       # Connections
@@ -364,7 +364,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.setInstructionPlaceMorePoints("left lung", 3, 6, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
-          elif tracheaF < 1:
+          elif tracheaF < 1 and (not self.useAI or self.createDetailedAirways):
               self.setInstructionPlaceMorePoints("trachea", 0, 1, tracheaF)
               self.ui.tracheaPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
@@ -493,6 +493,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
+          # if AI checked and no airway segmentation run processing immediately from the start button          
+          if self.useAI and not self.createDetailedAirways:
+              self.runProcessing()
           qt.QApplication.restoreOverrideCursor()
       except Exception as e:
           qt.QApplication.restoreOverrideCursor()
@@ -500,9 +503,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           import traceback
           traceback.print_exc()
 
-  def onApplyButton(self):
+  def runProcessing(self):
       """
-      Run processing when user clicks "Apply" button.
+      Run processing 
       """
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       self.ui.updateIntensityButton.enabled = False
@@ -534,7 +537,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           traceback.print_exc()
       self.setInstructions('')
       self.ui.applyButton.enabled = False
-      
+
+  def onApplyButton(self):
+      """
+      Run processing when user clicks "Apply" button.
+      """
+      self.runProcessing()
 
   def onCancelButton(self):
       """
@@ -1494,7 +1502,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 _doAI = True
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
         if _doAI:
-            if self.engineAI == "lungmask":
+            if self.engineAI.find("lungmask") == 0:
                 # Import the required libraries
                 self.showStatusMessage(' Importing lungmask AI ...')
                 try:
@@ -1505,36 +1513,61 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
                 from lungmask import mask                
 
-                self.showStatusMessage(' Creating lungs with AI ...')
-                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-                segmentation_np = mask.apply(inputVolumeSitk)  # default model is U-net(R231), output is numpy
-
-                # add lung segments
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
-
-                # Postprocess lungs 
-                self.postprocessSegment(self.outputSegmentation,0,"right lung")
-                self.postprocessSegment(self.outputSegmentation,1,"left lung")
-            
                 self.showStatusMessage(' Creating lung lobes with lungmask AI ...')
-                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-                model = mask.get_model('unet','LTRCLobes')
-                segmentation_np = mask.apply(inputVolumeSitk, model)
 
-                # add lobe segments
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
-                self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)
+                inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                if self.engineAI == "lungmask R231":
+                    model = mask.get_model('unet','R231')
+                    segmentation_np = mask.apply(inputVolumeSitk, model)
+                    # add lung segments
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
+                    # Postprocess lungs 
+                    self.postprocessSegment(self.outputSegmentation,0,"right lung")
+                    self.postprocessSegment(self.outputSegmentation,1,"left lung")
+                elif self.engineAI == "lungmask LTRCLobes":
+                    model = mask.get_model('unet','LTRCLobes')
+                    segmentation_np = mask.apply(inputVolumeSitk, model)
+                    # add lobe segments
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)                    
+                    # Postprocess lobes
+                    self.postprocessSegment(self.outputSegmentation,0,"left upper lobe")
+                    self.postprocessSegment(self.outputSegmentation,1,"left lower lobe")
+                    self.postprocessSegment(self.outputSegmentation,2,"right upper lobe")
+                    self.postprocessSegment(self.outputSegmentation,3,"right middle lobe")
+                    self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
+                elif self.engineAI == "lungmask LTRCLobes_R231":
+                    print("Test")
+                    segmentation_np = mask.apply_fused(inputVolumeSitk)
+                    # add lobe segments
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)                    
+                    # Postprocess lobes
+                    self.postprocessSegment(self.outputSegmentation,0,"left upper lobe")
+                    self.postprocessSegment(self.outputSegmentation,1,"left lower lobe")
+                    self.postprocessSegment(self.outputSegmentation,2,"right upper lobe")
+                    self.postprocessSegment(self.outputSegmentation,3,"right middle lobe")
+                    self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
+                elif self.engineAI == "lungmask R231CovidWeb":
+                    model = mask.get_model('unet','R231CovidWeb')
+                    segmentation_np = mask.apply(inputVolumeSitk, model)
+                    # add lung segments
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
+                    # Postprocess lungs 
+                    self.postprocessSegment(self.outputSegmentation,0,"right lung")
+                    self.postprocessSegment(self.outputSegmentation,1,"left lung")
+                else:
+                    raise ValueError('This lungmask AI engine model is not supported.')
+
                 
-                # Postprocess lungs lobes
-                self.postprocessSegment(self.outputSegmentation,2,"left upper lobe")
-                self.postprocessSegment(self.outputSegmentation,3,"left lower lobe")
-                self.postprocessSegment(self.outputSegmentation,4,"right upper lobe")
-                self.postprocessSegment(self.outputSegmentation,5,"right middle lobe")
-                self.postprocessSegment(self.outputSegmentation,6,"right lower lobe")
                 logging.info("Segmentation done.")
 
             elif self.engineAI.find("TotalSegmentator") == 0:            
