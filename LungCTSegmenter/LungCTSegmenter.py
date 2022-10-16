@@ -68,6 +68,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self._tracheaFiducials = None
       self._updatingGUIFromParameterNode = False
       self.createDetailedAirways = False
+      self.createVessels = False
       self.useAI = False
       self.shrinkMasks = False
       self.detailedMasks = False
@@ -122,6 +123,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # Connect threshhold range sliders 
       self.ui.LungThresholdRangeWidget.connect('valuesChanged(double,double)', self.onLungThresholdRangeWidgetChanged)
       self.ui.AirwayThresholdRangeWidget.connect('valuesChanged(double,double)', self.onAirwayThresholdRangeWidgetChanged)
+      self.ui.VesselThresholdRangeWidget.connect('valuesChanged(double,double)', self.onVesselThresholdRangeWidgetChanged)
       
       # Connect combo boxes 
       self.ui.detailLevelComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
@@ -129,6 +131,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect check boxes 
       self.ui.detailedAirwaysCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.createVesselsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.useAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -183,6 +186,20 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parser.add_section('AirwayThreshholdRange')
           parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
 
+      if parser.has_option('VesselThreshholdRange', 'minimumValue'):
+          parser.set('VesselThreshholdRange', 'minimumValue',str(self.ui.VesselThresholdRangeWidget.minimumValue))
+      else: 
+          if not parser.has_section('VesselThreshholdRange'): 
+            parser.add_section('VesselThreshholdRange')
+          parser.set('VesselThreshholdRange', 'minimumValue',str(self.ui.VesselThresholdRangeWidget.minimumValue))
+
+      if parser.has_option('VesselThreshholdRange', 'maximumValue'):
+          parser.set('VesselThreshholdRange', 'maximumValue',str(self.ui.VesselThresholdRangeWidget.maximumValue))
+      else: 
+          if not parser.has_section('VesselThreshholdRange'): 
+            parser.add_section('VesselThreshholdRange')
+          parser.set('VesselThreshholdRange', 'maximumValue',str(self.ui.VesselThresholdRangeWidget.maximumValue))
+
       with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
           parser.write(configfile)
 
@@ -233,6 +250,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.LungThresholdRangeWidget.maximumValue = -400
       self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
       self.ui.AirwayThresholdRangeWidget.maximumValue = -850
+      self.ui.VesselThresholdRangeWidget.minimumValue = -0
+      self.ui.VesselThresholdRangeWidget.maximumValue = 3000
       self.writeConfigParser()
       self.updateParameterNodeFromGUI()
 
@@ -242,6 +261,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.updateParameterNodeFromGUI()
       
   def onAirwayThresholdRangeWidgetChanged(self):
+ 
+      self.writeConfigParser()
+      self.updateParameterNodeFromGUI()
+
+  def onVesselThresholdRangeWidgetChanged(self):
  
       self.writeConfigParser()
       self.updateParameterNodeFromGUI()
@@ -390,6 +414,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.startButton.enabled = False
         
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
+      self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
@@ -400,6 +425,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.LungThresholdRangeWidget.maximumValue = self.logic.lungThresholdMax 
       self.ui.AirwayThresholdRangeWidget.minimumValue = self.logic.airwayThresholdMin
       self.ui.AirwayThresholdRangeWidget.maximumValue = self.logic.airwayThresholdMax       
+      self.ui.VesselThresholdRangeWidget.minimumValue = self.logic.vesselThresholdMin
+      self.ui.VesselThresholdRangeWidget.maximumValue = self.logic.vesselThresholdMax       
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -448,7 +475,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
       self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
       self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
+      self.logic.vesselThresholdMin = self.ui.VesselThresholdRangeWidget.minimumValue
+      self.logic.vesselThresholdMax = self.ui.VesselThresholdRangeWidget.maximumValue
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
+      self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
@@ -489,6 +519,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
           self.logic.detailedAirways = self.createDetailedAirways
+          self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
@@ -512,6 +543,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
+          self.logic.createVessels = self.createVessels          
           self.logic.useAI = self.useAI
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
@@ -740,16 +772,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.pulmonaryArteryColor = (0., 0.59, 0.81)
         self.pulmonaryVeinColor = (0.85, 0.40, 0.31)
         self.tracheaColor = (0.71, 0.89, 1.0)
-        self.vesselmaskColor = (200./255., 200./255, 200./255)
-        self.PAColor = (0., 151./255, 206./255)
-        self.PVColor = (216./255., 101./255, 79./255)
+        self.vesselmaskColor = (216./255., 160./255., 160./255.)
+        self.PAColor = (0., 151./255., 206./255.)
+        self.PVColor = (216./255., 101./255., 79./255.)
         self.tumorColor = (253./255., 135./255., 192./255.)
+        self.thoracicCavityColor = (177./255., 122./255., 101./255.)
         self.unknownColor = (0.39, 0.39, 0.5)
         
         self.segmentEditorWidget = None
         self.segmentationStarted = False
         self.segmentationFinished = False
         self.detailedAirways = False
+        self.createVessels = False
         self.useAI = False
         self.engineAI = "None"
         self.shrinkMasks = False
@@ -770,6 +804,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("AirwayThresholdMin", "-1500")
         if not parameterNode.GetParameter("AirwayThresholdMax"):
           parameterNode.SetParameter("AirwayThresholdMax", "-850")
+        if not parameterNode.GetParameter("VesselThresholdMin"):
+          parameterNode.SetParameter("VesselThresholdMin", "0")
+        if not parameterNode.GetParameter("VesselThresholdMax"):
+          parameterNode.SetParameter("VesselThresholdMax", "3000")
         if not parameterNode.GetParameter("airwaySegmentationDetailLevel"):
           parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
         if not parameterNode.GetParameter("engineAI"):
@@ -809,6 +847,24 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @airwayThresholdMax.setter
     def airwayThresholdMax(self, value):
         self.getParameterNode().SetParameter("AirwayThresholdMax", str(value))
+
+    @property
+    def vesselThresholdMin(self):
+        thresholdStr = self.getParameterNode().GetParameter("VesselThresholdMin")
+        return float(thresholdStr) if thresholdStr else 0
+
+    @vesselThresholdMin.setter
+    def vesselThresholdMin(self, value):
+        self.getParameterNode().SetParameter("VesselThresholdMin", str(value))
+
+    @property
+    def vesselThresholdMax(self):
+        thresholdStr = self.getParameterNode().GetParameter("VesselThresholdMax")
+        return float(thresholdStr) if thresholdStr else 3000
+
+    @vesselThresholdMax.setter
+    def vesselThresholdMax(self, value):
+        self.getParameterNode().SetParameter("VesselThresholdMax", str(value))
 
     @property
     def inputVolume(self):
@@ -1396,12 +1452,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         logging.info(f"Saved Input Node into {in_file} in {time.time() - start:3.1f}s")
         return tempVolDir, image_id, in_file
 
-    def addSegment(self, _segmentation, _name, _color):
+    def addSegment(self, _segmentation, _name, _color, _opacity = 1.0):
         newSeg = slicer.vtkSegment()
         newSeg.SetName(_name)
         newSeg.SetColor(_color)
         _segmentation.GetSegmentation().AddSegment(newSeg,_name)
         _segid = _segmentation.GetSegmentation().GetSegmentIdBySegmentName(_name)
+        displayNode = _segmentation.GetDisplayNode()
+        displayNode.SetSegmentOpacity3D(_segid, _opacity)  
+
         return _segid
 
 
@@ -1837,14 +1896,104 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
               "~^^"
               "~^^")
             
-        # create empty segments for manual segmentation
-        # TODO support automatic segmentation
-        self.addSegment(self.outputSegmentation, "vesselmask", self.vesselmaskColor)
-        self.addSegment(self.outputSegmentation, "PA", self.PAColor)
-        self.addSegment(self.outputSegmentation, "PV", self.PVColor)
-        self.addSegment(self.outputSegmentation, "tumor", self.tumorColor)
+        # create segments for vessel and tumor segmentation
+        vesselMaskID = self.addSegment(self.outputSegmentation, "vesselmask", self.vesselmaskColor, 1.0)
+        self.addSegment(self.outputSegmentation, "PA", self.PAColor, 1.0)
+        self.addSegment(self.outputSegmentation, "PV", self.PVColor, 1.0)
+        self.addSegment(self.outputSegmentation, "tumor", self.tumorColor, 1.0)
+        thoracicCavityID = self.addSegment(self.outputSegmentation, "thoracic cavity", self.thoracicCavityColor, 0.3)
+        
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
 
-        # Use a lower smoothing than the default 0.5 to ensure that thin airways are not suppressed in the 3D output
+        self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
+        self.segmentEditorWidget.setActiveEffectByName("Logical operators")
+        
+        self.showStatusMessage('Adding right lung to thoracic cavity ...')
+        effect = self.segmentEditorWidget.activeEffect()
+        effect.setParameter("BypassMasking","1")
+        effect.setParameter("ModifierSegmentID","right lung")
+        effect.setParameter("Operation","UNION")
+        effect.self().onApply()
+
+        self.showStatusMessage('Adding left lung to thoracic cavity ...')
+        effect = self.segmentEditorWidget.activeEffect()
+        effect.setParameter("BypassMasking","1")
+        effect.setParameter("ModifierSegmentID","left lung")
+        effect.setParameter("Operation","UNION")
+        effect.self().onApply()
+
+        if self.createVessels:
+            if not self.segmentEditorWidget.effectByName("Wrap Solidify"):
+                slicer.util.errorDisplay("Please install 'Wrap Solidify' extension using Extension Manager.")
+            else:
+                self.showStatusMessage('Solidifying thoracic cavity ...')
+                self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
+                
+                self.segmentEditorWidget.setActiveEffectByName("Wrap Solidify")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("carveHolesInOuterSurface","False")
+                effect.setParameter("carveHolesInOuterSurfaceDiameter","10")
+                effect.setParameter("createShell","False")
+                effect.setParameter("outputType","segment")
+                effect.setParameter("preserveCracks","True")
+                effect.setParameter("region","outerSurface")
+                effect.setParameter("regionSegmentID","thoracic cavity")
+                effect.setParameter("remeshOversampling","1.5")
+                effect.setParameter("saveIntermediateResults","False")
+                effect.setParameter("shellOffsetDirection","inside")
+                effect.setParameter("shellThickness","1.5")
+                effect.setParameter("shrinkwrapIterations","6")
+                effect.setParameter("smoothingFactor","0.2")
+                effect.setParameter("splitCavities","False")
+                effect.setParameter("splitCavitiesDiameter","5")
+                effect.self().onApply()
+                
+                print(vesselMaskID)
+                print(thoracicCavityID)
+                
+                segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+                segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+                segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+                segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+
+                volume = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
+                segmentation = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
+
+                segmentEditorWidget.setSegmentationNode(segmentation)
+                segmentEditorWidget.setMasterVolumeNode(volume)
+
+                segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
+                segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange( self.vesselThresholdMin, self.vesselThresholdMax)
+
+                segmentEditorNode.SetSelectedSegmentID(vesselMaskID)
+                segmentEditorNode.SetMaskSegmentID(thoracicCavityID)
+                segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+                segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedInsideSingleSegment)
+
+                segmentEditorWidget.setActiveEffectByName("Threshold")
+                effect = segmentEditorWidget.activeEffect()
+                effect.setParameter("AutoThresholdMethod","OTSU")
+                effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
+                effect.setParameter("BrushType","CIRCLE")
+                effect.setParameter("HistogramSetLower","LOWER")
+                effect.setParameter("HistogramSetUpper","UPPER")
+                effect.setParameter("MaximumThreshold",self.vesselThresholdMax)
+                effect.setParameter("MinimumThreshold",self.vesselThresholdMin)
+
+                effect.self().onApply()
+
+                # Deactivates all effects
+                segmentEditorWidget.setActiveEffect(None)
+                segmentEditorWidget = None
+                slicer.mrmlScene.RemoveNode(segmentEditorNode)
+    
+            
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(thoracicCavityID,False)
+
+        
+
+        # Use a lower smoothing then the default 0.5 to ensure that thin airways are not suppressed in the 3D output
         self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.3")
                         
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
@@ -2062,6 +2211,8 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         logic.removeTemporaryObjects()
         logic.tracheaFiducials = markupsTracheaNode
         logic.detailedAirways = False
+        logic.createVessels = False
+        
         logic.useAI = True
         logic.engineAI = "lungmask"
 

@@ -141,4 +141,10 @@ Segmenter:
 AI: support all lungmask AI models
 AI: support inference from MONAILabel lung_segmentation server
 start processing immediately if AI checked only and start button pressed
+
+V 2.58
+implement segmentation of thorac cavity
+optional vesselmask segmentation (checkbox) 
+vessel threshold slider
+
  

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>696</height>
+    <height>727</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -314,8 +314,28 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="createVesselsCheckBox">
+        <property name="text">
+         <string>Vessel segmentation</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
@@ -364,7 +384,7 @@
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
         <property name="toolTip">
-         <string>This parameter  equals 'threshold range' in the airway segmentation 'Local Threshold-&gt; Growcut' algorithm. It is only effective if 'Airway segmentation' is enabled.  It is recommended to leave the lower threshold slider -&gt;  full left.  If airway segment is incomplete or leaking, modify the upper threshold slider slightly and stepwise (+/- 30). Re-run the segmentation by pressing 'Apply' to see any effect. See 'detail' dropdown menu (above) for additional airway segmentation effects. </string>
+         <string>This parameter equals 'threshold range' in the airway segmentation 'Local Threshold-&gt; Growcut' algorithm. It is only effective if 'Airway segmentation' is enabled.  It is recommended to leave the lower threshold slider -&gt;  full left.  If airway segment is incomplete or leaking, modify the upper threshold slider slightly and stepwise (+/- 30). Re-run the segmentation by pressing 'Apply' to see any effect. See 'detail' dropdown menu (above) for additional airway segmentation effects. </string>
         </property>
         <property name="singleStep">
          <double>1.000000000000000</double>
@@ -413,21 +433,34 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="1">
+       <widget class="ctkRangeWidget" name="VesselThresholdRangeWidget">
+        <property name="toolTip">
+         <string>Set vessel thresholds depending on the vascular contrast medium used in your input volume. </string>
+        </property>
+        <property name="minimum">
+         <double>-1500.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>3000.000000000000000</double>
+        </property>
+        <property name="minimumValue">
+         <double>0.000000000000000</double>
+        </property>
+        <property name="maximumValue">
+         <double>3000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Vessel thresholds:</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>
