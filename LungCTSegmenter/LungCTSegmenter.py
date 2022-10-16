@@ -740,6 +740,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.pulmonaryArteryColor = (0., 0.59, 0.81)
         self.pulmonaryVeinColor = (0.85, 0.40, 0.31)
         self.tracheaColor = (0.71, 0.89, 1.0)
+        self.vesselmaskColor = (200./255., 200./255, 200./255)
+        self.PAColor = (0., 151./255, 206./255)
+        self.PVColor = (216./255., 101./255, 79./255)
+        self.tumorColor = (253./255., 135./255., 192./255.)
         self.unknownColor = (0.39, 0.39, 0.5)
         
         self.segmentEditorWidget = None
@@ -1392,6 +1396,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         logging.info(f"Saved Input Node into {in_file} in {time.time() - start:3.1f}s")
         return tempVolDir, image_id, in_file
 
+    def addSegment(self, _segmentation, _name, _color):
+        newSeg = slicer.vtkSegment()
+        newSeg.SetName(_name)
+        newSeg.SetColor(_color)
+        _segmentation.GetSegmentation().AddSegment(newSeg,_name)
+        _segid = _segmentation.GetSegmentation().GetSegmentIdBySegmentName(_name)
+        return _segid
+
+
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
@@ -1719,11 +1732,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
                 self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
-            newSeg = slicer.vtkSegment()
-            newSeg.SetName("airways")
-            newSeg.SetColor(self.tracheaColor)
-            self.outputSegmentation.GetSegmentation().AddSegment(newSeg,"airways")
-            airwaySegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
+            
+            airwaySegID = self.addSegment(self.outputSegmentation, "airways", self.tracheaColor)
 
             if not self.segmentEditorWidget.effectByName("Local Threshold"):
                 slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
@@ -1827,7 +1837,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
               "~^^"
               "~^^")
             
-        
+        # create empty segments for manual segmentation
+        # TODO support automatic segmentation
+        self.addSegment(self.outputSegmentation, "vesselmask", self.vesselmaskColor)
+        self.addSegment(self.outputSegmentation, "PA", self.PAColor)
+        self.addSegment(self.outputSegmentation, "PV", self.PVColor)
+        self.addSegment(self.outputSegmentation, "tumor", self.tumorColor)
+
         # Use a lower smoothing than the default 0.5 to ensure that thin airways are not suppressed in the 3D output
         self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.3")
                         
@@ -1840,7 +1856,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         threeDWidget = layoutManager.threeDWidget(0)
         threeDView = threeDWidget.threeDView()
         threeDView.resetFocalPoint()
-
 
         # Only show lungs when in AI mode when have lobes
         if self.useAI: 
