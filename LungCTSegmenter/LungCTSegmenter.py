@@ -1583,12 +1583,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
                     import lungmask
                 
-                from lungmask import mask                
-
-                self.showStatusMessage(' Creating lung lobes with lungmask AI ...')
+                from lungmask import mask
 
                 inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 if self.engineAI == "lungmask R231":
+                    self.showStatusMessage('Creating lungs with lungmask AI ...')
                     model = mask.get_model('unet','R231')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
                     # add lung segments
@@ -1598,6 +1597,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,0,"right lung")
                     self.postprocessSegment(self.outputSegmentation,1,"left lung")
                 elif self.engineAI == "lungmask LTRCLobes":
+                    self.showStatusMessage('Creating lungs and lobes with lungmask AI ...')
                     model = mask.get_model('unet','LTRCLobes')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
                     # add lobe segments
@@ -1613,7 +1613,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,3,"right middle lobe")
                     self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
                 elif self.engineAI == "lungmask LTRCLobes_R231":
-                    print("Test")
+                    self.showStatusMessage('Creating lungs and lobes with lungmask AI ...')
                     segmentation_np = mask.apply_fused(inputVolumeSitk)
                     # add lobe segments
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
@@ -1628,6 +1628,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,3,"right middle lobe")
                     self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
                 elif self.engineAI == "lungmask R231CovidWeb":
+                    self.showStatusMessage('Creating lungs with lungmask AI ...')
                     model = mask.get_model('unet','R231CovidWeb')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
                     # add lung segments
@@ -2214,7 +2215,7 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         logic.createVessels = False
         
         logic.useAI = True
-        logic.engineAI = "lungmask"
+        logic.engineAI = "lungmask LTRCLobes"
 
         logic.startSegmentation()
         logic.updateSegmentation()
