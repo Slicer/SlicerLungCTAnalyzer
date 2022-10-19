@@ -1715,8 +1715,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("pulmonary artery",tempDir + "segmentation/pulmonary_artery.nii.gz",self.outputSegmentation, self.pulmonaryArteryColor)
                 self.importTotalSegmentatorSegment("left atrium of heart",tempDir + "segmentation/heart_atrium_left.nii.gz",self.outputSegmentation, self.pulmonaryVeinColor)
                 self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
-                self.importTotalSegmentatorSegment("right lung",tempDir + "segmentation/lung_right.nii.gz",self.outputSegmentation, self.rightLungColor)
-                self.importTotalSegmentatorSegment("left lung",tempDir + "segmentation/lung_left.nii.gz",self.outputSegmentation, self.leftLungColor)
                 self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
                 self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
 
@@ -1904,6 +1902,61 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.addSegment(self.outputSegmentation, "tumor", self.tumorColor, 1.0)
         thoracicCavityID = self.addSegment(self.outputSegmentation, "thoracic cavity", self.thoracicCavityColor, 0.3)
         
+        # AI created lobes only, so create lungs and add lobes 
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"): 
+            rightLungID = self.addSegment(self.outputSegmentation, "right lung", self.rightLungColor, 0.3)
+            self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+            self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+
+            self.segmentEditorNode.SetSelectedSegmentID(rightLungID)
+            self.segmentEditorWidget.setActiveEffectByName("Logical operators")
+            self.showStatusMessage('Adding right upper lobe to right lung ...')
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("BypassMasking","1")
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right upper lobe")
+            effect.setParameter("ModifierSegmentID",segID)
+            effect.setParameter("Operation","UNION")
+            effect.self().onApply()
+
+            self.showStatusMessage('Adding right middle lobe to right lung ...')
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("BypassMasking","1")
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right middle lobe")
+            effect.setParameter("ModifierSegmentID",segID)
+            effect.setParameter("Operation","UNION")
+            effect.self().onApply()
+
+            self.showStatusMessage('Adding right lower lobe to right lung ...')
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("BypassMasking","1")
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lower lobe")
+            effect.setParameter("ModifierSegmentID",segID)
+            effect.setParameter("Operation","UNION")
+            effect.self().onApply()
+
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung"): 
+            leftLungID = self.addSegment(self.outputSegmentation, "left lung", self.leftLungColor, 0.3)
+            
+            self.segmentEditorNode.SetSelectedSegmentID(leftLungID)
+            self.segmentEditorWidget.setActiveEffectByName("Logical operators")
+            
+            self.showStatusMessage('Adding left upper lobe to left lung ...')
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("BypassMasking","1")
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left upper lobe")
+            effect.setParameter("ModifierSegmentID",segID)
+            effect.setParameter("Operation","UNION")
+            effect.self().onApply()
+
+            self.showStatusMessage('Adding left lower lobe to left lung ...')
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("BypassMasking","1")
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lower lobe")
+            effect.setParameter("ModifierSegmentID",segID)
+            effect.setParameter("Operation","UNION")
+            effect.self().onApply()
+
+        
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
 
@@ -1949,10 +2002,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("splitCavities","False")
                 effect.setParameter("splitCavitiesDiameter","5")
                 effect.self().onApply()
-                
-                print(vesselMaskID)
-                print(thoracicCavityID)
-                
+                                
                 segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
                 segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
                 segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
