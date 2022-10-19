@@ -1981,7 +1981,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             if not self.segmentEditorWidget.effectByName("Wrap Solidify"):
                 slicer.util.errorDisplay("Please install 'Wrap Solidify' extension using Extension Manager.")
             else:
-                self.showStatusMessage('Solidifying thoracic cavity ...')
+                # Create thoracic cavity from lung segmentations
+                self.showStatusMessage('Creating thoracic cavity segment with wrap solidify effect ...')
                 self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
                 
                 self.segmentEditorWidget.setActiveEffectByName("Wrap Solidify")
@@ -2003,27 +2004,21 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("splitCavitiesDiameter","5")
                 effect.self().onApply()
                                 
-                segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
-                segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-                segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-                segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
+                # Create vessel mask
+                self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
 
-                volume = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
-                segmentation = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
+                self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
+                self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange( self.vesselThresholdMin, self.vesselThresholdMax)
 
-                segmentEditorWidget.setSegmentationNode(segmentation)
-                segmentEditorWidget.setMasterVolumeNode(volume)
+                self.segmentEditorNode.SetSelectedSegmentID(vesselMaskID)
+                self.segmentEditorNode.SetMaskSegmentID(thoracicCavityID)
+                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedInsideSingleSegment)
 
-                segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
-                segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange( self.vesselThresholdMin, self.vesselThresholdMax)
-
-                segmentEditorNode.SetSelectedSegmentID(vesselMaskID)
-                segmentEditorNode.SetMaskSegmentID(thoracicCavityID)
-                segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
-                segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedInsideSingleSegment)
-
-                segmentEditorWidget.setActiveEffectByName("Threshold")
-                effect = segmentEditorWidget.activeEffect()
+                self.showStatusMessage('Creating vessel mask with threshold effect ...')
+                self.segmentEditorWidget.setActiveEffectByName("Threshold")
+                effect = self.segmentEditorWidget.activeEffect()
                 effect.setParameter("AutoThresholdMethod","OTSU")
                 effect.setParameter("AutoThresholdMode","SET_LOWER_MAX")
                 effect.setParameter("BrushType","CIRCLE")
@@ -2031,13 +2026,25 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("HistogramSetUpper","UPPER")
                 effect.setParameter("MaximumThreshold",self.vesselThresholdMax)
                 effect.setParameter("MinimumThreshold",self.vesselThresholdMin)
-
                 effect.self().onApply()
+                
+                self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
 
-                # Deactivates all effects
-                segmentEditorWidget.setActiveEffect(None)
-                segmentEditorWidget = None
-                slicer.mrmlScene.RemoveNode(segmentEditorNode)
+                # Create masked volume 
+                self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
+                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+
+                self.showStatusMessage('Creating thoracic cavity volume with mask volume effect ...')
+                self.segmentEditorWidget.setActiveEffectByName("Mask volume")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("BinaryMaskFillValueInside","1")
+                effect.setParameter("BinaryMaskFillValueOutside","0")
+                effect.setParameter("FillValue","0")
+                effect.setParameter("InputVisibility","True")
+                effect.setParameter("Operation","FILL_OUTSIDE")
+                effect.self().onApply()
     
             
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(thoracicCavityID,False)

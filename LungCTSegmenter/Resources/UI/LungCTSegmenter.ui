@@ -123,16 +123,6 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QCheckBox" name="shrinkMasksCheckBox">
-        <property name="toolTip">
-         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
-        </property>
-        <property name="text">
-         <string>Auto shrink masks (1 mm)</string>
-        </property>
-       </widget>
-      </item>
       <item row="16" column="1">
        <widget class="QPushButton" name="applyButton">
         <property name="enabled">
@@ -241,16 +231,6 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QCheckBox" name="detailedMasksCheckBox">
-        <property name="toolTip">
-         <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
-        </property>
-        <property name="text">
-         <string>Create additional lung masks </string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="1">
        <widget class="QComboBox" name="detailLevelComboBox">
         <property name="toolTip">
@@ -278,16 +258,6 @@
         </property>
         <property name="text">
          <string>use AI (experimental)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QCheckBox" name="saveFiducialsCheckBox">
-        <property name="toolTip">
-         <string>Save markups, created during mask segmentation, in current data directory. This happens when pressing &quot;Apply&quot;. Use &quot;Load last markups&quot; checkbox for loading the markups again after &quot;Cancel/Reset&quot; and &quot;Start&quot;. </string>
-        </property>
-        <property name="text">
-         <string>Save markups in data directory</string>
         </property>
        </widget>
       </item>
@@ -406,7 +376,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
+      <item row="8" column="0">
        <widget class="QPushButton" name="setDefaultButton">
         <property name="toolTip">
          <string>Reset lung range and airway range to default values.</string>
@@ -423,7 +393,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="1">
+      <item row="8" column="1">
        <widget class="QPushButton" name="updateIntensityButton">
         <property name="toolTip">
          <string>Update current segmentation preview after lung intensity range changes</string>
@@ -456,6 +426,36 @@
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>Vessel thresholds:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QCheckBox" name="shrinkMasksCheckBox">
+        <property name="toolTip">
+         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
+        </property>
+        <property name="text">
+         <string>Auto shrink masks (1 mm)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="detailedMasksCheckBox">
+        <property name="toolTip">
+         <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
+        </property>
+        <property name="text">
+         <string>Create additional lung masks </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="saveFiducialsCheckBox">
+        <property name="toolTip">
+         <string>Save markups, created during mask segmentation, in current data directory. This happens when pressing &quot;Apply&quot;. Use &quot;Load last markups&quot; checkbox for loading the markups again after &quot;Cancel/Reset&quot; and &quot;Start&quot;. </string>
+        </property>
+        <property name="text">
+         <string>Save markups in data directory</string>
         </property>
        </widget>
       </item>
