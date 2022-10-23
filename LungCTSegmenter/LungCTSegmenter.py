@@ -75,6 +75,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.isSufficientNumberOfPointsPlaced = False
       self.saveFiducials = False
       self.inputVolume = None
+      self.VolumeRenderingShift = 0
+      self.volumeRenderingDisplayNode = None
+
 
 
   def setup(self):
@@ -120,10 +123,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # (in the selected parameter node).
       self.ui.inputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
       
-      # Connect threshhold range sliders 
+      # Connect threshold range sliders 
       self.ui.LungThresholdRangeWidget.connect('valuesChanged(double,double)', self.onLungThresholdRangeWidgetChanged)
       self.ui.AirwayThresholdRangeWidget.connect('valuesChanged(double,double)', self.onAirwayThresholdRangeWidgetChanged)
       self.ui.VesselThresholdRangeWidget.connect('valuesChanged(double,double)', self.onVesselThresholdRangeWidgetChanged)
+
+      # Connect double sliders 
+      self.ui.VolumeRenderingShiftSliderWidget.connect('valueChanged(double)', self.onShiftSliderWidgetChanged)
       
       # Connect combo boxes 
       self.ui.detailLevelComboBox.currentTextChanged.connect(self.updateParameterNodeFromGUI)
@@ -145,69 +151,19 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.setDefaultButton.connect('clicked(bool)', self.onSetDefaultButton)
       
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
+      self.ui.toggleVolumeRenderingVisibilityButton.connect('clicked(bool)', self.onToggleVolumeRenderingVisibilityButton)
       self.ui.engineAIComboBox.enabled = False
-      
       # Make sure parameter node is initialized (needed for module reload)
+      
       self.initializeParameterNode()
 
       # Initial GUI update
       self.updateGUIFromParameterNode()
-      
-  def writeConfigParser(self):
-      import configparser
-      parser = configparser.SafeConfigParser()
-      parser.read(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI')
-
-      if parser.has_option('LungThreshholdRange', 'minimumValue'):
-          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.LungThresholdRangeWidget.minimumValue))
-      else: 
-          if not parser.has_section('LungThreshholdRange'): 
-            parser.add_section('LungThreshholdRange')
-          parser.set('LungThreshholdRange', 'minimumValue',str(self.ui.LungThresholdRangeWidget.minimumValue))
-
-      if parser.has_option('LungThreshholdRange', 'maximumValue'):
-          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.LungThresholdRangeWidget.maximumValue))
-      else: 
-          if not parser.has_section('LungThreshholdRange'): 
-            parser.add_section('LungThreshholdRange')
-          parser.set('LungThreshholdRange', 'maximumValue',str(self.ui.LungThresholdRangeWidget.maximumValue))
-
-      if parser.has_option('AirwayThreshholdRange', 'minimumValue'):
-          parser.set('AirwayThreshholdRange', 'minimumValue',str(self.ui.AirwayThresholdRangeWidget.minimumValue))
-      else: 
-          if not parser.has_section('AirwayThreshholdRange'): 
-            parser.add_section('AirwayThreshholdRange')
-          parser.set('AirwayThreshholdRange', 'minimumValue',str(self.ui.AirwayThresholdRangeWidget.minimumValue))
-
-      if parser.has_option('AirwayThreshholdRange', 'maximumValue'):
-          parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
-      else: 
-          if not parser.has_section('AirwayThreshholdRange'): 
-            parser.add_section('AirwayThreshholdRange')
-          parser.set('AirwayThreshholdRange', 'maximumValue',str(self.ui.AirwayThresholdRangeWidget.maximumValue))
-
-      if parser.has_option('VesselThreshholdRange', 'minimumValue'):
-          parser.set('VesselThreshholdRange', 'minimumValue',str(self.ui.VesselThresholdRangeWidget.minimumValue))
-      else: 
-          if not parser.has_section('VesselThreshholdRange'): 
-            parser.add_section('VesselThreshholdRange')
-          parser.set('VesselThreshholdRange', 'minimumValue',str(self.ui.VesselThresholdRangeWidget.minimumValue))
-
-      if parser.has_option('VesselThreshholdRange', 'maximumValue'):
-          parser.set('VesselThreshholdRange', 'maximumValue',str(self.ui.VesselThresholdRangeWidget.maximumValue))
-      else: 
-          if not parser.has_section('VesselThreshholdRange'): 
-            parser.add_section('VesselThreshholdRange')
-          parser.set('VesselThreshholdRange', 'maximumValue',str(self.ui.VesselThresholdRangeWidget.maximumValue))
-
-      with open(slicer.app.slicerUserSettingsFilePath + 'LCTA.INI', 'w') as configfile:    # save
-          parser.write(configfile)
 
   def cleanup(self):
       """
       Called when the application closes and the module widget is destroyed.
       """
-      self.writeConfigParser()
       self.removeFiducialObservers()
       self.removeObservers()
       # self.removeKeyboardShortcuts()
@@ -246,29 +202,26 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def onSetDefaultButton(self):
+      self.ui.VolumeRenderingShiftSliderWidget.value = 0
       self.ui.LungThresholdRangeWidget.minimumValue = -1500
       self.ui.LungThresholdRangeWidget.maximumValue = -400
       self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
       self.ui.AirwayThresholdRangeWidget.maximumValue = -850
       self.ui.VesselThresholdRangeWidget.minimumValue = -0
       self.ui.VesselThresholdRangeWidget.maximumValue = 3000
-      self.writeConfigParser()
       self.updateParameterNodeFromGUI()
 
+  def onShiftSliderWidgetChanged(self):
+       self.updateParameterNodeFromGUI()
+       self.updateVolumeRendering()
   def onLungThresholdRangeWidgetChanged(self):
- 
-      self.writeConfigParser()
-      self.updateParameterNodeFromGUI()
+       self.updateParameterNodeFromGUI()
       
   def onAirwayThresholdRangeWidgetChanged(self):
- 
-      self.writeConfigParser()
-      self.updateParameterNodeFromGUI()
+       self.updateParameterNodeFromGUI()
 
   def onVesselThresholdRangeWidgetChanged(self):
- 
-      self.writeConfigParser()
-      self.updateParameterNodeFromGUI()
+       self.updateParameterNodeFromGUI()
 
   def onSceneEndClose(self, caller, event):
       """
@@ -407,6 +360,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
+      self.ui.toggleVolumeRenderingVisibilityButton.enabled = self.logic.segmentationFinished
+      self.ui.VolumeRenderingShiftSliderWidget.enabled = self.logic.segmentationFinished
       self.ui.applyButton.enabled = self.isSufficientNumberOfPointsPlaced
       if self.logic.segmentationFinished: 
         self.ui.applyButton.enabled = False
@@ -420,7 +375,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
       self.ui.detailLevelComboBox.currentText = self.logic.airwaySegmentationDetailLevel
-      self.ui.engineAIComboBox.currentText = self.logic.engineAI
+      self.ui.engineAIComboBox.currentText = self.logic.engineAI      
+      self.ui.VolumeRenderingShiftSliderWidget.value = self.VolumeRenderingShift
       self.ui.LungThresholdRangeWidget.minimumValue = self.logic.lungThresholdMin
       self.ui.LungThresholdRangeWidget.maximumValue = self.logic.lungThresholdMax 
       self.ui.AirwayThresholdRangeWidget.minimumValue = self.logic.airwayThresholdMin
@@ -471,6 +427,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
+      self.VolumeRenderingShift = self.ui.VolumeRenderingShiftSliderWidget.value
       self.logic.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
       self.logic.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
       self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
@@ -503,6 +460,47 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           segmentationDisplayNode.Visibility2DOn()
           segmentationDisplayNode.Visibility3DOn()
 
+  def updateVolumeRendering(self):
+      """
+      Update Volume rendering 
+      """
+      if not self.logic.maskedVolume: 
+        slicer.util.warningDisplay("No masked volume found.\n")
+        return
+      volRenLogic = slicer.modules.volumerendering.logic()
+      self.volumeRenderingDisplayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(self.logic.maskedVolume)
+      self.volumeRenderingDisplayNode.SetVisibility(True)
+      self.volumeRenderingDisplayNode.GetVolumePropertyNode().Copy(volRenLogic.GetPresetByName("CT-Coronary-Arteries-3")) 
+      volRenWidget = slicer.modules.volumerendering.widgetRepresentation()
+      if volRenWidget is None:
+        logging.error('Failed to access volume rendering module')
+        return
+      # Make sure the proper volume property node is set
+      volumePropertyNode = self.volumeRenderingDisplayNode.GetVolumePropertyNode()
+      if volumePropertyNode is None:
+        logging.error('Failed to access volume properties')
+        return
+      volumePropertyNodeWidget = slicer.util.findChild(volRenWidget, 'VolumePropertyNodeWidget')
+      volumePropertyNodeWidget.setMRMLVolumePropertyNode(volumePropertyNode)
+      # Adjust the transfer function
+      volumePropertyNodeWidget.moveAllPoints(self.VolumeRenderingShift, 0, False)
+
+
+  def onToggleVolumeRenderingVisibilityButton(self):
+      """
+      Toggle volume rendering visibility.
+      """
+      if not self.logic.maskedVolume: 
+        slicer.util.warningDisplay("No masked volume found.\n")
+        return
+      if not self.volumeRenderingDisplayNode:  
+          self.updateVolumeRendering()
+      else: 
+          if not self.volumeRenderingDisplayNode.GetVisibility():   
+              self.volumeRenderingDisplayNode.SetVisibility(True)
+          else: 
+              self.volumeRenderingDisplayNode.SetVisibility(False)
+    
   def onStartButton(self):
       """
       Run processing when user clicks "Start" button.
@@ -560,6 +558,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           segmentationDisplayNode = segmentationNode.GetDisplayNode()
           segmentationDisplayNode.Visibility2DOn()
           segmentationDisplayNode.Visibility3DOn()
+          self.volumeRenderingDisplayNode = None
           self.updateGUIFromParameterNode()
           qt.QApplication.restoreOverrideCursor()
       except Exception as e:
@@ -586,6 +585,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
           self.ui.toggleSegmentationVisibilityButton.enabled = False
+          self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
           self.ui.startButton.enabled = True
           self.logic.segmentationStarted = False
           self.logic.segmentationFinished = False
@@ -788,6 +788,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.engineAI = "None"
         self.shrinkMasks = False
         self.detailedMasks = False
+        self.maskedVolume = None
         
     def __del__(self):
         self.removeTemporaryObjects()
@@ -1097,6 +1098,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
         slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("Lung segmentation"))
         slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("TotalSegmentator"))
+        if self.maskedVolume: 
+            slicer.mrmlScene.RemoveNode(self.maskedVolume)
         
         self.removeTemporaryObjects()
 
@@ -1463,6 +1466,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         return _segid
 
+    def slicerVersionToFloat(self):
+        return float(str(slicer.app.majorVersion) + "." + str(slicer.app.minorVersion))
 
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
@@ -1843,13 +1848,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
                 import numpy as np
                 markupsIndex = 0
+                
                 # Get point coordinate in RAS
                 point_Ras = [0, 0, 0, 1]
                 self.tracheaFiducials.GetNthFiducialWorldCoordinates(markupsIndex, point_Ras)
                 
-                print("RAS trachea markup")
-                print(str(point_Ras))
-
                 # If volume node is transformed, apply that transform to get volume's RAS coordinates
                 transformRasToVolumeRas = vtk.vtkGeneralTransform()
                 slicer.vtkMRMLTransformNode.GetTransformBetweenNodes(None, self.inputVolume.GetParentTransformNode(), transformRasToVolumeRas)
@@ -1976,7 +1979,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("ModifierSegmentID","left lung")
         effect.setParameter("Operation","UNION")
         effect.self().onApply()
-
+        
+        self.maskedVolume = None
         if self.createVessels:
             if not self.segmentEditorWidget.effectByName("Wrap Solidify"):
                 slicer.util.errorDisplay("Please install 'Wrap Solidify' extension using Extension Manager.")
@@ -2035,6 +2039,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
                 self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
                 self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+                self.maskedVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Masked volume")
+
 
                 self.showStatusMessage('Creating thoracic cavity volume with mask volume effect ...')
                 self.segmentEditorWidget.setActiveEffectByName("Mask volume")
@@ -2044,6 +2050,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("FillValue","0")
                 effect.setParameter("InputVisibility","True")
                 effect.setParameter("Operation","FILL_OUTSIDE")
+                effect.self().outputVolumeSelector.setCurrentNode(self.maskedVolume)
                 effect.self().onApply()
     
             

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>727</height>
+    <height>735</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -100,6 +100,16 @@
       <string>Segmentation</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="9" column="0">
+       <widget class="QCheckBox" name="useAICheckBox">
+        <property name="toolTip">
+         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
+        </property>
+        <property name="text">
+         <string>use AI (experimental)</string>
+        </property>
+       </widget>
+      </item>
       <item row="3" column="0">
        <widget class="QCheckBox" name="detailedAirwaysCheckBox">
         <property name="enabled">
@@ -113,6 +123,47 @@
         </property>
        </widget>
       </item>
+      <item row="16" column="0">
+       <widget class="QPushButton" name="cancelButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Cancel the current segmentation process.</string>
+        </property>
+        <property name="text">
+         <string>Cancel / Reset</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="detailLevelComboBox">
+        <property name="toolTip">
+         <string>This parameter equals MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for setting the parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
+        <property name="toolTip">
+         <string>Find instructions here during the segmentation procedure.  </string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="0">
+       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
+        <property name="text">
+         <string>Toggle segments visibility</string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="1">
+       <widget class="QPushButton" name="toggleVolumeRenderingVisibilityButton">
+        <property name="text">
+         <string>Toggle volume rendering</string>
+        </property>
+       </widget>
+      </item>
       <item row="13" column="0" colspan="2">
        <widget class="QPushButton" name="startButton">
         <property name="toolTip">
@@ -120,6 +171,29 @@
         </property>
         <property name="text">
          <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QCheckBox" name="loadLastFiducialsCheckBox">
+        <property name="toolTip">
+         <string>If checked, previously saved markups are loaded from data or temp directory when &quot;Start&quot; button is pressed. Lung CT Segmenter tries to load from data directory first, if not found from Slicer temp directory. </string>
+        </property>
+        <property name="text">
+         <string>Load last saved markups</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QComboBox" name="engineAIComboBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Select the  AI engine. 'lungmask' (U-Net) will create lungs and lobes, 'MONAILabel' (U-Net) lungs and airways, 'TotalSegmentator' (nnU-Net) lung lobes, trachea, pulmonary artery and the left atrium of the heart.  All engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+).</string>
+        </property>
+        <property name="currentText">
+         <string/>
         </property>
        </widget>
       </item>
@@ -136,7 +210,7 @@
         </property>
        </widget>
       </item>
-      <item row="18" column="0" colspan="2">
+      <item row="19" column="0" colspan="2">
        <widget class="ctkCollapsibleGroupBox" name="adjustPointsGroupBox">
         <property name="title">
          <string>Adjust points </string>
@@ -214,76 +288,6 @@
         </layout>
        </widget>
       </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="ctkFittedTextBrowser" name="instructionsLabel">
-        <property name="toolTip">
-         <string>Find instructions here during the segmentation procedure.  </string>
-        </property>
-       </widget>
-      </item>
-      <item row="17" column="0" colspan="2">
-       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
-        <property name="toolTip">
-         <string>Press this button to show and unshow the visibility of segments in 2D view</string>
-        </property>
-        <property name="text">
-         <string>Toggle segments visibility</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QComboBox" name="detailLevelComboBox">
-        <property name="toolTip">
-         <string>This parameter equals MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for setting the parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
-        </property>
-       </widget>
-      </item>
-      <item row="16" column="0">
-       <widget class="QPushButton" name="cancelButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Cancel the current segmentation process.</string>
-        </property>
-        <property name="text">
-         <string>Cancel / Reset</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="0">
-       <widget class="QCheckBox" name="useAICheckBox">
-        <property name="toolTip">
-         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
-        </property>
-        <property name="text">
-         <string>use AI (experimental)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QCheckBox" name="loadLastFiducialsCheckBox">
-        <property name="toolTip">
-         <string>If checked, previously saved markups are loaded from data or temp directory when &quot;Start&quot; button is pressed. Lung CT Segmenter tries to load from data directory first, if not found from Slicer temp directory. </string>
-        </property>
-        <property name="text">
-         <string>Load last saved markups</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="1">
-       <widget class="QComboBox" name="engineAIComboBox">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Select the  AI engine. 'lungmask' (U-Net) will create lungs and lobes, 'MONAILabel' (U-Net) lungs and airways, 'TotalSegmentator' (nnU-Net) lung lobes, trachea, pulmonary artery and the left atrium of the heart.  All engines require CUDA, some minutes processing time and a medium to high-end Nvidia GPU (RTX 1060+).</string>
-        </property>
-        <property name="currentText">
-         <string/>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="0">
        <widget class="QCheckBox" name="createVesselsCheckBox">
         <property name="text">
@@ -351,6 +355,13 @@
         </property>
        </widget>
       </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Airway thresholds: </string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
         <property name="toolTip">
@@ -376,30 +387,10 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
-       <widget class="QPushButton" name="setDefaultButton">
-        <property name="toolTip">
-         <string>Reset lung range and airway range to default values.</string>
-        </property>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Reset to default</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Airway thresholds: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QPushButton" name="updateIntensityButton">
-        <property name="toolTip">
-         <string>Update current segmentation preview after lung intensity range changes</string>
-        </property>
-        <property name="text">
-         <string>Update </string>
+         <string>Vessel thresholds:</string>
         </property>
        </widget>
       </item>
@@ -422,24 +413,37 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_8">
+      <item row="4" column="0">
+       <widget class="QPushButton" name="setDefaultButton">
+        <property name="toolTip">
+         <string>Reset lung range and airway range to default values.</string>
+        </property>
         <property name="text">
-         <string>Vessel thresholds:</string>
+         <string>Reset to default</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QPushButton" name="updateIntensityButton">
+        <property name="toolTip">
+         <string>Update current segmentation preview after lung intensity range changes</string>
+        </property>
+        <property name="text">
+         <string>Update </string>
         </property>
        </widget>
       </item>
       <item row="5" column="0">
-       <widget class="QCheckBox" name="shrinkMasksCheckBox">
+       <widget class="QCheckBox" name="saveFiducialsCheckBox">
         <property name="toolTip">
-         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
+         <string>Save markups, created during mask segmentation, in current data directory. This happens when pressing &quot;Apply&quot;. Use &quot;Load last markups&quot; checkbox for loading the markups again after &quot;Cancel/Reset&quot; and &quot;Start&quot;. </string>
         </property>
         <property name="text">
-         <string>Auto shrink masks (1 mm)</string>
+         <string>Save markups in data directory</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="6" column="0">
        <widget class="QCheckBox" name="detailedMasksCheckBox">
         <property name="toolTip">
          <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
@@ -449,13 +453,33 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="saveFiducialsCheckBox">
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="shrinkMasksCheckBox">
         <property name="toolTip">
-         <string>Save markups, created during mask segmentation, in current data directory. This happens when pressing &quot;Apply&quot;. Use &quot;Load last markups&quot; checkbox for loading the markups again after &quot;Cancel/Reset&quot; and &quot;Start&quot;. </string>
+         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
         </property>
         <property name="text">
-         <string>Save markups in data directory</string>
+         <string>Auto shrink masks (1 mm)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="ctkSliderWidget" name="VolumeRenderingShiftSliderWidget">
+        <property name="minimum">
+         <double>-300.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>300.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Volume rendering Shift</string>
         </property>
        </widget>
       </item>
@@ -486,6 +510,11 @@
    <class>ctkRangeWidget</class>
    <extends>QWidget</extends>
    <header>ctkRangeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ctkSliderWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkSliderWidget.h</header>
   </customwidget>
   <customwidget>
    <class>qMRMLNodeComboBox</class>

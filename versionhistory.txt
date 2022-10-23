@@ -147,4 +147,6 @@ implement segmentation of thorac cavity
 optional vesselmask segmentation (checkbox) 
 vessel threshold slider
 
+V 2.59
+add volume rendering button 
  
