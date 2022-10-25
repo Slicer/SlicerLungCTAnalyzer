@@ -386,6 +386,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
                 segmentationDisplayNode.Visibility3DOff()
                 self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+        else:
+            self.ui.rightLungMaskSelector.setCurrentSegmentID(self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"))
+            self.ui.leftLungMaskSelector.setCurrentSegmentID(self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung"))
+
 
     def setParameterNode(self, inputParameterNode):
         """
@@ -560,6 +564,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             # no change
             return
 
+        self.logic.inputSegmentation = segmentationNode
+        
         wasBlockedRight = self.ui.rightLungMaskSelector.blockSignals(True)
         wasBlockedLeft = self.ui.leftLungMaskSelector.blockSignals(True)
 
