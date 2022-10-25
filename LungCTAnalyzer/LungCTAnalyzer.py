@@ -359,13 +359,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.parent.isEntered:
             self.initializeParameterNode()
 
-    def findSegmentID(self, segmentationNode, segmentNameFragment):
-        segmentation = segmentationNode.GetSegmentation()
-        for segmentIndex in range(segmentation.GetNumberOfSegments()):
-            if segmentNameFragment.upper() in segmentation.GetNthSegment(segmentIndex).GetName().upper():
-                return segmentation.GetNthSegmentID(segmentIndex)
-        return None
-
     def initializeParameterNode(self):
         """
         Ensure parameter node exists and observed.
@@ -382,11 +375,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.logic.inputVolume = firstVolumeNode
 
         if not self.logic.inputSegmentation:
-            firstSegmentationNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLSegmentationNode")
-            if firstSegmentationNode:
-                self.logic.inputSegmentation = firstSegmentationNode
-                self.logic.rightLungMaskSegmentID = self.findSegmentID(firstSegmentationNode, "right")
-                self.logic.leftLungMaskSegmentID = self.findSegmentID(firstSegmentationNode, "left")
+            segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
+            if segNode:
+                self.logic.inputSegmentation = segNode
+                self.logic.rightLungMaskSegmentID = segNode.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+                self.logic.leftLungMaskSegmentID = segNode.GetSegmentation().GetSegmentIdBySegmentName("left lung")
                 #initial masks always on
                 segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
                 segmentationDisplayNode.Visibility2DOn()
@@ -572,8 +565,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.rightLungMaskSelector.setCurrentNode(segmentationNode)
         self.ui.leftLungMaskSelector.setCurrentNode(segmentationNode)
-        self.ui.rightLungMaskSelector.setCurrentSegmentID(self.findSegmentID(segmentationNode, "right"))
-        self.ui.leftLungMaskSelector.setCurrentSegmentID(self.findSegmentID(segmentationNode, "left"))
+
+        self.ui.rightLungMaskSelector.setCurrentSegmentID(segmentationNode.GetSegmentation().GetSegmentIdBySegmentName("right lung"))
+        self.ui.leftLungMaskSelector.setCurrentSegmentID(segmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left lung"))
 
         self.ui.rightLungMaskSelector.blockSignals(wasBlockedRight)
         self.ui.leftLungMaskSelector.blockSignals(wasBlockedLeft)

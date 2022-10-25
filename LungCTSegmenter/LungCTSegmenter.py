@@ -1900,10 +1900,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             
         # create segments for vessel and tumor segmentation
         vesselMaskID = self.addSegment(self.outputSegmentation, "vesselmask", self.vesselmaskColor, 1.0)
-        self.addSegment(self.outputSegmentation, "PA", self.PAColor, 1.0)
-        self.addSegment(self.outputSegmentation, "PV", self.PVColor, 1.0)
-        self.addSegment(self.outputSegmentation, "tumor", self.tumorColor, 1.0)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(vesselMaskID,False)
+        PASegmentID = self.addSegment(self.outputSegmentation, "PA", self.PAColor, 1.0)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(PASegmentID,False)
+        PVSegmentID = self.addSegment(self.outputSegmentation, "PV", self.PVColor, 1.0)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(PVSegmentID,False)
+        tumorSegmentID = self.addSegment(self.outputSegmentation, "tumor", self.tumorColor, 1.0)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(tumorSegmentID,False)
         thoracicCavityID = self.addSegment(self.outputSegmentation, "thoracic cavity", self.thoracicCavityColor, 0.3)
+        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(thoracicCavityID,False)
         
         # AI created lobes only, so create lungs and add lobes 
         if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"): 
@@ -2052,9 +2057,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("Operation","FILL_OUTSIDE")
                 effect.self().outputVolumeSelector.setCurrentNode(self.maskedVolume)
                 effect.self().onApply()
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(vesselMaskID,True)
     
-            
-        self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(thoracicCavityID,False)
+          
 
         
 
