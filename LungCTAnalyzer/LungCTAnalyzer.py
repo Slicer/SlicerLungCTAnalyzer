@@ -226,8 +226,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
-       
-       # Set initial button texts
+        slicer.app.applicationLogic().FitSliceToAll()
+     
+        # Set initial button texts
         
         if hasattr(self.logic, "inputSegmentation"):
             if self.logic.inputSegmentation: 

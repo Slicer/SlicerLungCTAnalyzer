@@ -156,7 +156,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # Make sure parameter node is initialized (needed for module reload)
       
       self.initializeParameterNode()
-
+      slicer.app.applicationLogic().FitSliceToAll()
       # Initial GUI update
       self.updateGUIFromParameterNode()
 
