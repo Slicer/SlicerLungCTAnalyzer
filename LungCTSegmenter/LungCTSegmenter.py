@@ -71,6 +71,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createVessels = False
       self.useAI = False
       self.shrinkMasks = False
+      self.upgradeAI = False
       self.detailedMasks = False
       self.isSufficientNumberOfPointsPlaced = False
       self.saveFiducials = False
@@ -140,6 +141,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.useAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.upgradeAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
@@ -372,6 +374,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
+      self.ui.upgradeAICheckBox.checked = self.upgradeAI
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
       self.ui.detailLevelComboBox.currentText = self.logic.airwaySegmentationDetailLevel
@@ -439,6 +442,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.useAI = self.ui.useAICheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
+      self.upgradeAI = self.ui.upgradeAICheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
       self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
@@ -551,6 +555,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.saveFiducialsDataDir()
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
+          self.logic.upgradeAI = self.upgradeAI
           self.logic.detailedMasks = self.detailedMasks
           self.logic.applySegmentation()
           segmentationNode = self.logic.outputSegmentation
@@ -787,6 +792,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.useAI = False
         self.engineAI = "None"
         self.shrinkMasks = False
+        self.upgradeAI = False
         self.detailedMasks = False
         self.maskedVolume = None
         
@@ -1589,7 +1595,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     import lungmask
                 
                 from lungmask import mask
-
+                
+                if self.upgradeAI:
+                    slicer.util.pip_install("git+https://github.com/JoHof/lungmask --upgrade")
+                    
                 inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 if self.engineAI == "lungmask R231":
                     self.showStatusMessage('Creating lungs with lungmask AI ...')
@@ -1657,8 +1666,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.pip_install("git+https://github.com/wasserth/TotalSegmentator.git")
                     import totalsegmentator
             
-                # Testing: Make sure we are working with latest version
-                slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
+                if self.upgradeAI:
+                    slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
 
                 # _run set False for debugging without new TotalSegmentator run 
                 _run = True

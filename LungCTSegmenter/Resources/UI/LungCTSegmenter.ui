@@ -483,6 +483,16 @@
         </property>
        </widget>
       </item>
+      <item row="8" column="0">
+       <widget class="QCheckBox" name="upgradeAICheckBox">
+        <property name="toolTip">
+         <string>Check this to upgrade AI from GitHub to latest versions. </string>
+        </property>
+        <property name="text">
+         <string>Upgrade AI</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
