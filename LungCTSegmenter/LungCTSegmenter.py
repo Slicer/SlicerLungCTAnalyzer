@@ -162,7 +162,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       # Initial GUI update
       self.updateGUIFromParameterNode()
-
       self.ui.toggleSegmentationVisibilityButton.enabled = False
       self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
