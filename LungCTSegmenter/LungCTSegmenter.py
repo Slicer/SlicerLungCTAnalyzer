@@ -492,18 +492,29 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def onToggleVolumeRenderingVisibilityButton(self):
       """
-      Toggle volume rendering visibility.
+      Toggle volume rendering visibility and handle vesselmask visibility.
       """
       if not self.logic.maskedVolume: 
         slicer.util.warningDisplay("No masked volume found.\n")
         return
+
+      segmentation = self.logic.outputSegmentation.GetSegmentation()
+      _vesselmaskID = segmentation.GetSegmentIdBySegmentName("vesselmask")
+ 
       if not self.volumeRenderingDisplayNode:  
           self.updateVolumeRendering()
+          if _vesselmaskID:
+              self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(_vesselmaskID,False)
       else: 
           if not self.volumeRenderingDisplayNode.GetVisibility():   
               self.volumeRenderingDisplayNode.SetVisibility(True)
+              if _vesselmaskID:
+                self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(_vesselmaskID,False)
           else: 
               self.volumeRenderingDisplayNode.SetVisibility(False)
+              if _vesselmaskID:
+                self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(_vesselmaskID,True)
+
     
   def onStartButton(self):
       """
