@@ -497,7 +497,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Toggle volume rendering visibility and handle vesselmask visibility.
       """
       if not self.logic.maskedVolume: 
-        slicer.util.warningDisplay("No masked volume found.\n")
+        self.logic.maskedVolume = slicer.mrmlScene.GetFirstNodeByName(self.logic.inputVolume.GetName() + f' masked volume')
+        if not self.logic.maskedVolume: 
+            slicer.util.warningDisplay("No masked volume found.\n")
         return
 
       segmentation = self.logic.outputSegmentation.GetSegmentation()
@@ -2072,7 +2074,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
                 self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
                 self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-                self.maskedVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Masked volume")
+                self.maskedVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", self.inputVolume.GetName() + f" masked volume")
 
 
                 self.showStatusMessage('Creating thoracic cavity volume with mask volume effect ...')
