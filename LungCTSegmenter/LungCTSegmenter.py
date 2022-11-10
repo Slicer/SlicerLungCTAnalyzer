@@ -159,8 +159,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       self.initializeParameterNode()
       slicer.app.applicationLogic().FitSliceToAll()
+
       # Initial GUI update
       self.updateGUIFromParameterNode()
+
+      self.ui.toggleSegmentationVisibilityButton.enabled = False
+      self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
+      self.ui.VolumeRenderingShiftSliderWidget.enabled = False
+
 
   def cleanup(self):
       """
@@ -361,9 +367,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
-      self.ui.toggleSegmentationVisibilityButton.enabled = self.logic.segmentationFinished
-      self.ui.toggleVolumeRenderingVisibilityButton.enabled = self.logic.segmentationFinished
-      self.ui.VolumeRenderingShiftSliderWidget.enabled = self.logic.segmentationFinished
       self.ui.applyButton.enabled = self.isSufficientNumberOfPointsPlaced
       if self.logic.segmentationFinished: 
         self.ui.applyButton.enabled = False
@@ -537,6 +540,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
+          self.ui.toggleSegmentationVisibilityButton.enabled = False
+          self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
+          self.ui.VolumeRenderingShiftSliderWidget.enabled = False
           # if AI checked and no airway segmentation run processing immediately from the start button          
           if self.useAI and not self.createDetailedAirways:
               self.runProcessing()
@@ -576,6 +582,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           segmentationDisplayNode.Visibility3DOn()
           self.volumeRenderingDisplayNode = None
           self.updateGUIFromParameterNode()
+          self.ui.toggleSegmentationVisibilityButton.enabled = True
+          self.ui.toggleVolumeRenderingVisibilityButton.enabled = True
+          self.ui.VolumeRenderingShiftSliderWidget.enabled = True
           qt.QApplication.restoreOverrideCursor()
       except Exception as e:
           qt.QApplication.restoreOverrideCursor()
