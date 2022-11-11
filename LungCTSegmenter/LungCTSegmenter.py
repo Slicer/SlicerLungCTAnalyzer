@@ -471,7 +471,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Update Volume rendering 
       """
       if not self.logic.maskedVolume: 
-        slicer.util.warningDisplay("No masked volume found.\n")
+        self.logic.maskedVolume = slicer.mrmlScene.GetFirstNodeByName(self.logic.inputVolume.GetName() + f' masked volume')
+        if not self.logic.maskedVolume:
+            slicer.util.warningDisplay("No masked volume found.\n")
         return
       volRenLogic = slicer.modules.volumerendering.logic()
       self.volumeRenderingDisplayNode = volRenLogic.CreateDefaultVolumeRenderingNodes(self.logic.maskedVolume)
