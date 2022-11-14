@@ -70,6 +70,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createDetailedAirways = False
       self.createVessels = False
       self.useAI = False
+      self.fastOption = False
+      self.statisticsOption = False
+      self.radiomicsOption = False
       self.shrinkMasks = False
       self.upgradeAI = False
       self.detailedMasks = False
@@ -144,6 +147,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.upgradeAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.statisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.radiomicsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -363,7 +369,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.isSufficientNumberOfPointsPlaced = True
 
       self.ui.startButton.enabled = not self.logic.segmentationStarted
-
       self.ui.cancelButton.enabled = self.logic.segmentationStarted
       self.ui.updateIntensityButton.enabled = self.logic.segmentationStarted
       self.ui.applyButton.enabled = self.isSufficientNumberOfPointsPlaced
@@ -375,6 +380,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI
+      self.ui.fastCheckBox.checked = self.fastOption
+      self.ui.statisticsCheckBox.checked = self.statisticsOption
+      self.ui.radiomicsCheckBox.checked = self.radiomicsOption
+      
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.upgradeAICheckBox.checked = self.upgradeAI
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
@@ -442,6 +451,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
+      self.fastOption = self.ui.fastCheckBox.checked 
+      self.statisticsOption = self.ui.statisticsCheckBox.checked 
+      self.radiomicsOption = self.ui.radiomicsCheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.upgradeAI = self.ui.upgradeAICheckBox.checked 
@@ -536,10 +548,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.loadFiducialsTempDir() 
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
-          self.ui.updateIntensityButton.enabled = True
-          self.logic.detailedAirways = self.createDetailedAirways
-          self.logic.createVessels = self.createVessels
-          self.logic.useAI = self.useAI
+          self.ui.updateIntensityButton.enabled = True          
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
@@ -565,8 +574,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       try:
           self.logic.detailedAirways = self.createDetailedAirways
-          self.logic.createVessels = self.createVessels          
+          self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
+          self.logic.fastOption = self.fastOption
+          self.logic.statisticsOption = self.statisticsOption
+          self.logic.radiomicsOption = self.radiomicsOption
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
           # always save a copy of the current markups in Slicer temp dir for later use
@@ -608,7 +620,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Stop segmentation without applying it.
       """
       try:
-          print("Cancel.")
           self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
           self.isSufficientNumberOfPointsPlaced = False
           self.logic.cancelSegmentation()
@@ -813,6 +824,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.detailedAirways = False
         self.createVessels = False
         self.useAI = False
+        self.fastOption = False
+        self.statisticsOption = False
+        self.radiomicsOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
         self.upgradeAI = False
@@ -1705,10 +1719,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         try:
                             shutil.rmtree(dir_path)
                         except OSError as e:
-                            print("Unable to delete temporary ouput folder diue to error:  %s : %s" % (dir_path, e.strerror))
+                            print("Unable to delete temporary ouput folder due to error:  %s : %s" % (dir_path, e.strerror))
                                 
                 # Write temporary volume file in NIFT format as input for TotalSegmentator
-                self.showStatusMessage(' Creating segmentations with TotalSegmentator AI ...')
+                self.showStatusMessage(" Writing temprary data to " + tempDir + "input.nii.gz" + " ...")
                 myStorageNode = self.inputVolume.CreateDefaultStorageNode()
                 myStorageNode.SetFileName(tempDir + "input.nii.gz")
                 myStorageNode.WriteData(self.inputVolume)
@@ -1725,22 +1739,45 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 if _run:
                     # run TotalSegmentator from a console process because after 
                     # import totalsegmentator 
-                    # its functions throw exceptions                  
-                    proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation")
+                    # its functions throw exceptions
+                    _optionStr = ""
+                    
+                    if not self.fastOption and torch.cuda.get_device_properties(0).total_memory < 7000000000:
+                        if slicer.util.confirmYesNoDisplay("You have less than 7 GB of GPU memory available. Enable the '--fast' option?"):
+                            self.fastOption = True
+                    if self.fastOption: 
+                        _optionStr += r" --fast "
+                    if self.statisticsOption: 
+                        _optionStr += r" --statistics "
+                    if self.radiomicsOption: 
+                        _optionStr += r" --radiomics "
+                    self.showStatusMessage(' Creating segmentations with TotalSegmentator AI ' + _optionStr + ' ...')
+                    _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation"
+                    print(_cmdStr)
+                    proc = slicer.util.launchConsoleProcess(_cmdStr)
+                    
                     slicer.util.logProcessOutput(proc)
                     if self.engineAI == "TotalSegmentator all" :  
                         # create all segments in one NIFTI file 
-                        proc = slicer.util.launchConsoleProcess(r"python ./TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml")
+                        _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml"
+                        print(_cmdStr)
+                        proc = slicer.util.launchConsoleProcess(_cmdStr)
                         slicer.util.logProcessOutput(proc)
                     if self.engineAI == "TotalSegmentator lung extended" or self.engineAI == "TotalSegmentator all" :  
-                        # we must do this twice to get vessel segmentation 
-                        proc = slicer.util.launchConsoleProcess(r"python TotalSegmentator -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels")
+                        # we must do this twice to get vessel segmentation
+                        _cmdStr = r"python TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels"
+                        print(_cmdStr)
+                        proc = slicer.util.launchConsoleProcess(_cmdStr)
                         slicer.util.logProcessOutput(proc)
                         # combine segments into right lung
-                        proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right")
+                        _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right"
+                        print(_cmdStr)
+                        proc = slicer.util.launchConsoleProcess(_cmdStr)
                         slicer.util.logProcessOutput(proc)
                         # combine segments into left lung
-                        proc = slicer.util.launchConsoleProcess(r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left")
+                        _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left" 
+                        print(_cmdStr)
+                        proc = slicer.util.launchConsoleProcess(_cmdStr)
                         slicer.util.logProcessOutput(proc)
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)

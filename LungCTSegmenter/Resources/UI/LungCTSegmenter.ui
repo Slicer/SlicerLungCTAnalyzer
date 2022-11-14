@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>735</height>
+    <height>807</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -100,49 +100,6 @@
       <string>Segmentation</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="9" column="0">
-       <widget class="QCheckBox" name="useAICheckBox">
-        <property name="toolTip">
-         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
-        </property>
-        <property name="text">
-         <string>use AI (experimental)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="detailedAirwaysCheckBox">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="toolTip">
-         <string>Perform a 'Local Threshold' airway segmentation. 'SegmentEditorExtraEffects' need to be installed.   </string>
-        </property>
-        <property name="text">
-         <string>Airway segmentation</string>
-        </property>
-       </widget>
-      </item>
-      <item row="16" column="0">
-       <widget class="QPushButton" name="cancelButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Cancel the current segmentation process.</string>
-        </property>
-        <property name="text">
-         <string>Cancel / Reset</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QComboBox" name="detailLevelComboBox">
-        <property name="toolTip">
-         <string>This parameter equals MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for setting the parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0" colspan="2">
        <widget class="ctkFittedTextBrowser" name="instructionsLabel">
         <property name="toolTip">
@@ -150,27 +107,33 @@
         </property>
        </widget>
       </item>
-      <item row="17" column="0">
-       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
-        <property name="text">
-         <string>Toggle segments visibility</string>
-        </property>
-       </widget>
-      </item>
-      <item row="17" column="1">
+      <item row="19" column="1">
        <widget class="QPushButton" name="toggleVolumeRenderingVisibilityButton">
         <property name="text">
          <string>Toggle volume rendering</string>
         </property>
        </widget>
       </item>
-      <item row="13" column="0" colspan="2">
+      <item row="15" column="0" colspan="2">
        <widget class="QPushButton" name="startButton">
         <property name="toolTip">
          <string>Press this button to start the segmentation process. </string>
         </property>
         <property name="text">
          <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="1">
+       <widget class="QPushButton" name="applyButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Run the algorithm.</string>
+        </property>
+        <property name="text">
+         <string>Apply</string>
         </property>
        </widget>
       </item>
@@ -197,20 +160,7 @@
         </property>
        </widget>
       </item>
-      <item row="16" column="1">
-       <widget class="QPushButton" name="applyButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Run the algorithm.</string>
-        </property>
-        <property name="text">
-         <string>Apply</string>
-        </property>
-       </widget>
-      </item>
-      <item row="19" column="0" colspan="2">
+      <item row="21" column="0" colspan="2">
        <widget class="ctkCollapsibleGroupBox" name="adjustPointsGroupBox">
         <property name="title">
          <string>Adjust points </string>
@@ -288,10 +238,60 @@
         </layout>
        </widget>
       </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="detailLevelComboBox">
+        <property name="toolTip">
+         <string>This parameter equals MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for setting the parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
+        </property>
+       </widget>
+      </item>
+      <item row="19" column="0">
+       <widget class="QPushButton" name="toggleSegmentationVisibilityButton">
+        <property name="text">
+         <string>Toggle segments visibility</string>
+        </property>
+       </widget>
+      </item>
       <item row="4" column="0">
        <widget class="QCheckBox" name="createVesselsCheckBox">
         <property name="text">
          <string>Vessel segmentation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="0">
+       <widget class="QPushButton" name="cancelButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Cancel the current segmentation process.</string>
+        </property>
+        <property name="text">
+         <string>Cancel / Reset</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="detailedAirwaysCheckBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Perform a 'Local Threshold' airway segmentation. 'SegmentEditorExtraEffects' need to be installed.   </string>
+        </property>
+        <property name="text">
+         <string>Airway segmentation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QCheckBox" name="useAICheckBox">
+        <property name="toolTip">
+         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
+        </property>
+        <property name="text">
+         <string>use AI (experimental)</string>
         </property>
        </widget>
       </item>
@@ -490,6 +490,36 @@
         </property>
         <property name="text">
          <string>Upgrade AI</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QCheckBox" name="fastCheckBox">
+        <property name="toolTip">
+         <string>Try this on systems with low GPU memory (&lt; 7GB)</string>
+        </property>
+        <property name="text">
+         <string>Totalsegmentator: --fast option</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QCheckBox" name="radiomicsCheckBox">
+        <property name="toolTip">
+         <string>This will generate a file statistics_radiomics.json with radiomics features of each class. You have to install pyradiomics to use this (pip install pyradiomics).</string>
+        </property>
+        <property name="text">
+         <string>Totalsegmentator: --radiomics option</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QCheckBox" name="statisticsCheckBox">
+        <property name="toolTip">
+         <string>This will generate a file statistics.json with volume (in mm³) and mean intensity of each class.</string>
+        </property>
+        <property name="text">
+         <string>Totalsegmentator: --statistics option</string>
         </property>
        </widget>
       </item>
