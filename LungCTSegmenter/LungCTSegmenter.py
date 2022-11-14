@@ -1512,6 +1512,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def slicerVersionToFloat(self):
         return float(str(slicer.app.majorVersion) + "." + str(slicer.app.minorVersion))
 
+    def openFile(self, filename):
+        if sys.platform == "win32":
+            filename.replace('/', '\\')
+            os.startfile(filename)
+        else:
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.call([opener, filename])
+
+
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
@@ -1810,6 +1819,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                             subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(mask) 
                     # turn off visibility by default
                     subSeg.GetDisplayNode().SetVisibility(False)
+
+                if self.statisticsOption: 
+                    reportPath = tempDir + f"segmentation/statistics.json"
+                    self.openFile(reportPath)        
+                if self.radiomicsOption: 
+                    reportPath = tempDir + f"segmentation/statistics_radiomics.json"
+                    self.openFile(reportPath)        
 
 
                 # restore to previous directory state 

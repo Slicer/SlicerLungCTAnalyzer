@@ -314,7 +314,7 @@
    <item>
     <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
      <property name="toolTip">
-      <string>Set intensity ranges to default values.</string>
+      <string/>
      </property>
      <property name="text">
       <string>Advanced</string>
@@ -506,7 +506,7 @@
       <item row="10" column="1">
        <widget class="QCheckBox" name="radiomicsCheckBox">
         <property name="toolTip">
-         <string>This will generate a file statistics_radiomics.json with radiomics features of each class. You have to install pyradiomics to use this (pip install pyradiomics).</string>
+         <string>This will generate and load a file statistics_radiomics.json with radiomics features of each class. You have to install pyradiomics to use this (pip install pyradiomics from command line outside Slicer). Keep in mind that checking this option can cause run times of up to 60 min on a gaming laptop. </string>
         </property>
         <property name="text">
          <string>Totalsegmentator: --radiomics option</string>
@@ -516,7 +516,7 @@
       <item row="9" column="1">
        <widget class="QCheckBox" name="statisticsCheckBox">
         <property name="toolTip">
-         <string>This will generate a file statistics.json with volume (in mm³) and mean intensity of each class.</string>
+         <string>This will generate and load a file statistics.json with volume (in mm³) and mean intensity of each class.</string>
         </property>
         <property name="text">
          <string>Totalsegmentator: --statistics option</string>
