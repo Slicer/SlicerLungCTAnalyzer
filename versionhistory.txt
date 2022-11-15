@@ -149,4 +149,11 @@ vessel threshold slider
 
 V 2.59
 add volume rendering button 
+
+V 2.60
+add TotalSegmentator options: --fast --statistics --radiomics
+change TotalSegmentator lobe colors
+smooth TotalSegmentator lobes and lungs
+
+ 
  

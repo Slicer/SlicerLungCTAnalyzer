@@ -172,6 +172,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
 
+      self.ui.fastCheckBox.enabled = False
+      self.ui.statisticsCheckBox.enabled = False
+      self.ui.radiomicsCheckBox.enabled = False
+
 
   def cleanup(self):
       """
@@ -461,6 +465,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
       self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
       self.logic.engineAI = self.ui.engineAIComboBox.currentText
+      if self.logic.engineAI.find("TotalSegmentator") == 0:            
+          self.ui.fastCheckBox.enabled = True
+          self.ui.statisticsCheckBox.enabled = True
+          self.ui.radiomicsCheckBox.enabled = True
+      else:
+          self.ui.fastCheckBox.enabled = False
+          self.ui.statisticsCheckBox.enabled = False
+          self.ui.radiomicsCheckBox.enabled = False
+
     
       self._parameterNode.EndModify(wasModified)
 
@@ -801,11 +814,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.rightLungColor = (0.5, 0.68, 0.5)
         self.leftLungColor = (0.95, 0.84, 0.57)
 
-        self.rightUpperLobeColor = (0.67, 0.54, 0.45)
-        self.rightMiddleLobeColor = (0.79, 0.64, 0.55)
-        self.rightLowerLobeColor = (0.88, 0.73, 0.63)
-        self.leftUpperLobeColor = (0.67, 0.54, 0.45)
-        self.leftLowerLobeColor = (0.88, 0.73, 0.63)
+        self.rightUpperLobeColor = (177./255., 122./255., 101./255. )
+        self.rightMiddleLobeColor = (111./255., 184./255., 210./255.)
+        self.rightLowerLobeColor = (216./255., 101./255., 79./255.)
+        self.leftUpperLobeColor = (128./255., 174./255., 128./255.)
+        self.leftLowerLobeColor = (241./255., 214./255., 145./255.)
+
         self.ribColor = (0.95, 0.84, 0.57)
         self.vesselMaskColor = (0.85, 0.40, 0.31)
         self.pulmonaryArteryColor = (0., 0.59, 0.81)
@@ -1350,11 +1364,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         
 
 
-    def addSegmentFromNumpyArray(self, outputSegmentation, input_np, segmentName, labelValue, inputVolume):
+    def addSegmentFromNumpyArray(self, outputSegmentation, input_np, segmentName, labelValue, inputVolume, color):
         emptySegment = slicer.vtkSegment()
         emptySegment.SetName(segmentName)
+        emptySegment.SetColor(color)
         outputSegmentation.GetSegmentation().AddSegment(emptySegment)
-        emptySegment = slicer.vtkSegment()
 
         import numpy as np
         segment_np = np.zeros(input_np.shape)
@@ -1362,6 +1376,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         segmentId = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
         slicer.util.updateSegmentBinaryLabelmapFromArray(segment_np, outputSegmentation, segmentId, inputVolume)
+
 
     def normalizeImageHU(self, img, air, fat):
         air_HU = -1000
@@ -1469,14 +1484,26 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(_name)
                 _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(subSeg.GetSegmentation(), sourceSegmentId)
                 _segID = _outputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_name)
-                self.setAnatomicalTag(_outputsegmentation, _name, _segID)              
+                self.setAnatomicalTag(_outputsegmentation, _name, _segID)
                 displayNode = _outputsegmentation.GetDisplayNode()
                 # Set overall opacity of the segmentation
                 displayNode.SetOpacity3D(1.0)  
                 # make lobes semitransparent
                 if _name.find("lobe") > -1 or _name.find("lung") > -1:
+                    # Smooth segment
+                    self.segmentEditorWidget.setSegmentationNode(_outputsegmentation)
+                    self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+                    self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+                    self.showStatusMessage(f'Smoothing {_name}')
+                    self.segmentEditorNode.SetSelectedSegmentID(_segID)
+                    self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                    effect = self.segmentEditorWidget.activeEffect()
+                    effect.setParameter("SmoothingMethod","GAUSSIAN")
+                    effect.setParameter("GaussianStandardDeviationMm","2")
+                    effect.self().onApply()
                     # Set opacity of a single segment
                     displayNode.SetSegmentOpacity3D(_segID, 0.3)  
+
             slicer.mrmlScene.RemoveNode(subSeg)
         else:
             print(_sourcepath + " not found.")
@@ -1650,9 +1677,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.showStatusMessage('Creating lungs with lungmask AI ...')
                     model = mask.get_model('unet','R231')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
+                    
                     # add lung segments
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume, self.rightLungColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume, self.leftLungColor)
                     # Postprocess lungs 
                     self.postprocessSegment(self.outputSegmentation,0,"right lung")
                     self.postprocessSegment(self.outputSegmentation,1,"left lung")
@@ -1661,11 +1689,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     model = mask.get_model('unet','LTRCLobes')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
                     # add lobe segments
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)                    
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume, self.leftUpperLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume, self.leftLowerLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume, self.rightUpperLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume, self.rightMiddleLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume, self.rightLowerLobeColor)                    
                     # Postprocess lobes
                     self.postprocessSegment(self.outputSegmentation,0,"left upper lobe")
                     self.postprocessSegment(self.outputSegmentation,1,"left lower lobe")
@@ -1676,11 +1704,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.showStatusMessage('Creating lungs and lobes with lungmask AI ...')
                     segmentation_np = mask.apply_fused(inputVolumeSitk)
                     # add lobe segments
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume)                    
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume, self.leftUpperLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume, self.leftLowerLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right upper lobe", 3, self.inputVolume, self.rightUpperLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right middle lobe", 4, self.inputVolume, self.rightMiddleLobeColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lower lobe", 5, self.inputVolume, self.rightLowerLobeColor)                    
                     # Postprocess lobes
                     self.postprocessSegment(self.outputSegmentation,0,"left upper lobe")
                     self.postprocessSegment(self.outputSegmentation,1,"left lower lobe")
@@ -1692,8 +1720,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     model = mask.get_model('unet','R231CovidWeb')
                     segmentation_np = mask.apply(inputVolumeSitk, model)
                     # add lung segments
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume)
-                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume, self.rightLungColor)
+                    self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume, self.leftLungColor)
                     # Postprocess lungs 
                     self.postprocessSegment(self.outputSegmentation,0,"right lung")
                     self.postprocessSegment(self.outputSegmentation,1,"left lung")
