@@ -1341,8 +1341,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def postprocessSegment(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
-        _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
-        
+
         if self.useAI:
             self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
             self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
@@ -1488,9 +1487,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 displayNode = _outputsegmentation.GetDisplayNode()
                 # Set overall opacity of the segmentation
                 displayNode.SetOpacity3D(1.0)  
-                # make lobes semitransparent
                 if _name.find("lobe") > -1 or _name.find("lung") > -1:
-                    # Smooth segment
+                    # smooth segment
                     self.segmentEditorWidget.setSegmentationNode(_outputsegmentation)
                     self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
                     self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
@@ -1501,6 +1499,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     effect.setParameter("SmoothingMethod","GAUSSIAN")
                     effect.setParameter("GaussianStandardDeviationMm","2")
                     effect.self().onApply()
+                    # make lobes semitransparent
                     # Set opacity of a single segment
                     displayNode.SetSegmentOpacity3D(_segID, 0.3)  
 
@@ -1658,6 +1657,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 _doAI = True
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
         if _doAI:
+            # use unsampled, original input volume and set geometry
+            self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
+            wasModified = self.outputSegmentation.StartModify()
+            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+            # Trigger display update
+            self.outputSegmentation.Modified()
+            self.outputSegmentation.EndModify(wasModified)
             if self.engineAI.find("lungmask") == 0:
                 # Import the required libraries
                 self.showStatusMessage(' Importing lungmask AI ...')
@@ -1731,7 +1737,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
                 logging.info("Segmentation done.")
 
-            elif self.engineAI.find("TotalSegmentator") == 0:            
+            elif self.engineAI.find("TotalSegmentator") == 0:
                 # Import the required libraries
                 self.showStatusMessage(' Importing Totalsegmentator AI ...')
                 try:
@@ -1828,6 +1834,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
                 self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
                 self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
+                
 
                 # load segmentation joint file 
                 from os.path import exists
@@ -1916,20 +1923,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             else:
                 self.showStatusMessage('Airway segmentation ...')
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
-
-                # switch to full-resolution segmentation (this is quick, there is no need for progress message)
                 self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
-                referenceGeometryString = self.outputSegmentation.GetSegmentation().GetConversionParameter(slicer.vtkSegmentationConverter.GetReferenceImageGeometryParameterName())
-                referenceGeometryImageData = slicer.vtkOrientedImageData()
-                slicer.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImageData, False)
                 wasModified = self.outputSegmentation.StartModify()
-                currentSegment = self.outputSegmentation.GetSegmentation().GetSegment(airwaySegID)
-                # Get master labelmap from segment
-                currentLabelmap = currentSegment.GetRepresentation("Binary labelmap")
-                # Resample
-                if not slicer.vtkOrientedImageDataResample.ResampleOrientedImageToReferenceOrientedImage(
-                  currentLabelmap, referenceGeometryImageData, currentLabelmap, False, True):
-                  raise ValueError("Failed to resample segment " << currentSegment.GetName())
                 self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
                 # Trigger display update
                 self.outputSegmentation.Modified()
@@ -2149,6 +2144,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("MaximumThreshold",self.vesselThresholdMax)
                 effect.setParameter("MinimumThreshold",self.vesselThresholdMin)
                 effect.self().onApply()
+
+                self.showStatusMessage(f'Filling holes in vessel mask ...')
+                self.segmentEditorNode.SetSelectedSegmentID("vesselmask")
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
+                effect.setParameter("KernelSizeMm","3")
+                effect.setParameter("ApplyToAllVisibleSegments","0")
+                effect.setParameter("ColorSmudge","0")
+                effect.setParameter("EraseAllSegments","0")
+                effect.setParameter("GaussianStandardDeviationMm","3")
+                effect.setParameter("JointTaubinSmoothingFactor","0.5")
+                effect.self().onApply()
                 
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
                 self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
@@ -2171,10 +2179,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.self().outputVolumeSelector.setCurrentNode(self.maskedVolume)
                 effect.self().onApply()
                 self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(vesselMaskID,True)
-    
-          
-
-        
 
         # Use a lower smoothing then the default 0.5 to ensure that thin airways are not suppressed in the 3D output
         self.outputSegmentation.GetSegmentation().SetConversionParameter("Smoothing factor","0.3")
