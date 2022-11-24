@@ -1797,31 +1797,46 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.showStatusMessage(' Creating segmentations with TotalSegmentator AI ' + _optionStr + ' ...')
                     _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation"
                     print(_cmdStr)
-                    proc = slicer.util.launchConsoleProcess(_cmdStr)
-                    
-                    slicer.util.logProcessOutput(proc)
+                    try:
+                        proc = slicer.util.launchConsoleProcess(_cmdStr)
+                        slicer.util.logProcessOutput(proc)
+                    except Exception as e:
+                        slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
+
                     if self.engineAI == "TotalSegmentator all" :  
                         # create all segments in one NIFTI file 
                         _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml"
                         print(_cmdStr)
-                        proc = slicer.util.launchConsoleProcess(_cmdStr)
-                        slicer.util.logProcessOutput(proc)
+                        try:
+                            proc = slicer.util.launchConsoleProcess(_cmdStr)
+                            slicer.util.logProcessOutput(proc)
+                        except Exception as e:
+                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
                     if self.engineAI == "TotalSegmentator lung extended" or self.engineAI == "TotalSegmentator all" :  
                         # we must do this twice to get vessel segmentation
                         _cmdStr = r"python TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels"
                         print(_cmdStr)
-                        proc = slicer.util.launchConsoleProcess(_cmdStr)
-                        slicer.util.logProcessOutput(proc)
+                        try:
+                            proc = slicer.util.launchConsoleProcess(_cmdStr)
+                            slicer.util.logProcessOutput(proc)
+                        except Exception as e:
+                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
                         # combine segments into right lung
                         _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right"
                         print(_cmdStr)
-                        proc = slicer.util.launchConsoleProcess(_cmdStr)
-                        slicer.util.logProcessOutput(proc)
+                        try:
+                            proc = slicer.util.launchConsoleProcess(_cmdStr)
+                            slicer.util.logProcessOutput(proc)
+                        except Exception as e:
+                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
                         # combine segments into left lung
                         _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left" 
                         print(_cmdStr)
-                        proc = slicer.util.launchConsoleProcess(_cmdStr)
-                        slicer.util.logProcessOutput(proc)
+                        try:
+                            proc = slicer.util.launchConsoleProcess(_cmdStr)
+                            slicer.util.logProcessOutput(proc)
+                        except Exception as e:
+                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
                 
                 self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
