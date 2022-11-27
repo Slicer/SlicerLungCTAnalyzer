@@ -1472,40 +1472,34 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         #    print(_name + " not handled during SetTag.")
         
                        
-    def importTotalSegmentatorSegment(self, _name, _sourcepath, _outputsegmentation, _color):
-        from os.path import exists
-        file_exists = exists(_sourcepath)
-        if file_exists:
-            subSeg = slicer.util.loadSegmentation(_sourcepath)
-            sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_1")
-            if sourceSegmentId:
-                subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetColor(_color)
-                subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(_name)
-                _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(subSeg.GetSegmentation(), sourceSegmentId)
-                _segID = _outputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_name)
-                self.setAnatomicalTag(_outputsegmentation, _name, _segID)
-                displayNode = _outputsegmentation.GetDisplayNode()
-                # Set overall opacity of the segmentation
-                displayNode.SetOpacity3D(1.0)  
-                if _name.find("lobe") > -1 or _name.find("lung") > -1:
-                    # smooth segment
-                    self.segmentEditorWidget.setSegmentationNode(_outputsegmentation)
-                    self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
-                    self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-                    self.showStatusMessage(f'Smoothing {_name}')
-                    self.segmentEditorNode.SetSelectedSegmentID(_segID)
-                    self.segmentEditorWidget.setActiveEffectByName("Smoothing")
-                    effect = self.segmentEditorWidget.activeEffect()
-                    effect.setParameter("SmoothingMethod","GAUSSIAN")
-                    effect.setParameter("GaussianStandardDeviationMm","2")
-                    effect.self().onApply()
-                    # make lobes semitransparent
-                    # Set opacity of a single segment
-                    displayNode.SetSegmentOpacity3D(_segID, 0.3)  
-
-            slicer.mrmlScene.RemoveNode(subSeg)
-        else:
-            print(_sourcepath + " not found.")
+    def importTotalSegmentatorSegment(self, _outputName, _inputName, _outputsegmentation, _inputsegmentation, _color):
+        
+        sourceSegmentId = None
+        sourceSegmentId = _inputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_inputName)
+        if sourceSegmentId:
+            _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(_inputsegmentation.GetSegmentation(), sourceSegmentId)
+            _segID = _outputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_inputName)
+            _outputsegmentation.GetSegmentation().GetSegment(_segID).SetName(_outputName)
+            _outputsegmentation.GetSegmentation().GetSegment(_segID).SetColor(_color)
+            self.setAnatomicalTag(_outputsegmentation, _outputName, _segID)
+            displayNode = _outputsegmentation.GetDisplayNode()
+            # Set overall opacity of the segmentation
+            displayNode.SetOpacity3D(1.0)  
+            if _outputName.find("lobe") > -1 or _outputName.find("lung") > -1:
+                # smooth segment
+                self.segmentEditorWidget.setSegmentationNode(_outputsegmentation)
+                self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+                self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+                self.showStatusMessage(f'Smoothing {_outputName}')
+                self.segmentEditorNode.SetSelectedSegmentID(_segID)
+                self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("SmoothingMethod","GAUSSIAN")
+                effect.setParameter("GaussianStandardDeviationMm","2")
+                effect.self().onApply()
+                # make lobes semitransparent
+                # Set opacity of a single segment
+                displayNode.SetSegmentOpacity3D(_segID, 0.3)  
 
     def saveVolTemp(self, inputVolume):
         import time
@@ -1751,148 +1745,37 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info("Segmentation done.")
 
             elif self.engineAI.find("TotalSegmentator") == 0:
-                # Import the required libraries
-                self.showStatusMessage(' Importing Totalsegmentator AI ...')
-                try:
-                    import totalsegmentator
-                except ModuleNotFoundError:
-                    slicer.util.pip_install("git+https://github.com/wasserth/TotalSegmentator.git")
-                    import totalsegmentator
             
-                if self.upgradeAI:
-                    slicer.util.pip_install("--upgrade git+https://github.com/wasserth/TotalSegmentator.git")
+                self.showStatusMessage(' Creating segmentations with TotalSegmentator ...')
+                tslogic = slicer.util.getModuleLogic('TotalSegmentator')
+                if not tslogic: 
+                    raise RuntimeError("TotalSegmentator program logic not found - please install the TotalSegmentator extension.")
 
-                # _run set False for debugging without new TotalSegmentator run 
-                _run = True
+                tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
+                if self.fastOption: 
+                    tslogic.process(self.inputVolume, tsOutputSegmentation, True, "total")
+                else:
+                    tslogic.process(self.inputVolume, tsOutputSegmentation, False, "total")
 
-                tempDir = slicer.app.temporaryPath + "/TotalSegmentator/"
-                if _run:
-                    # check if temp output folder exists
-                    if os.path.isdir(tempDir + r"segmentation"):                
-                        # remove temp output directory and files
-                        import shutil
-                        dir_path = tempDir + r"segmentation"
-                        try:
-                            shutil.rmtree(dir_path)
-                        except OSError as e:
-                            print("Unable to delete temporary ouput folder due to error:  %s : %s" % (dir_path, e.strerror))
-                                
-                # Write temporary volume file in NIFT format as input for TotalSegmentator
-                self.showStatusMessage(" Writing temprary data to " + tempDir + "input.nii.gz" + " ...")
-                myStorageNode = self.inputVolume.CreateDefaultStorageNode()
-                myStorageNode.SetFileName(tempDir + "input.nii.gz")
-                myStorageNode.WriteData(self.inputVolume)
-                logging.info("Input volume written to " + tempDir + "input.nii.gz")
-                                
-                beforeDir = os.getcwd()
-                # get Slicer home bin folder
-                slicerHomeBinDir = slicer.app.slicerHome
-                slicerHomeDir = slicerHomeBinDir.removesuffix('/bin/..')
-                # change to script directory
-                os.chdir(slicerHomeDir + r"/lib/Python/Scripts")
-                #print(os.getcwd())
-                
-                if _run:
-                    # run TotalSegmentator from a console process because after 
-                    # import totalsegmentator 
-                    # its functions throw exceptions
-                    _optionStr = ""
-                    
-                    if not self.fastOption and torch.cuda.get_device_properties(0).total_memory < 7000000000:
-                        if slicer.util.confirmYesNoDisplay("You have less than 7 GB of GPU memory available. Enable the '--fast' option?"):
-                            self.fastOption = True
-                    if self.fastOption: 
-                        _optionStr += r" --fast "
-                    if self.statisticsOption: 
-                        _optionStr += r" --statistics "
-                    if self.radiomicsOption: 
-                        _optionStr += r" --radiomics "
-                    self.showStatusMessage(' Creating segmentations with TotalSegmentator AI ' + _optionStr + ' ...')
-                    _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation"
-                    print(_cmdStr)
-                    try:
-                        proc = slicer.util.launchConsoleProcess(_cmdStr)
-                        slicer.util.logProcessOutput(proc)
-                    except Exception as e:
-                        slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
-
-                    if self.engineAI == "TotalSegmentator all" :  
-                        # create all segments in one NIFTI file 
-                        _cmdStr = r"python ./TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --ml"
-                        print(_cmdStr)
-                        try:
-                            proc = slicer.util.launchConsoleProcess(_cmdStr)
-                            slicer.util.logProcessOutput(proc)
-                        except Exception as e:
-                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
-                    if self.engineAI == "TotalSegmentator lung extended" or self.engineAI == "TotalSegmentator all" :  
-                        # we must do this twice to get vessel segmentation
-                        _cmdStr = r"python TotalSegmentator " + _optionStr + " -i " + tempDir + r"input.nii.gz" + " -o " + tempDir + r"segmentation --task lung_vessels"
-                        print(_cmdStr)
-                        try:
-                            proc = slicer.util.launchConsoleProcess(_cmdStr)
-                            slicer.util.logProcessOutput(proc)
-                        except Exception as e:
-                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
-                        # combine segments into right lung
-                        _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_right.nii.gz -m lung_right"
-                        print(_cmdStr)
-                        try:
-                            proc = slicer.util.launchConsoleProcess(_cmdStr)
-                            slicer.util.logProcessOutput(proc)
-                        except Exception as e:
-                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
-                        # combine segments into left lung
-                        _cmdStr = r"python .\totalseg_combine_masks -i " + tempDir + r"segmentation -o " + tempDir + r"segmentation/lung_left.nii.gz -m lung_left" 
-                        print(_cmdStr)
-                        try:
-                            proc = slicer.util.launchConsoleProcess(_cmdStr)
-                            slicer.util.logProcessOutput(proc)
-                        except Exception as e:
-                            slicer.util.errorDisplay("launchConsoleProcess failed due to error "+str(e))
-                
-                self.importTotalSegmentatorSegment("right upper lobe",tempDir + "segmentation/lung_upper_lobe_right.nii.gz",self.outputSegmentation, self.rightUpperLobeColor)
-                self.importTotalSegmentatorSegment("right middle lobe",tempDir + "segmentation/lung_middle_lobe_right.nii.gz",self.outputSegmentation, self.rightMiddleLobeColor)
-                self.importTotalSegmentatorSegment("right lower lobe",tempDir + "segmentation/lung_lower_lobe_right.nii.gz",self.outputSegmentation, self.rightLowerLobeColor)
-                self.importTotalSegmentatorSegment("left upper lobe",tempDir + "segmentation/lung_upper_lobe_left.nii.gz",self.outputSegmentation, self.leftUpperLobeColor)
-                self.importTotalSegmentatorSegment("left lower lobe",tempDir + "segmentation/lung_lower_lobe_left.nii.gz",self.outputSegmentation, self.leftLowerLobeColor)
-                self.importTotalSegmentatorSegment("trachea",tempDir + "segmentation/trachea.nii.gz",self.outputSegmentation, self.tracheaColor)
-                self.importTotalSegmentatorSegment("pulmonary artery",tempDir + "segmentation/pulmonary_artery.nii.gz",self.outputSegmentation, self.pulmonaryArteryColor)
-                self.importTotalSegmentatorSegment("left atrium of heart",tempDir + "segmentation/heart_atrium_left.nii.gz",self.outputSegmentation, self.pulmonaryVeinColor)
-                self.importTotalSegmentatorSegment("lung",tempDir + "segmentation/lung.nii.gz",self.outputSegmentation, self.rightLungColor)
-                self.importTotalSegmentatorSegment("lung vessels",tempDir + "segmentation/lung_vessels.nii.gz",self.outputSegmentation, self.vesselMaskColor)
-                self.importTotalSegmentatorSegment("airways and bronchi",tempDir + "segmentation/lung_trachea_bronchia.nii.gz",self.outputSegmentation, self.tracheaColor)
-                
-
-                # load segmentation joint file 
-                from os.path import exists
-                _sourcepath = tempDir + "segmentation/s01.nii.gz"
-                file_exists = exists(_sourcepath)
-                if file_exists:
-                    subSeg = slicer.util.loadSegmentation(_sourcepath)
-                    subSeg.SetName("TotalSegmentator")
-                    # rename segments according to TotalSegmenator class names 
-                    from totalsegmentator.map_to_binary import class_map
-                    #print(class_map)
-                    masks = class_map["total"].values()
-                    for idx, mask in enumerate(masks):
-                        sourceSegmentId = None
-                        sourceSegmentId = subSeg.GetSegmentation().GetSegmentIdBySegmentName("Segment_" + str(idx + 1))
-                        if sourceSegmentId:
-                            subSeg.GetSegmentation().GetSegment(sourceSegmentId).SetName(mask) 
+                if self.engineAI == "TotalSegmentator all" :  
+                    # turn on visibility by default
+                    tsOutputSegmentation.GetDisplayNode().SetVisibility(True)                
+                else:
                     # turn off visibility by default
-                    subSeg.GetDisplayNode().SetVisibility(False)
-
-                if self.statisticsOption: 
-                    reportPath = tempDir + f"segmentation/statistics.json"
-                    self.openFile(reportPath)        
-                if self.radiomicsOption: 
-                    reportPath = tempDir + f"segmentation/statistics_radiomics.json"
-                    self.openFile(reportPath)        
-
-
-                # restore to previous directory state 
-                os.chdir(beforeDir)
+                    tsOutputSegmentation.GetDisplayNode().SetVisibility(False)                
+                    
+                self.importTotalSegmentatorSegment("right upper lobe","lung_upper_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
+                self.importTotalSegmentatorSegment("right middle lobe","lung_middle_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
+                self.importTotalSegmentatorSegment("right lower lobe","lung_lower_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor)
+                self.importTotalSegmentatorSegment("left upper lobe","lung_upper_lobe_left",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor)
+                self.importTotalSegmentatorSegment("left lower lobe","lung_lower_lobe_left",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor)
+                self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor)
+                self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor)
+                self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor)
+                self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, tsOutputSegmentation, self.rightLungColor)
+                self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputSegmentation, self.vesselMaskColor)
+                self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor)
+                                
                 logging.info("Segmentation done.")
                 
             elif self.engineAI.find("MONAILabel") == 0:
