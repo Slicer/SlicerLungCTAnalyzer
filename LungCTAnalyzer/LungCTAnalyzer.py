@@ -2189,7 +2189,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
             self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
             self.segmentEditorWidget.setSegmentationNode(self.inputSegmentation)
-            self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+            self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
 
             self.showStatusMessage('Shrinking right lung mask ...')
             self.segmentEditorNode.SetSelectedSegmentID(self.rightLungMaskSegmentID)
@@ -2255,7 +2255,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments)
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-        self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+        self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
 
         for side in ['right','left']:
             # fill holes in vessel segmentations
@@ -2286,7 +2286,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
             self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
             self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-            self.segmentEditorWidget.setMasterVolumeNode(self.maskLabelVolume)
+            self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
 
             for side in ['left', 'right']:
                 for region in ['ventral', 'dorsal','upper','middle','lower']: 
@@ -2464,7 +2464,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
         segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-        segmentEditorWidget.setMasterVolumeNode(maskLabelVolume)
+        segmentEditorWidget.setSourceVolumeNode(maskLabelVolume)
         for side in ["right", "left"]:
               maskLabelValue = 1 if side == "right" else 2
               for segmentProperty in self.segmentProperties:

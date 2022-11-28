@@ -413,6 +413,26 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Volume rendering Shift</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="ctkSliderWidget" name="VolumeRenderingShiftSliderWidget">
+        <property name="minimum">
+         <double>-300.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>300.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+      </item>
       <item row="4" column="0">
        <widget class="QPushButton" name="setDefaultButton">
         <property name="toolTip">
@@ -463,26 +483,6 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="ctkSliderWidget" name="VolumeRenderingShiftSliderWidget">
-        <property name="minimum">
-         <double>-300.000000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>300.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>0.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Volume rendering Shift</string>
-        </property>
-       </widget>
-      </item>
       <item row="8" column="0">
        <widget class="QCheckBox" name="upgradeAICheckBox">
         <property name="toolTip">
@@ -500,26 +500,6 @@
         </property>
         <property name="text">
          <string>Totalsegmentator: --fast option</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="1">
-       <widget class="QCheckBox" name="radiomicsCheckBox">
-        <property name="toolTip">
-         <string>This will generate and load a file statistics_radiomics.json with radiomics features of each class. You have to install pyradiomics to use this (pip install pyradiomics from command line outside Slicer). Keep in mind that checking this option can cause run times of up to 60 min on a gaming laptop. </string>
-        </property>
-        <property name="text">
-         <string>Totalsegmentator: --radiomics option</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="1">
-       <widget class="QCheckBox" name="statisticsCheckBox">
-        <property name="toolTip">
-         <string>This will generate and load a file statistics.json with volume (in mm³) and mean intensity of each class.</string>
-        </property>
-        <property name="text">
-         <string>Totalsegmentator: --statistics option</string>
         </property>
        </widget>
       </item>

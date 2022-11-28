@@ -71,8 +71,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createVessels = False
       self.useAI = False
       self.fastOption = False
-      self.statisticsOption = False
-      self.radiomicsOption = False
       self.shrinkMasks = False
       self.upgradeAI = False
       self.detailedMasks = False
@@ -148,8 +146,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-      self.ui.statisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-      self.ui.radiomicsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -173,8 +169,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
 
       self.ui.fastCheckBox.enabled = False
-      self.ui.statisticsCheckBox.enabled = False
-      self.ui.radiomicsCheckBox.enabled = False
 
 
   def cleanup(self):
@@ -385,8 +379,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI
       self.ui.fastCheckBox.checked = self.fastOption
-      self.ui.statisticsCheckBox.checked = self.statisticsOption
-      self.ui.radiomicsCheckBox.checked = self.radiomicsOption
       
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.upgradeAICheckBox.checked = self.upgradeAI
@@ -456,8 +448,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
-      self.statisticsOption = self.ui.statisticsCheckBox.checked 
-      self.radiomicsOption = self.ui.radiomicsCheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.upgradeAI = self.ui.upgradeAICheckBox.checked 
@@ -467,12 +457,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.engineAI = self.ui.engineAIComboBox.currentText
       if self.logic.engineAI.find("TotalSegmentator") == 0:            
           self.ui.fastCheckBox.enabled = True
-          self.ui.statisticsCheckBox.enabled = True
-          self.ui.radiomicsCheckBox.enabled = True
       else:
           self.ui.fastCheckBox.enabled = False
-          self.ui.statisticsCheckBox.enabled = False
-          self.ui.radiomicsCheckBox.enabled = False
 
     
       self._parameterNode.EndModify(wasModified)
@@ -590,8 +576,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
           self.logic.fastOption = self.fastOption
-          self.logic.statisticsOption = self.statisticsOption
-          self.logic.radiomicsOption = self.radiomicsOption
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
           # always save a copy of the current markups in Slicer temp dir for later use
@@ -839,8 +823,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.createVessels = False
         self.useAI = False
         self.fastOption = False
-        self.statisticsOption = False
-        self.radiomicsOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
         self.upgradeAI = False
@@ -1064,10 +1046,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-        self.segmentEditorWidget.setMasterVolumeNode(self.resampledVolume)
+        self.segmentEditorWidget.setSourceVolumeNode(self.resampledVolume)
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
-        self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
+        intensityRange = [self.lungThresholdMin, self.lungThresholdMax]
+        self.segmentEditorWidget.mrmlSegmentEditorNode().SetSourceVolumeIntensityMaskRange(intensityRange)
 
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
@@ -1113,7 +1096,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
       # Set intensity mask and thresholds again to reflect their possible changes and update button
       self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
-      self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(self.lungThresholdMin, self.lungThresholdMax)
+      intensityRange = [self.lungThresholdMin, self.lungThresholdMax]
+      self.segmentEditorWidget.mrmlSegmentEditorNode().SetSourceVolumeIntensityMaskRange(intensityRange)
       # set effect
       self.segmentEditorWidget.setActiveEffectByName("Grow from seeds")
       effect = self.segmentEditorWidget.activeEffect()
@@ -1607,7 +1591,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 if not slicer.vtkOrientedImageDataResample.ResampleOrientedImageToReferenceOrientedImage(
                   currentLabelmap, referenceGeometryImageData, currentLabelmap, False, True):
                   raise ValueError("Failed to resample segment " << currentSegment.GetName())
-            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+            self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
             # Trigger display update
             self.outputSegmentation.Modified()
             self.outputSegmentation.EndModify(wasModified)
@@ -1667,7 +1651,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             # use unsampled, original input volume and set geometry
             self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
             wasModified = self.outputSegmentation.StartModify()
-            self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+            self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
             # Trigger display update
             self.outputSegmentation.Modified()
             self.outputSegmentation.EndModify(wasModified)
@@ -1745,7 +1729,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info("Segmentation done.")
 
             elif self.engineAI.find("TotalSegmentator") == 0:
-            
                 self.showStatusMessage(' Creating segmentations with TotalSegmentator ...')
                 tslogic = slicer.util.getModuleLogic('TotalSegmentator')
                 if not tslogic: 
@@ -1759,10 +1742,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
                 if self.engineAI == "TotalSegmentator all" :  
                     # turn on visibility by default
-                    tsOutputSegmentation.GetDisplayNode().SetVisibility(True)                
+                    tsOutputSegmentation.GetDisplayNode().SetVisibility(True)
                 else:
                     # turn off visibility by default
-                    tsOutputSegmentation.GetDisplayNode().SetVisibility(False)                
+                    tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
                     
                 self.importTotalSegmentatorSegment("right upper lobe","lung_upper_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe","lung_middle_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
@@ -1836,7 +1819,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
                 wasModified = self.outputSegmentation.StartModify()
-                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+                self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
                 # Trigger display update
                 self.outputSegmentation.Modified()
                 self.outputSegmentation.EndModify(wasModified)
@@ -1932,10 +1915,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungsID,False)
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
-        self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange(0,0)
+        intensityRange = [0,0]
+        self.segmentEditorWidget.mrmlSegmentEditorNode().SetSourceVolumeIntensityMaskRange(intensityRange)
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-
 
         # AI created lobes only, so create lungs and add lobes 
         if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"): 
@@ -1986,10 +1969,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                                 
                 # Create vessel mask
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+                self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
 
                 self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
-                self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMaskRange( self.vesselThresholdMin, self.vesselThresholdMax)
+                intensityRange = [self.vesselThresholdMin, self.vesselThresholdMax]
+                self.segmentEditorWidget.mrmlSegmentEditorNode().SetSourceVolumeIntensityMaskRange(intensityRange)
 
                 self.segmentEditorNode.SetSelectedSegmentID(vesselMaskID)
                 self.segmentEditorNode.SetMaskSegmentID(thoracicCavityID)
@@ -2022,7 +2006,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.self().onApply()
                 
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-                self.segmentEditorWidget.setMasterVolumeNode(self.inputVolume)
+                self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
 
                 # Create masked volume 
                 self.segmentEditorNode.SetSelectedSegmentID(thoracicCavityID)
