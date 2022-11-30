@@ -547,14 +547,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.loadFiducialsTempDir() 
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
-          self.ui.updateIntensityButton.enabled = True          
+          self.ui.updateIntensityButton.enabled = True
           self.logic.startSegmentation()
           self.logic.updateSegmentation()
           self.updateGUIFromParameterNode()
           self.ui.toggleSegmentationVisibilityButton.enabled = False
           self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
           self.ui.VolumeRenderingShiftSliderWidget.enabled = False
-          # if AI checked and no airway segmentation run processing immediately from the start button          
+          # if AI checked and no airway segmentation planned no need to place markups so 
+          # run processing immediately from the start button
           if self.useAI and not self.createDetailedAirways:
               self.runProcessing()
           qt.QApplication.restoreOverrideCursor()
@@ -1048,9 +1049,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
         self.segmentEditorWidget.setSourceVolumeNode(self.resampledVolume)
 
-        self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(True)
-        intensityRange = [self.lungThresholdMin, self.lungThresholdMax]
-        self.segmentEditorWidget.mrmlSegmentEditorNode().SetSourceVolumeIntensityMaskRange(intensityRange)
 
         stopTime = time.time()
         logging.info('StartSegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
