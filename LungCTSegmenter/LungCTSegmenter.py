@@ -418,7 +418,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def updateSeeds(self, caller, eventId):
       # Lock all fiducials - add/remove them instead of moving (if markup is moved then we would need to reinitialize
       # region growing, which would take time)
-      slicer.modules.markups.logic().SetAllMarkupsLocked(caller, True)
+      slicer.modules.markups.logic().SetAllControlPointsLocked(caller, True)
 
       self.updateGUIFromParameterNode()
       if self.isSufficientNumberOfPointsPlaced: 
@@ -1059,10 +1059,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if segmentId:
             self.outputSegmentation.GetSegmentation().RemoveSegment(segmentId)
         append = vtk.vtkAppendPolyData()
-        numFids = markupsNode.GetNumberOfFiducials()
+        numFids = markupsNode.GetNumberOfControlPoints()
         for i in range(numFids):
             ras = [0,0,0]
-            markupsNode.GetNthFiducialPosition(i,ras)
+            markupsNode.GetNthControlPointPosition(i,ras)
             sphere = vtk.vtkSphereSource()
             sphere.SetCenter(ras)
             sphere.SetRadius(radius)
@@ -1852,8 +1852,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 markupsIndex = 0
                 
                 # Get point coordinate in RAS
-                point_Ras = [0, 0, 0, 1]
-                self.tracheaFiducials.GetNthFiducialWorldCoordinates(markupsIndex, point_Ras)
+                point_Ras = [0, 0, 0]
+                self.tracheaFiducials.GetNthControlPointPositionWorld(markupsIndex, point_Ras)
                 
                 # If volume node is transformed, apply that transform to get volume's RAS coordinates
                 transformRasToVolumeRas = vtk.vtkGeneralTransform()
