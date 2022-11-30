@@ -1524,9 +1524,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             opener = "open" if sys.platform == "darwin" else "xdg-open"
             subprocess.call([opener, filename])
 
-    def addSegmentToSegment(self, segmentation, modifierSegmentID, selectedSegmentID):
-        self.showStatusMessage('Adding ' + modifierSegmentID + ' to ' + selectedSegmentID + ' ...')
-        self.segmentEditorWidget.setSegmentationNode(segmentation)
+    def addSegmentToSegment(self, segmentationNode, modifierSegmentName, selectedSegmentName):
+        self.showStatusMessage('Adding ' + modifierSegmentName + ' to ' + selectedSegmentName + ' ...')
+        modifierSegmentID = segmentationNode.GetSegmentation().GetSegmentIdBySegmentName(modifierSegmentName)
+        selectedSegmentID = segmentationNode.GetSegmentation().GetSegmentIdBySegmentName(selectedSegmentName)
+        self.segmentEditorWidget.setSegmentationNode(segmentationNode)
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
         self.segmentEditorNode.SetSelectedSegmentID(selectedSegmentID)
@@ -2040,7 +2042,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         threeDView = threeDWidget.threeDView()
         threeDView.resetFocalPoint()
 
-        # Do not show lungs when in AI mode when have lobes
+        # Do not show lungs when in AI mode and when have lobes
         if self.useAI: 
             if self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right upper lobe"):
                 segmentation = self.outputSegmentation.GetSegmentation()
@@ -2049,7 +2051,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 leftLungID = segmentation.GetSegmentIdBySegmentName("left lung")
                 self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(leftLungID,False)
                 lungID = segmentation.GetSegmentIdBySegmentName("lung")
-                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungID,False)
+                if lungID:
+                    self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungID,False)
                 
         # Never show both lungs initially 
         segmentation = self.outputSegmentation.GetSegmentation()
