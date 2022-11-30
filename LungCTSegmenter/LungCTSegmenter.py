@@ -1429,8 +1429,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             segment.SetTag(segment.GetTerminologyEntryTagName(),
                 "Segmentation category and type - 3D Slicer General Anatomy list"
                 "~SCT^123037004^Anatomical Structure"
-                "~SCT^72481006^Middle lobe of lung"
-                "~SCT^24028007^Right"
+                "~SCT^72481006^Middle lobe of right lung"
+                "~^^"
                 "~Anatomic codes - DICOM master list"
                 "~^^"
                 "~^^")
