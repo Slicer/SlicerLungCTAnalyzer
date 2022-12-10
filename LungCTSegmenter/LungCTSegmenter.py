@@ -543,8 +543,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
       try:
           if self.ui.loadLastFiducialsCheckBox.checked:
-            if not self.loadFiducialsDataDir(): 
-                self.loadFiducialsTempDir() 
+            # always try loading markups from data directory first
+            fiducialsLoadSuccess = self.loadFiducialsDataDir()
+            if not fiducialsLoadSuccess: 
+                # otherwise try loading markups from temp directory 
+                fiducialsLoadSuccess = self.loadFiducialsTempDir() 
           self.setInstructions("Initializing segmentation...")
           self.isSufficientNumberOfPointsPlaced = False
           self.ui.updateIntensityButton.enabled = True
@@ -688,7 +691,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self._saveFiducials(directory)
 
   def loadFiducials(self,directory):
-
     RLoadSuccess = LLoadSuccess = TLoadSuccess = False 
     temporaryStorageNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialStorageNode")
     file_path = directory +"/R.fcsv"
@@ -738,11 +740,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     directory = slicer.app.temporaryPath + "/LungCTSegmenter/"
     if os.path.exists(directory): 
         fiducialsLoadSuccess = self.loadFiducials(directory)
-        print("Loading last markups from temp directory ok.")
+        if fiducialsLoadSuccess: 
+            logging.info("Succesfully loaded markups from temp directory.")
+        else:
+            logging.info("Failed to load markups from temp directory.")
 
-    if fiducialsLoadSuccess: 
-        # start segmentation process and allow user to move or add additional markups
-        self.onStartButton()
     return fiducialsLoadSuccess
 
   def loadFiducialsDataDir(self):
@@ -764,13 +766,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 logging.info("No markup directory in data path.")
             else: 
                 fiducialsLoadSuccess = self.loadFiducials(directory)
-                logging.info("Succesfully loaded markups from volume directory.")
+                if fiducialsLoadSuccess: 
+                    logging.info("Succesfully loaded markups from data directory.")
+                else:
+                    logging.info("Failed to load markups from data directory.")
         else:
-            logging.info("No storage node, probably node loaded from server.")
-            
-    if fiducialsLoadSuccess: 
-        # start segmentation process and allow user to move or add additional markups
-        self.onStartButton()
+            logging.info("No storage node.")
     return fiducialsLoadSuccess
 
 #
