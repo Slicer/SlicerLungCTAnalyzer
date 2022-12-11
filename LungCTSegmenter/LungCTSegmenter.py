@@ -1751,11 +1751,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # turn off visibility by default
                     tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
                     
-                self.importTotalSegmentatorSegment("right upper lobe","lung_upper_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
-                self.importTotalSegmentatorSegment("right middle lobe","lung_middle_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
-                self.importTotalSegmentatorSegment("right lower lobe","lung_lower_lobe_right",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor)
-                self.importTotalSegmentatorSegment("left upper lobe","lung_upper_lobe_left",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor)
-                self.importTotalSegmentatorSegment("left lower lobe","lung_lower_lobe_left",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor)
+                self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
+                self.importTotalSegmentatorSegment("right middle lobe","middle lobe right of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
+                self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor)
+                self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor)
+                self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor)
                 self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor)
                 self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor)
                 self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor)
