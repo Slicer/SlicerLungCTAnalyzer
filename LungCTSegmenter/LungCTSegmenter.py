@@ -1752,7 +1752,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
                     
                 self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
-                self.importTotalSegmentatorSegment("right middle lobe","middle lobe right of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
+                self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
                 self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor)
                 self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor)
                 self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor)
