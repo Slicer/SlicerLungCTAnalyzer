@@ -139,15 +139,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Input image and segmentation
         self.ui.inputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.inputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputSegmentationSelected)
-        self.ui.rightLungMaskSelector.connect("currentSegmentChanged(QString)", self.updateParameterNodeFromGUI)
-        self.ui.leftLungMaskSelector.connect("currentSegmentChanged(QString)", self.updateParameterNodeFromGUI)
         self.ui.toggleInputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleInputSegmentationVisibility2D)
         self.ui.toggleInputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleInputSegmentationVisibility3D)
 
         # Output options
         self.ui.generateStatisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        self.ui.detailedSubsegmentsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        self.ui.countBullaeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.lobeAnalysisCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.areaAnalysisCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.lungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -380,18 +378,15 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
             if segNode:
                 self.logic.inputSegmentation = segNode
-                self.logic.rightLungMaskSegmentID = segNode.GetSegmentation().GetSegmentIdBySegmentName("right lung")
-                self.logic.leftLungMaskSegmentID = segNode.GetSegmentation().GetSegmentIdBySegmentName("left lung")
+                segmentation = segNode.GetSegmentation()
+                self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+                self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
                 #initial masks always on
                 segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
                 segmentationDisplayNode.Visibility2DOn()
                 self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
                 segmentationDisplayNode.Visibility3DOff()
                 self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
-        else:
-            self.ui.rightLungMaskSelector.setCurrentSegmentID(self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"))
-            self.ui.leftLungMaskSelector.setCurrentSegmentID(self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung"))
-
 
     def setParameterNode(self, inputParameterNode):
         """
@@ -432,12 +427,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.inputVolumeSelector.setCurrentNode(self.logic.inputVolume)
         wasBlocked = self.ui.inputSegmentationSelector.blockSignals(True)
         self.ui.inputSegmentationSelector.setCurrentNode(self.logic.inputSegmentation)
-        self.ui.rightLungMaskSelector.setCurrentNode(self.logic.inputSegmentation)
-        self.ui.leftLungMaskSelector.setCurrentNode(self.logic.inputSegmentation)
         self.ui.inputSegmentationSelector.blockSignals(wasBlocked)
-        if self.logic.inputSegmentation:
-            self.ui.rightLungMaskSelector.setCurrentSegmentID(self.logic.rightLungMaskSegmentID)
-            self.ui.leftLungMaskSelector.setCurrentSegmentID(self.logic.leftLungMaskSegmentID)
 
         thresholds = self.logic.thresholds
         self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
@@ -461,8 +451,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
-        self.ui.detailedSubsegmentsCheckBox.checked = self.logic.detailedSubsegments
-        self.ui.countBullaeCheckBox.checked = self.logic.countBullae
+        self.ui.lobeAnalysisCheckBox.checked = self.logic.lobeAnalysis
+        self.ui.areaAnalysisCheckBox.checked = self.logic.areaAnalysis
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -505,8 +495,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
         self.logic.inputSegmentation = self.ui.inputSegmentationSelector.currentNode()
-        self.logic.rightLungMaskSegmentID = self.ui.rightLungMaskSelector.currentSegmentID()
-        self.logic.leftLungMaskSegmentID = self.ui.leftLungMaskSelector.currentSegmentID()
+        segmentation = self.logic.inputSegmentation.GetSegmentation()
+        self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+        self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
 
         thresholds = {}
         thresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
@@ -527,8 +518,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.checkForUpdates = self.ui.checkForUpdatesCheckBox.checked
         
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
-        self.logic.detailedSubsegments = self.ui.detailedSubsegmentsCheckBox.checked
-        self.logic.countBullae = self.ui.countBullaeCheckBox.checked
+        self.logic.lobeAnalysis = self.ui.lobeAnalysisCheckBox.checked
+        self.logic.areaAnalysis = self.ui.areaAnalysisCheckBox.checked
+        self.logic.countBullae = False
 
         self._parameterNode.EndModify(wasModified)
 
@@ -565,21 +557,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if segmentationNode == self.logic.inputSegmentation:
             # no change
             return
-
-        self.logic.inputSegmentation = segmentationNode
-        
-        wasBlockedRight = self.ui.rightLungMaskSelector.blockSignals(True)
-        wasBlockedLeft = self.ui.leftLungMaskSelector.blockSignals(True)
-
-        self.ui.rightLungMaskSelector.setCurrentNode(segmentationNode)
-        self.ui.leftLungMaskSelector.setCurrentNode(segmentationNode)
-
-        self.ui.rightLungMaskSelector.setCurrentSegmentID(segmentationNode.GetSegmentation().GetSegmentIdBySegmentName("right lung"))
-        self.ui.leftLungMaskSelector.setCurrentSegmentID(segmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left lung"))
-
-        self.ui.rightLungMaskSelector.blockSignals(wasBlockedRight)
-        self.ui.leftLungMaskSelector.blockSignals(wasBlockedLeft)
-
 
         self.updateParameterNodeFromGUI()
 
@@ -1277,7 +1254,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.resultsTable.GetTable().Modified()
 
 
-        if self.detailedSubsegments == True: 
+        if self.areaAnalysis == True: 
             segmentNameColumn = self.resultsTable.GetTable().GetColumnByName("Segment")
             for side in ['left', 'right']:
                 for subSegmentProperty in self.subSegmentProperties:
@@ -1583,7 +1560,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         emphysemaPercentArray.InsertNextValue(self.emphysemaLeftVolumePerc)
 
 
-        if self.detailedSubsegments: 
+        if self.areaAnalysis: 
 
             for subSegmentProperty in self.subSegmentProperties:
 
@@ -1781,7 +1758,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 for item in data: 
                     f.write(str(item))  
                     f.write(";")
-                if self.detailedSubsegments: 
+                if self.areaAnalysis: 
                     for subSegmentProperty in self.subSegmentProperties:
                         self.getResultsFor(f"{subSegmentProperty['name']}")
                         f.write(str(self.functionalResultTotalVolume + self.affectedResultTotalVolume))
@@ -1853,6 +1830,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     def volumeRenderingPropertyNode(self, node):
         self.getParameterNode().SetNodeReferenceID("VolumeRenderingPropertyNode", node.GetID() if node else None)
 
+
     @property
     def rightLungMaskSegmentID(self):
       return self.getParameterNode().GetParameter("RightLungMaskSegmentID")
@@ -1860,7 +1838,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     @rightLungMaskSegmentID.setter
     def rightLungMaskSegmentID(self, value):
         self.getParameterNode().SetParameter("RightLungMaskSegmentID", value)
-
+    
     @property
     def leftLungMaskSegmentID(self):
       return self.getParameterNode().GetParameter("LeftLungMaskSegmentID")
@@ -1878,12 +1856,20 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetParameter("GenerateStatistics", "true" if on else "false")
 
     @property
-    def detailedSubsegments(self):
-      return self.getParameterNode().GetParameter("DetailedSubsegments") == "true"
+    def lobeAnalysis(self):
+      return self.getParameterNode().GetParameter("LobeAnalysis") == "true"
 
-    @detailedSubsegments.setter
-    def detailedSubsegments(self, on):
-        self.getParameterNode().SetParameter("DetailedSubsegments", "true" if on else "false")
+    @lobeAnalysis.setter
+    def lobeAnalysis(self, on):
+        self.getParameterNode().SetParameter("LobeAnalysis", "true" if on else "false")
+
+    @property
+    def areaAnalysis(self):
+      return self.getParameterNode().GetParameter("AreaAnalysis") == "true"
+
+    @areaAnalysis.setter
+    def areaAnalysis(self, on):
+        self.getParameterNode().SetParameter("AreaAnalysis", "true" if on else "false")
 
     @property
     def countBullae(self):
@@ -2143,7 +2129,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         steps = 7
         if self.shrinkMasks:
             steps +=1
-        if self.detailedSubsegments: 
+        if self.areaAnalysis: 
             steps +=1
             
         self.progressStep = 100/steps
@@ -2276,10 +2262,10 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
         self.segmentEditorNode = None      
         
-        if self.detailedSubsegments == True: 
+        if self.areaAnalysis == True: 
 
             # split lung into subregions
-            self.segmentEditorNode.SetSelectedSegmentID("Splitting output segments into subregions ...")
+            self.showProgress("Splitting output segments into subregions ...")
    
             logging.info('Creating temporary segment editor ... ')
             self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
@@ -2307,8 +2293,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget = None
             slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
             self.segmentEditorNode = None
-
-        # infiltrationRightVentralId = slicer.mrmlScene.GetFirstNodeByName("Infiltration Right Ventral")
         
         # Cleanup
         self.showStatusMessage('Cleaning up ...')
@@ -2342,7 +2326,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.createCovidResultsTable()
 
         # turn visibility of subregions off if created
-        if self.detailedSubsegments == True: 
+        if self.areaAnalysis == True: 
             for segmentProperty in self.segmentProperties:
                 for side in ['left', 'right']:
                     for region in ['ventral', 'dorsal','upper','middle','lower']: 
