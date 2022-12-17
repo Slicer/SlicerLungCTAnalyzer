@@ -593,13 +593,13 @@
       <string>Statistics</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="0">
-       <widget class="QPushButton" name="showResultsTablePushButton">
+      <item row="3" column="0">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
         <property name="toolTip">
-         <string>Show the volumetry results table. </string>
+         <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
         </property>
         <property name="text">
-         <string>Show results table</string>
+         <string>Show/hide final segments in 2D</string>
         </property>
        </widget>
       </item>
@@ -622,24 +622,21 @@
         </property>
        </widget>
       </item>
+      <item row="10" column="1">
+       <widget class="QPushButton" name="openReportDirectoryButton">
+        <property name="text">
+         <string>Open report directory</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Report directory:</string>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="1">
-       <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
-        <property name="toolTip">
-         <string>Press this button to show or hide the segments in 3D view. </string>
-        </property>
-        <property name="text">
-         <string>Show/hide final segments in 3D</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="ctkDirectoryButton" name="selectReportDirectoryButton">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
        <widget class="QPushButton" name="showCovidResultsTableButton">
         <property name="toolTip">
          <string>Show the extended results table. </string>
@@ -649,31 +646,34 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Report directory:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QPushButton" name="openReportDirectoryButton">
-        <property name="text">
-         <string>Open report directory</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="0">
-       <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
+       <widget class="QPushButton" name="showResultsTablePushButton">
         <property name="toolTip">
-         <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
+         <string>Show the volumetry results table. </string>
         </property>
         <property name="text">
-         <string>Show/hide final segments in 2D</string>
+         <string>Show results table</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0" colspan="2">
+      <item row="3" column="1">
+       <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
+        <property name="toolTip">
+         <string>Press this button to show or hide the segments in 3D view. </string>
+        </property>
+        <property name="text">
+         <string>Show/hide final segments in 3D</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="ctkDirectoryButton" name="selectReportDirectoryButton">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
        <widget class="QPushButton" name="createPDFReportButton">
         <property name="toolTip">
          <string>Press this button to create a PDF report.  </string>
@@ -683,14 +683,14 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="1">
+       <widget class="QPushButton" name="saveResultsCSVButton">
+        <property name="text">
+         <string>Create CSV file</string>
+        </property>
+       </widget>
+      </item>
      </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="saveResultsCSVButton">
-     <property name="text">
-      <string>Create CSV file</string>
-     </property>
     </widget>
    </item>
    <item>
