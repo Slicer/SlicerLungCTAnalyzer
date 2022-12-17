@@ -88,7 +88,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.61
+        self.version = 2.62
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -2113,6 +2113,36 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             slicer.app.processEvents()
             self.showStatusMessage(progressText)
 
+    def subtractSegmentFromSegment(self, segmentationNode, modifierSegmentName, selectedSegmentName):
+        self.showStatusMessage('Subtracting ' + modifierSegmentName + ' from ' + selectedSegmentName + ' ...')
+        modifierSegmentID = segmentationNode.GetSegmentation().GetSegmentIdBySegmentName(modifierSegmentName)
+        selectedSegmentID = segmentationNode.GetSegmentation().GetSegmentIdBySegmentName(selectedSegmentName)
+
+        self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
+        self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+        self.segmentEditorWidget.setSegmentationNode(self.inputSegmentation)
+        self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
+
+        self.segmentEditorWidget.setSegmentationNode(segmentationNode)
+        self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+        self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+        self.segmentEditorNode.SetSelectedSegmentID(selectedSegmentID)
+        self.segmentEditorWidget.setActiveEffectByName("Logical operators")
+        effect = self.segmentEditorWidget.activeEffect()
+        effect.setParameter("BypassMasking","1")
+        effect.setParameter("ModifierSegmentID",modifierSegmentID)
+        effect.setParameter("Operation","SUBTRACT")
+        effect.self().onApply()
+
+        # Delete temporary segment editor
+        logging.info('Deleting temporary segment editor ... ')
+        self.segmentEditorWidget = None
+        slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
+        self.segmentEditorNode = None
+
+
     def process(self):
         """
         Run the processing algorithm.
@@ -2293,7 +2323,103 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget = None
             slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
             self.segmentEditorNode = None
+
+        if self.lobeAnalysis == True:
         
+            # copy lobe masks from input to output segmentation
+            self.showProgress("Copying lobe masks ...")
+            numberLobesFound = 0
+            for lobeName in ['right upper lobe', 'right middle lobe', 'right lower lobe', 'left upper lobe', 'left lower lobe' ]:
+                sourceSegID = self.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(lobeName)
+                sourceSeg = self.inputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                if sourceSeg:
+                    numberLobesFound += 1
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(lobeName, lobeName)
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+            
+            if numberLobesFound < 5:
+                raise ValueError("Lobe analysis was requested, but only " + str(numberLobesFound) + " lobes found (5 expected) in input segmentation. Abort.")
+                
+
+            lobeName = "upper lobe"
+            side = "right"
+            self.showProgress("Analyzing " + side + " " + lobeName + " ...")
+            for segmentProperty in self.segmentProperties:
+                segmentName = f"{segmentProperty['name']} {side}"
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + lobeName,segmentName,segmentProperty['color'])
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+                newSeg.SetName(segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right lower lobe", segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right middle lobe", segmentName + " " + lobeName)                
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+
+            lobeName = "middle lobe"
+            side = "right"
+            self.showProgress("Analyzing " + side + " " + lobeName + " ...")
+            for segmentProperty in self.segmentProperties:
+                segmentName = f"{segmentProperty['name']} {side}"
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + lobeName,segmentName,segmentProperty['color'])
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+                newSeg.SetName(segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right upper lobe", segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right lower lobe", segmentName + " " + lobeName)                
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+
+            lobeName = "lower lobe"
+            side = "right"
+            self.showProgress("Analyzing " + side + " " + lobeName + " ...")
+            for segmentProperty in self.segmentProperties:
+                segmentName = f"{segmentProperty['name']} {side}"
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + lobeName,segmentName,segmentProperty['color'])
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+                newSeg.SetName(segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right upper lobe", segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "right middle lobe", segmentName + " " + lobeName)                
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+
+            lobeName = "upper lobe"
+            side = "left"
+            self.showProgress("Analyzing " + side + " " + lobeName + " ...")
+            for segmentProperty in self.segmentProperties:
+                segmentName = f"{segmentProperty['name']} {side}"
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + lobeName,segmentName,segmentProperty['color'])
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+                newSeg.SetName(segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "left lower lobe", segmentName + " " + lobeName)                
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+
+            lobeName = "lower lobe"
+            side = "left"
+            self.showProgress("Analyzing " + side + " " + lobeName + " ...")
+            for segmentProperty in self.segmentProperties:
+                segmentName = f"{segmentProperty['name']} {side}"
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().GetSegment(sourceSegID)
+                newSegId = self.outputSegmentation.GetSegmentation().AddEmptySegment(segmentName + " " + lobeName,segmentName,segmentProperty['color'])
+                newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
+                newSeg.DeepCopy(sourceSeg)
+                newSeg.SetName(segmentName + " " + lobeName)                
+                self.subtractSegmentFromSegment(self.outputSegmentation, "left upper lobe", segmentName + " " + lobeName)                
+                self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(newSeg.GetName(),True)
+       
+            # cleanup lobe masks in output segmentation
+            for lobeName in ['right upper lobe', 'right middle lobe', 'right lower lobe', 'left upper lobe', 'left lower lobe' ]:
+                sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(lobeName)
+                sourceSeg = self.outputSegmentation.GetSegmentation().RemoveSegment(sourceSegID)
+                
         # Cleanup
         self.showStatusMessage('Cleaning up ...')
         self.maskLabelColorTable = self.maskLabelVolume.GetDisplayNode().GetColorNode()

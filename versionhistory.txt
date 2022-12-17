@@ -159,5 +159,7 @@ V 2.61
 make LCTA compatible with 3D SLicer 5.2.1
 add SlicerTotalSegmentator support
 
+V 2.62
+Lung CT Analyzer: add lobe analysis
  
  
