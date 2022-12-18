@@ -1739,10 +1739,16 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     raise RuntimeError("TotalSegmentator program logic not found - please install the TotalSegmentator extension.")
 
                 tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
+                tsOutputExtendedSegmentation = None
                 if self.fastOption: 
                     tslogic.process(self.inputVolume, tsOutputSegmentation, True, "total")
+                    if self.engineAI == "TotalSegmentator lung extended":
+                        slicer.util.warningDisplay("TotalSegmentator vessel analysis is not supported in --fast mode.\n")
                 else:
                     tslogic.process(self.inputVolume, tsOutputSegmentation, False, "total")
+                    if self.engineAI == "TotalSegmentator lung extended":
+                        tsOutputExtendedSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator extended')
+                        tslogic.process(self.inputVolume, tsOutputExtendedSegmentation, True, "lung_vessels")
 
                 if self.engineAI == "TotalSegmentator all" :  
                     # turn on visibility by default
@@ -1750,6 +1756,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 else:
                     # turn off visibility by default
                     tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
+                    if tsOutputExtendedSegmentation:
+                        tsOutputExtendedSegmentation.GetDisplayNode().SetVisibility(False)
                     
                 self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
                 self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
@@ -1760,8 +1768,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor)
                 self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor)
                 self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, tsOutputSegmentation, self.rightLungColor)
-                self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputSegmentation, self.vesselMaskColor)
-                self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor)
+                if tsOutputExtendedSegmentation:
+                    self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputExtendedSegmentation, self.vesselMaskColor)
+                    self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputExtendedSegmentation, self.tracheaColor)
                                 
                 logging.info("Segmentation done.")
                 

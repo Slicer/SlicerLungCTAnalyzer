@@ -593,7 +593,7 @@
       <string>Statistics</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QPushButton" name="toggleOutputSegmentationVisibility2DPushButton">
         <property name="toolTip">
          <string>Press this button to enable or disable the display of the newly created segments in 2D view. </string>
@@ -622,17 +622,17 @@
         </property>
        </widget>
       </item>
-      <item row="10" column="1">
+      <item row="11" column="1">
        <widget class="QPushButton" name="openReportDirectoryButton">
         <property name="text">
          <string>Open report directory</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="label_4">
+      <item row="5" column="1">
+       <widget class="QPushButton" name="saveResultsCSVButton">
         <property name="text">
-         <string>Report directory:</string>
+         <string>Create CSV file</string>
         </property>
        </widget>
       </item>
@@ -642,7 +642,7 @@
          <string>Show the extended results table. </string>
         </property>
         <property name="text">
-         <string>Show extended results table</string>
+         <string>Show pulmonary infiltrates results table</string>
         </property>
        </widget>
       </item>
@@ -656,7 +656,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="10" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Report directory:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
        <widget class="QPushButton" name="toggleOutputSegmentationVisibility3DPushButton">
         <property name="toolTip">
          <string>Press this button to show or hide the segments in 3D view. </string>
@@ -666,14 +673,14 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="1">
+      <item row="10" column="1">
        <widget class="ctkDirectoryButton" name="selectReportDirectoryButton">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QPushButton" name="createPDFReportButton">
         <property name="toolTip">
          <string>Press this button to create a PDF report.  </string>
@@ -683,10 +690,10 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QPushButton" name="saveResultsCSVButton">
+      <item row="3" column="1">
+       <widget class="QPushButton" name="showEmphysemaResultsTableButton">
         <property name="text">
-         <string>Create CSV file</string>
+         <string>Show pulmonary emphysema results table</string>
         </property>
        </widget>
       </item>
@@ -715,6 +722,13 @@
       <bool>false</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="checkForUpdatesCheckBox">
+        <property name="text">
+         <string>Check for Updates</string>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
@@ -887,56 +901,6 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_16">
-        <property name="text">
-         <string>COVID-19 results table:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="qMRMLNodeComboBox" name="outputCovidResultsTableSelector">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="toolTip">
-         <string>Table that stores COVID-19 analysis results</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLTableNode</string>
-         </stringlist>
-        </property>
-        <property name="showChildNodeTypes">
-         <bool>false</bool>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="editEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="noneDisplay">
-         <string>Create new table</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="checkForUpdatesCheckBox">
-        <property name="text">
-         <string>Check for Updates</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -1077,22 +1041,6 @@
     <hint type="destinationlabel">
      <x>316</x>
      <y>621</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>LungCTAnalyzer</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>outputCovidResultsTableSelector</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>327</x>
-     <y>687</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>293</x>
-     <y>689</y>
     </hint>
    </hints>
   </connection>

@@ -150,7 +150,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-        self.ui.outputCovidResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
         # Advanced options
         self.ui.checkForUpdatesCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -190,6 +189,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.showResultsTablePushButton.connect('clicked()', self.onShowResultsTable)
         self.ui.saveResultsCSVButton.connect('clicked()', self.onSaveResultsCSV)
         self.ui.showCovidResultsTableButton.connect('clicked()', self.onShowCovidResultsTable)
+        self.ui.showEmphysemaResultsTableButton.connect('clicked()', self.onShowEmphysemaResultsTable)
         self.ui.toggleOutputSegmentationVisibility2DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility2D)
         self.ui.toggleOutputSegmentationVisibility3DPushButton.connect('clicked()', self.onToggleOutputSegmentationVisibility3D)
         self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
@@ -445,7 +445,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.outputSegmentationSelector.setCurrentNode(self.logic.outputSegmentation)
         self.ui.outputResultsTableSelector.setCurrentNode(self.logic.resultsTable)
         self.ui.volumeRenderingPropertyNodeSelector.setCurrentNode(self.logic.volumeRenderingPropertyNode)
-        self.ui.outputCovidResultsTableSelector.setCurrentNode(self.logic.covidResultsTable)
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
 
 
@@ -467,6 +466,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.saveResultsCSVButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showResultsTablePushButton.enabled = (self.logic.resultsTable is not None)
         self.ui.showCovidResultsTableButton.enabled = (self.logic.covidResultsTable is not None)
+        self.ui.showEmphysemaResultsTableButton.enabled = (self.logic.emphysemaResultsTable is not None)
 
         self.ui.toggleInputSegmentationVisibility2DPushButton.enabled = (self.logic.inputSegmentation is not None)
         self.ui.toggleInputSegmentationVisibility3DPushButton.enabled = (self.logic.inputSegmentation is not None)
@@ -512,9 +512,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
         self.logic.resultsTable = self.ui.outputResultsTableSelector.currentNode()
         self.logic.volumeRenderingPropertyNode = self.ui.volumeRenderingPropertyNodeSelector.currentNode()
-        self.logic.covidResultsTable = self.ui.outputCovidResultsTableSelector.currentNode()
-        
-
+     
         self.checkForUpdates = self.ui.checkForUpdatesCheckBox.checked
         
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
@@ -919,6 +917,12 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.logic.showTable(self.logic.covidResultsTable)
         
+    def onShowEmphysemaResultsTable(self):
+        slicer.util.messageBox("Emphysema segmentations have not been clinically evaluated yet. Do not base treatment decisions on that values.",
+            dontShowAgainSettingsKey="LungCTAnalyzer/DontShowCovidResultsWarning",
+            icon=qt.QMessageBox.Warning)
+
+        self.logic.showTable(self.logic.emphysemaResultsTable)
 
     def toggleSegmentationVisibility2D(self, segmentationNode):
         segmentationDisplayNode = segmentationNode.GetDisplayNode()
@@ -1295,7 +1299,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             result = 0.
         return result
 
-    def getResultsFor(self, area):
+    def getResultsFor(self, area, explicit = False):
 
         self.rightResultLungVolume = self.getVol("Emphysema right " + area) + self.getVol("Inflated right " + area) + self.getVol("Infiltration right " + area) + self.getVol("Collapsed right " + area) 
         self.leftResultLungVolume = self.getVol("Emphysema left " + area) + self.getVol("Inflated left " + area) + self.getVol("Infiltration left " + area) + self.getVol("Collapsed left " + area) 
@@ -1563,7 +1567,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         if self.areaAnalysis: 
 
             for subSegmentProperty in self.subSegmentProperties:
-
                 self.getResultsFor(f"{subSegmentProperty['name']}")
                 labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
                 affectedFunctionalMlArray.InsertNextValue(self.totalResultLungVolume)
@@ -1577,7 +1580,39 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 collapsedPercentArray.InsertNextValue(self.collapsedResultTotalVolumePerc)
                 emphysemaMlArray.InsertNextValue(self.emphysemaResultTotalVolume)
                 emphysemaPercentArray.InsertNextValue(self.emphysemaResultTotalVolumePerc)
-                
+
+        if self.lobeAnalysis: 
+            for lobeName in ['upper lobe', 'middle lobe', 'lower lobe']:
+                    segmentName = lobeName
+                    self.getResultsFor(segmentName)
+                    labelArray.InsertNextValue("Right " + segmentName)
+                    affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+                    functionalMlArray.InsertNextValue(self.functionalResultRightVolume)
+                    functionalPercentArray.InsertNextValue(self.functionalResultRightVolumePerc)
+                    affectedMlArray.InsertNextValue(self.affectedResultRightVolume)
+                    affectedPercentArray.InsertNextValue(self.affectedResultRightVolumePerc)
+                    infiltratedMlArray.InsertNextValue(self.infiltratedResultTotalVolume)
+                    infiltratedPercentArray.InsertNextValue(self.infiltratedResultRightVolumePerc)
+                    collapsedMlArray.InsertNextValue(self.collapsedResultRightVolume)
+                    collapsedPercentArray.InsertNextValue(self.collapsedResultRightVolumePerc)
+                    emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
+                    emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
+            for lobeName in ['upper lobe', 'lower lobe']:
+                    segmentName = lobeName
+                    self.getResultsFor(segmentName)
+                    labelArray.InsertNextValue("Left " + segmentName)
+                    affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+                    functionalMlArray.InsertNextValue(self.functionalResultLeftVolume)
+                    functionalPercentArray.InsertNextValue(self.functionalResultLeftVolumePerc)
+                    affectedMlArray.InsertNextValue(self.affectedResultLeftVolume)
+                    affectedPercentArray.InsertNextValue(self.affectedResultLeftVolumePerc)
+                    infiltratedMlArray.InsertNextValue(self.infiltratedResultLeftVolume)
+                    infiltratedPercentArray.InsertNextValue(self.infiltratedResultLeftVolumePerc)
+                    collapsedMlArray.InsertNextValue(self.collapsedResultLeftVolume)
+                    collapsedPercentArray.InsertNextValue(self.collapsedResultLeftVolumePerc)
+                    emphysemaMlArray.InsertNextValue(self.emphysemaResultLeftVolume)
+                    emphysemaPercentArray.InsertNextValue(self.emphysemaResultLeftVolumePerc)
+                        
 
         self.covidResultsTable.AddColumn(labelArray)
         self.covidResultsTable.AddColumn(affectedFunctionalMlArray)
@@ -1592,11 +1627,96 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.covidResultsTable.AddColumn(affectedMlArray)
         self.covidResultsTable.AddColumn(affectedPercentArray)
 
+    def createEmphysemaResultsTable(self):
+    
+        if not self.emphysemaResultsTable:
+            self.emphysemaResultsTable = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', 'Lung CT analysis emphysema analysis')
+        else:
+            self.emphysemaResultsTable.RemoveAllColumns()
 
+        labelArray = vtk.vtkStringArray()
+        labelArray.SetName("Lung areas")
+
+        affectedFunctionalMlArray = vtk.vtkDoubleArray()
+        affectedFunctionalMlArray.SetName("Total volume (ml)")
+
+        emphysemaMlArray = vtk.vtkDoubleArray()
+        emphysemaMlArray.SetName("Emphysema (ml)")
+
+        emphysemaPercentArray = vtk.vtkDoubleArray()
+        emphysemaPercentArray.SetName("Emphysema (%)")
+
+
+        labelArray.InsertNextValue("Total lungs")
+        affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
+                
+        emphysemaMlArray.InsertNextValue(self.emphysemaTotalVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaTotalVolumePerc)
+
+        labelArray.InsertNextValue("Right lung")
+        affectedFunctionalMlArray.InsertNextValue(self.rightLungVolume)
+               
+        emphysemaMlArray.InsertNextValue(self.emphysemaRightVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaRightVolumePerc)
+
+        labelArray.InsertNextValue("Left lung")
+        affectedFunctionalMlArray.InsertNextValue(self.leftLungVolume)
+                
+        emphysemaMlArray.InsertNextValue(self.emphysemaLeftVolume)
+        emphysemaPercentArray.InsertNextValue(self.emphysemaLeftVolumePerc)
+
+
+        if self.areaAnalysis: 
+            for subSegmentProperty in self.subSegmentProperties:
+                self.getResultsFor(f"{subSegmentProperty['name']}")
+                labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
+                affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
+                emphysemaMlArray.InsertNextValue(self.emphysemaResultTotalVolume)
+                emphysemaPercentArray.InsertNextValue(self.emphysemaResultTotalVolumePerc)
+                
+        if self.lobeAnalysis: 
+            segmentName = f"upper lobe"
+            self.getResultsFor(segmentName)
+            labelArray.InsertNextValue("Right upper lobe")
+            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
+            emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
+            segmentName = f"middle lobe"
+            self.getResultsFor(segmentName)
+            labelArray.InsertNextValue("Right middle lobe")
+            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
+            emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
+            segmentName = f"lower lobe"
+            self.getResultsFor(segmentName)
+            labelArray.InsertNextValue("Right lower lobe")
+            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
+            emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
+            segmentName = f"upper lobe"
+            self.getResultsFor(segmentName)
+            labelArray.InsertNextValue("Left upper lobe")
+            affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+            emphysemaMlArray.InsertNextValue(self.emphysemaResultLeftVolume)
+            emphysemaPercentArray.InsertNextValue(self.emphysemaResultLeftVolumePerc)
+            segmentName = f"lower lobe"
+            self.getResultsFor(segmentName)
+            labelArray.InsertNextValue("Left lower lobe")
+            affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+            emphysemaMlArray.InsertNextValue(self.emphysemaResultLeftVolume)
+            emphysemaPercentArray.InsertNextValue(self.emphysemaResultLeftVolumePerc)
+
+
+        self.emphysemaResultsTable.AddColumn(labelArray)
+        self.emphysemaResultsTable.AddColumn(affectedFunctionalMlArray)
+        self.emphysemaResultsTable.AddColumn(emphysemaMlArray)
+        self.emphysemaResultsTable.AddColumn(emphysemaPercentArray)
+   
     def saveDataToFile(self, reportPathWithoutExtension,user_str1,user_str2,user_str3):
     
         slicer.util.saveNode(self.resultsTable, reportPathWithoutExtension + "_resultsTable.csv")
         slicer.util.saveNode(self.covidResultsTable, reportPathWithoutExtension + "_extendedResultsTable.csv")
+        slicer.util.saveNode(self.emphysemaResultsTable, reportPathWithoutExtension + "_emphysemaResultsTable.csv")
 
         
         
@@ -1821,6 +1941,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     @covidResultsTable.setter
     def covidResultsTable(self, node):
         self.getParameterNode().SetNodeReferenceID("CovidResultsTable", node.GetID() if node else None)
+
+    @property
+    def emphysemaResultsTable(self):
+        return self.getParameterNode().GetNodeReference("EmphysemaResultsTable")
+
+    @emphysemaResultsTable.setter
+    def emphysemaResultsTable(self, node):
+        self.getParameterNode().SetNodeReferenceID("EmphysemaResultsTable", node.GetID() if node else None)
 
     @property
     def volumeRenderingPropertyNode(self):
@@ -2450,6 +2578,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.calculateStatistics()
         self.showStatusMessage('Creating special table ...')
         self.createCovidResultsTable()
+        self.createEmphysemaResultsTable()
 
         # turn visibility of subregions off if created
         if self.areaAnalysis == True: 
