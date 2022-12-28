@@ -241,7 +241,7 @@
       <item row="3" column="1">
        <widget class="QComboBox" name="detailLevelComboBox">
         <property name="toolTip">
-         <string>This parameter equals MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for setting the parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
+         <string>This parameter corresponds to the MinimumDiameterMm of the airway's 'LocalThreshold-&gt;GrowCut' segmentation algorithm. 'low detail'=3; 'medium detail'=2; 'high detail'=1. The recommended initial setting is: 'low detail'.  A good estimate for this parameter is the width of the trachea. Use 'low detail' for a wide, 'medium detail' for a normal, and  'high detail' for a narrow trachea. Re-run the segmentation by pressing 'Apply' to see any effect. Airways missing or invsisible? Increase the detail level and/or modify the upper airway threshold (see 'Advanced'). Airway leaks: Decrease the detail level' and/or modify the upper airway threshold.</string>
         </property>
        </widget>
       </item>
@@ -254,6 +254,9 @@
       </item>
       <item row="4" column="0">
        <widget class="QCheckBox" name="createVesselsCheckBox">
+        <property name="toolTip">
+         <string>Perform a vessel segmentation and create an additional cropped CT volume with lungs, heart and mediastinum. </string>
+        </property>
         <property name="text">
          <string>Vessel segmentation</string>
         </property>
@@ -278,7 +281,7 @@
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Perform a 'Local Threshold' airway segmentation. 'SegmentEditorExtraEffects' need to be installed.   </string>
+         <string>Perform a 'Local Threshold' airway segmentation. </string>
         </property>
         <property name="text">
          <string>Airway segmentation</string>
@@ -288,10 +291,10 @@
       <item row="9" column="0">
        <widget class="QCheckBox" name="useAICheckBox">
         <property name="toolTip">
-         <string>If checked, additional lung and lobe segmentations will be AI-generated  by involving 'lungmask U-net' or 'TotalSegmentator'. </string>
+         <string>If checked, lung and/or lobe segmentations will be generated  by either  'lungmask U-Net', a running 'MONAILabel' server or 'TotalSegmentator'. </string>
         </property>
         <property name="text">
-         <string>use AI (experimental)</string>
+         <string>Use AI</string>
         </property>
        </widget>
       </item>
@@ -469,7 +472,7 @@
          <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
         </property>
         <property name="text">
-         <string>Create additional lung masks </string>
+         <string>Create regional lung masks </string>
         </property>
        </widget>
       </item>
@@ -484,16 +487,6 @@
        </widget>
       </item>
       <item row="8" column="0">
-       <widget class="QCheckBox" name="upgradeAICheckBox">
-        <property name="toolTip">
-         <string>Check this to upgrade AI from GitHub to latest versions. </string>
-        </property>
-        <property name="text">
-         <string>Upgrade AI</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
        <widget class="QCheckBox" name="fastCheckBox">
         <property name="toolTip">
          <string>Try this on systems with low GPU memory (&lt; 7GB)</string>

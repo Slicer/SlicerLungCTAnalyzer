@@ -72,7 +72,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.useAI = False
       self.fastOption = False
       self.shrinkMasks = False
-      self.upgradeAI = False
       self.detailedMasks = False
       self.isSufficientNumberOfPointsPlaced = False
       self.saveFiducials = False
@@ -145,7 +144,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.useAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.shrinkMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-      self.ui.upgradeAICheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -380,11 +378,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
       self.ui.detailedAirwaysCheckBox.checked = self.createDetailedAirways
       self.ui.createVesselsCheckBox.checked = self.createVessels
-      self.ui.useAICheckBox.checked = self.useAI
+      self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
       
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
-      self.ui.upgradeAICheckBox.checked = self.upgradeAI
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
       self.ui.detailLevelComboBox.currentText = self.logic.airwaySegmentationDetailLevel
@@ -453,15 +450,21 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.fastOption = self.ui.fastCheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
-      self.upgradeAI = self.ui.upgradeAICheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
       self.saveFiducials = self.ui.saveFiducialsCheckBox.checked 
       self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
       self.logic.engineAI = self.ui.engineAIComboBox.currentText
+      
       if self.logic.engineAI.find("TotalSegmentator") == 0:            
           self.ui.fastCheckBox.enabled = True
       else:
           self.ui.fastCheckBox.enabled = False
+      
+      if self.useAI:
+        self.ui.LungThresholdRangeWidget.enabled = False
+      else:
+        self.ui.LungThresholdRangeWidget.enabled = True
+
 
     
       self._parameterNode.EndModify(wasModified)
@@ -591,7 +594,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.saveFiducialsDataDir()
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
-          self.logic.upgradeAI = self.upgradeAI
           self.logic.detailedMasks = self.detailedMasks
           self.logic.applySegmentation()
           segmentationNode = self.logic.outputSegmentation
@@ -830,7 +832,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.fastOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
-        self.upgradeAI = False
         self.detailedMasks = False
         self.maskedVolume = None
         
@@ -1669,10 +1670,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     import lungmask
                 
                 from lungmask import mask
-                
-                if self.upgradeAI:
-                    slicer.util.pip_install("git+https://github.com/JoHof/lungmask --upgrade")
-                    
+                                   
                 inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 if self.engineAI == "lungmask R231":
                     self.showStatusMessage('Creating lungs with lungmask AI ...')
