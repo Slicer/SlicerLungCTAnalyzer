@@ -1329,18 +1329,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
 
-        if self.useAI:
-            self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
-            self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
-            self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
-            self.showStatusMessage(f'Smoothing {segmentName}')
-            self.segmentEditorNode.SetSelectedSegmentID(_segID)
-            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("SmoothingMethod","GAUSSIAN")
-            effect.setParameter("GaussianStandardDeviationMm","2")
-            effect.self().onApply()
-
         displayNode = outputSegmentation.GetDisplayNode()
         # Set overall opacity of the segmentation
         displayNode.SetOpacity3D(1.0)  
