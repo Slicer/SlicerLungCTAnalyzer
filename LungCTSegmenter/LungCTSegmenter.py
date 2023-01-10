@@ -585,6 +585,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
+          self.logic.create3D = True
           self.logic.fastOption = self.fastOption
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
@@ -829,6 +830,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.detailedAirways = False
         self.createVessels = False
         self.useAI = False
+        self.create3D = True
         self.fastOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
@@ -2031,13 +2033,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         
         self.outputSegmentation.GetDisplayNode().SetVisibility(True)
 
-        self.showStatusMessage(' Creating 3D ...')
-        self.outputSegmentation.CreateClosedSurfaceRepresentation()
-        # center 3D view
-        layoutManager = slicer.app.layoutManager()
-        threeDWidget = layoutManager.threeDWidget(0)
-        threeDView = threeDWidget.threeDView()
-        threeDView.resetFocalPoint()
+        if self.create3D: 
+            self.showStatusMessage(' Creating 3D ...')
+            self.outputSegmentation.CreateClosedSurfaceRepresentation()
+            # center 3D view
+            layoutManager = slicer.app.layoutManager()
+            threeDWidget = layoutManager.threeDWidget(0)
+            threeDView = threeDWidget.threeDView()
+            threeDView.resetFocalPoint()
 
         # Do not show lungs when in AI mode and when have lobes
         if self.useAI: 
