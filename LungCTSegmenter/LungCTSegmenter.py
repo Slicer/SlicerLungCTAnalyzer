@@ -586,6 +586,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
           self.logic.create3D = True
+          self.logic.smoothLungs = True
           self.logic.fastOption = self.fastOption
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
@@ -831,6 +832,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.createVessels = False
         self.useAI = False
         self.create3D = True
+        self.smoothLungs = True
         self.fastOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
@@ -1330,6 +1332,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def postprocessSegment(self, outputSegmentation, _nth, segmentName):
         outputSegmentation.GetSegmentation().GetNthSegment(_nth).SetName(segmentName)
         _segID = outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)
+        
+        if self.useAI and self.smoothLungs:
+            self.segmentEditorWidget.setSegmentationNode(outputSegmentation)
+            self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
+            self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
+            self.showStatusMessage(f'Smoothing {segmentName}')
+            self.segmentEditorNode.SetSelectedSegmentID(_segID)
+            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+            effect = self.segmentEditorWidget.activeEffect()
+            effect.setParameter("SmoothingMethod","GAUSSIAN")
+            effect.setParameter("GaussianStandardDeviationMm","2")
+            effect.self().onApply()
 
         displayNode = outputSegmentation.GetDisplayNode()
         # Set overall opacity of the segmentation
@@ -1462,7 +1476,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             displayNode = _outputsegmentation.GetDisplayNode()
             # Set overall opacity of the segmentation
             displayNode.SetOpacity3D(1.0)  
-            if _outputName.find("lobe") > -1 or _outputName.find("lung") > -1:
+            if (_outputName.find("lobe") > -1 or _outputName.find("lung") > -1) and self.smoothLungs:
                 # smooth segment
                 self.segmentEditorWidget.setSegmentationNode(_outputsegmentation)
                 self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
