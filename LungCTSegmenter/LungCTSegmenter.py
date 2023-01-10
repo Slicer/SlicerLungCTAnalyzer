@@ -833,6 +833,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.useAI = False
         self.create3D = True
         self.smoothLungs = True
+        self.removeAIOutputData = False
         self.fastOption = False
         self.engineAI = "None"
         self.shrinkMasks = False
@@ -1773,6 +1774,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 if tsOutputExtendedSegmentation:
                     self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputExtendedSegmentation, self.vesselMaskColor)
                     self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputExtendedSegmentation, self.tracheaColor)
+
+                if self.removeAIOutputData: 
+                    if tsOutputSegmentation: 
+                        slicer.mrmlScene.RemoveNode(tsOutputSegmentation)
+                    if tsOutputExtendedSegmentation: 
+                        slicer.mrmlScene.RemoveNode(tsOutputExtendedSegmentation)
                                 
                 logging.info("Segmentation done.")
                 
