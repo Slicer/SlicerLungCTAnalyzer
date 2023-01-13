@@ -1768,61 +1768,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         'left collapsed %',
         'left affected ml',
         'left affected %',
-        'dorsal func+aff ml',
-        'dorsal inflated ml',
-        'dorsal inflated %',
-        'dorsal emphysema ml',
-        'dorsal emphysema %',
-        'dorsal infiltrated ml',
-        'dorsal infiltrated %',
-        'dorsal collapsed ml',
-        'dorsal collapsed %',
-        'dorsal affected ml',
-        'dorsal affected %',
-        'ventral func+aff ml',
-        'ventral inflated ml',
-        'ventral inflated %',
-        'ventral emphysema ml',
-        'ventral emphysema %',
-        'ventral infiltrated ml',
-        'ventral infiltrated %',
-        'ventral collapsed ml',
-        'ventral collapsed %',
-        'ventral affected ml',
-        'ventral affected %',
-        'upper func+aff ml',
-        'upper inflated ml',
-        'upper inflated %',
-        'upper emphysema ml',
-        'upper emphysema %',
-        'upper infiltrated ml',
-        'upper infiltrated %',
-        'upper collapsed ml',
-        'upper collapsed %',
-        'upper affected ml',
-        'upper affected %',
-        'middle func+aff ml',
-        'middle inflated ml',
-        'middle inflated %',
-        'middle emphysema ml',
-        'middle emphysema %',
-        'middle infiltrated ml',
-        'middle infiltrated %',
-        'middle collapsed ml',
-        'middle collapsed %',
-        'middle affected ml',
-        'middle affected %',
-        'lower func+aff ml',
-        'lower inflated ml',
-        'lower inflated %',
-        'lower emphysema ml',
-        'lower emphysema %',
-        'lower infiltrated ml',
-        'lower infiltrated %',
-        'lower collapsed ml',
-        'lower collapsed %',
-        'lower affected ml',
-        'lower affected %',
         ]
 
         data = [
@@ -1878,6 +1823,63 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 for item in data: 
                     f.write(str(item))  
                     f.write(";")
+                f.write("\n")
+        except IOError:
+            print("I/O error")
+        
+        
+        
+    def saveExtendedRegionDataToFile(self, filename,user_str1,user_str2,user_str3):
+
+        import os.path
+
+        file_exists = os.path.isfile(filename)
+
+        self.calculateStatistics()
+
+        import csv
+
+        header = [
+        'user1',
+        'user2',
+        'user3']
+
+        data = [
+        user_str1,
+        user_str2,
+        user_str3]
+
+        
+        regions = ["upper", "middle", "lower", "ventral", "dorsal"]
+        areas = [
+            'func+aff ml',
+            'inflated ml',
+            'inflated %',
+            'emphysema ml',
+            'emphysema %',
+            'infiltrated ml',
+            'infiltrated %',
+            'collapsed ml',
+            'collapsed %',
+            'affected ml',
+            'affected %']
+            
+        for region in regions: 
+            for area in areas: 
+                header.append(region + " " + area)
+
+        try:
+            with open(filename, 'a') as f:
+                if not file_exists:
+                    for item in header: 
+                        f.write('"')
+                        f.write(item)  # file doesn't exist yet, write a header
+                        f.write('"')
+                        f.write(";")
+                    f.write("\n")
+                for item in data: 
+                    f.write(str(item))  
+                    f.write(";")
                 if self.areaAnalysis: 
                     for subSegmentProperty in self.subSegmentProperties:
                         self.getResultsFor(f"{subSegmentProperty['name']}")
@@ -1907,7 +1909,112 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         except IOError:
             print("I/O error")
         
+    def saveExtendedLobeDataToFile(self, filename,user_str1,user_str2,user_str3):
+
+        import os.path
+
+        file_exists = os.path.isfile(filename)
+
+        self.calculateStatistics()
+
+        import csv
+
+        header = [
+        'user1',
+        'user2',
+        'user3']
+
+        data = [
+        user_str1,
+        user_str2,
+        user_str3]
+
         
+        lobes = ["right upper", "right middle", "right lower", "left upper", "left lower"]
+        areas = [
+            'func+aff ml',
+            'inflated ml',
+            'inflated %',
+            'emphysema ml',
+            'emphysema %',
+            'infiltrated ml',
+            'infiltrated %',
+            'collapsed ml',
+            'collapsed %',
+            'affected ml',
+            'affected %']
+            
+        for lobe in lobes: 
+            for area in areas: 
+                header.append(lobe + " " + area)
+
+
+        try:
+            with open(filename, 'a') as f:
+                if not file_exists:
+                    for item in header: 
+                        f.write('"')
+                        f.write(item)  # file doesn't exist yet, write a header
+                        f.write('"')
+                        f.write(";")
+                    f.write("\n")
+                for item in data: 
+                    f.write(str(item))  
+                    f.write(";")
+                if self.lobeAnalysis: 
+                    lobenames = ["upper lobe", "middle lobe", "lower lobe"]
+                    for lobename in lobenames:
+                        self.getResultsFor(lobename)
+                        f.write(str(self.functionalResultRightVolume + self.affectedResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultRightVolumePerc))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultRightVolumePerc))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultRightVolumePerc))
+                        f.write(";")
+                        f.write(str(self.collapsedResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.collapsedResultRightVolumePerc))
+                        f.write(";")
+                        f.write(str(self.affectedResultRightVolume))
+                        f.write(";")
+                        f.write(str(self.affectedResultRightVolumePerc))
+                        f.write(";")
+                    lobenames = ["upper lobe", "lower lobe"]
+                    for lobename in lobenames:
+                        self.getResultsFor(lobename)
+                        f.write(str(self.functionalResultLeftVolume + self.affectedResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.functionalResultLeftVolumePerc))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.emphysemaResultLeftVolumePerc))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.infiltratedResultLeftVolumePerc))
+                        f.write(";")
+                        f.write(str(self.collapsedResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.collapsedResultLeftVolumePerc))
+                        f.write(";")
+                        f.write(str(self.affectedResultLeftVolume))
+                        f.write(";")
+                        f.write(str(self.affectedResultLeftVolumePerc))
+                        f.write(";")
+                f.write("\n")
+        except IOError:
+            print("I/O error")
         
 
     @property

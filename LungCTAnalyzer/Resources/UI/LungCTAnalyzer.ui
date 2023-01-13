@@ -115,14 +115,14 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Area analysis: </string>
+         <string>Region analysis: </string>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QCheckBox" name="areaAnalysisCheckBox">
         <property name="toolTip">
-         <string>Create and analyze additional lung areas: Ventral, dorsal, upper, middle, lower. </string>
+         <string>Create and analyze additional lung regions: Anterior, posterior, upper, middle, lower. </string>
         </property>
         <property name="text">
          <string/>
