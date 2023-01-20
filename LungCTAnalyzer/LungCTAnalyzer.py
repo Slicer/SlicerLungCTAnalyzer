@@ -1079,6 +1079,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.outputStats = None
         self.segmentEditorNode = None
         self.segmentEditorWidget = None
+        # make progress bar optional for batch operations where not needed
+        self.showProgressBar = True
         
     def showStatusMessage(self, msg, timeoutMsec=500):
         slicer.util.showStatusMessage(msg, timeoutMsec)
@@ -2340,13 +2342,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
 
     def showProgress(self,progressText):
+        if self.showProgressBar:
             # Update progress value
             self.progressbar.setValue(self.progress)
             self.progress += self.progressStep
             # Update label text
             self.progressbar.labelText = progressText
-            slicer.app.processEvents()
-            self.showStatusMessage(progressText)
+        slicer.app.processEvents()
+        self.showStatusMessage(progressText)
 
     def subtractSegmentFromSegment(self, segmentationNode, modifierSegmentName, selectedSegmentName):
         self.showStatusMessage('Subtracting ' + modifierSegmentName + ' from ' + selectedSegmentName + ' ...')
@@ -2386,9 +2389,10 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         logging.info('Processing started.')
         import time
         startTime = time.time()
-        # Prevent progress dialog from automatically closing
-        self.progressbar = slicer.util.createProgressDialog(parent=slicer.util.mainWindow(), windowTitle='Processing...', autoClose=False)
-        self.progressbar.setCancelButton(None)
+        if self.showProgressBar:
+            # Prevent progress dialog from automatically closing
+            self.progressbar = slicer.util.createProgressDialog(parent=slicer.util.mainWindow(), windowTitle='Processing...', autoClose=False)
+            self.progressbar.setCancelButton(None)
 
         self.progress =0
         steps = 7
@@ -2702,7 +2706,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.showProgress("Processing complete.")
         time.sleep(3)
         slicer.app.processEvents()
-        self.progressbar.close()
+        if self.showProgressBar: 
+            self.progressbar.close()
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
