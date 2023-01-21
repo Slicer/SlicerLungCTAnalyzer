@@ -2096,6 +2096,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         stopTime = time.time()
         logging.info('ApplySegmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
+        print('Segmentation completed in {0:.2f} seconds'.format(stopTime-startTime))
 
 
 #

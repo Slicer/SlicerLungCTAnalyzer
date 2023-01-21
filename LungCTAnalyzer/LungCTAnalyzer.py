@@ -195,6 +195,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
         self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)        
 
+        self.ui.applyButton.enabled = True
+
         self.reportFolder = ""
 
         import configparser
@@ -277,6 +279,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.toggleMaskedVolumeDisplay3DPushButton.text = "Show preview in 3D"
         
         self.show3DWarning = True
+
         # show version on GUI 
         self.versionText = "Lung CT Analyzer V %.2f" % self.version       
         self.ui.versionLabel.text = self.versionText
@@ -336,6 +339,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         # Make sure parameter node exists and observed
         self.initializeParameterNode()
+        self.ui.applyButton.enabled = True
+
 
     def exit(self):
         """
@@ -2704,12 +2709,12 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         # Update progress value
         self.progress = 99
         self.showProgress("Processing complete.")
-        time.sleep(3)
         slicer.app.processEvents()
         if self.showProgressBar: 
             self.progressbar.close()
         stopTime = time.time()
         logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
+        print('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
     def createMaskedVolume(self, keepMaskLabelVolume=False):
         self.showStatusMessage('Creating masked volume ...')
