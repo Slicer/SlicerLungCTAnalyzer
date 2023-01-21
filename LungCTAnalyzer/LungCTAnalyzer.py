@@ -195,8 +195,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.toggleMaskedVolumeDisplay2DPushButton.connect('clicked()', self.onMaskedVolumeDisplay2D)
         self.ui.toggleMaskedVolumeDisplay3DPushButton.connect('clicked()', self.onMaskedVolumeDisplay3D)        
 
-        self.ui.applyButton.enabled = True
-
         self.reportFolder = ""
 
         import configparser
@@ -339,7 +337,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         # Make sure parameter node exists and observed
         self.initializeParameterNode()
-        self.ui.applyButton.enabled = True
 
 
     def exit(self):
@@ -500,9 +497,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
         self.logic.inputSegmentation = self.ui.inputSegmentationSelector.currentNode()
-        segmentation = self.logic.inputSegmentation.GetSegmentation()
-        self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
-        self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+        if self.logic.inputSegmentation:
+            segmentation = self.logic.inputSegmentation.GetSegmentation()
+            self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+            self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
 
         thresholds = {}
         thresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
