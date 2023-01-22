@@ -1479,8 +1479,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         labelArray = vtk.vtkStringArray()
         labelArray.SetName("Lung area")
 
-        affectedFunctionalMlArray = vtk.vtkDoubleArray()
-        affectedFunctionalMlArray.SetName("Inflated + Affected (ml)")
+        totalMlArray = vtk.vtkDoubleArray()
+        totalMlArray.SetName("Total (ml)")
 
         functionalMlArray = vtk.vtkDoubleArray()
         functionalMlArray.SetName("Inflated (ml)")
@@ -1515,7 +1515,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
 
         labelArray.InsertNextValue("Total lungs")
-        affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
+        totalMlArray.InsertNextValue(self.totalLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalTotalVolume)
         functionalPercentArray.InsertNextValue(self.functionalTotalVolumePerc)
@@ -1533,7 +1533,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         emphysemaPercentArray.InsertNextValue(self.emphysemaTotalVolumePerc)
 
         labelArray.InsertNextValue("Right lung")
-        affectedFunctionalMlArray.InsertNextValue(self.rightLungVolume)
+        totalMlArray.InsertNextValue(self.rightLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalRightVolume)
         functionalPercentArray.InsertNextValue(self.functionalRightVolumePerc)
@@ -1551,7 +1551,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         emphysemaPercentArray.InsertNextValue(self.emphysemaRightVolumePerc)
 
         labelArray.InsertNextValue("Left lung")
-        affectedFunctionalMlArray.InsertNextValue(self.leftLungVolume)
+        totalMlArray.InsertNextValue(self.leftLungVolume)
         
         functionalMlArray.InsertNextValue(self.functionalLeftVolume)
         functionalPercentArray.InsertNextValue(self.functionalLeftVolumePerc)
@@ -1574,7 +1574,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             for subSegmentProperty in self.subSegmentProperties:
                 self.getResultsFor(f"{subSegmentProperty['name']}")
                 labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
-                affectedFunctionalMlArray.InsertNextValue(self.totalResultLungVolume)
+                totalMlArray.InsertNextValue(self.totalResultLungVolume)
                 functionalMlArray.InsertNextValue(self.functionalResultTotalVolume)
                 functionalPercentArray.InsertNextValue(self.functionalResultTotalVolumePerc)
                 affectedMlArray.InsertNextValue(self.affectedResultTotalVolume)
@@ -1591,7 +1591,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     segmentName = lobeName
                     self.getResultsFor(segmentName)
                     labelArray.InsertNextValue("Right " + segmentName)
-                    affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+                    totalMlArray.InsertNextValue(self.rightResultLungVolume)
                     functionalMlArray.InsertNextValue(self.functionalResultRightVolume)
                     functionalPercentArray.InsertNextValue(self.functionalResultRightVolumePerc)
                     affectedMlArray.InsertNextValue(self.affectedResultRightVolume)
@@ -1606,7 +1606,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     segmentName = lobeName
                     self.getResultsFor(segmentName)
                     labelArray.InsertNextValue("Left " + segmentName)
-                    affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+                    totalMlArray.InsertNextValue(self.leftResultLungVolume)
                     functionalMlArray.InsertNextValue(self.functionalResultLeftVolume)
                     functionalPercentArray.InsertNextValue(self.functionalResultLeftVolumePerc)
                     affectedMlArray.InsertNextValue(self.affectedResultLeftVolume)
@@ -1620,7 +1620,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                         
 
         self.covidResultsTable.AddColumn(labelArray)
-        self.covidResultsTable.AddColumn(affectedFunctionalMlArray)
+        self.covidResultsTable.AddColumn(totalMlArray)
         self.covidResultsTable.AddColumn(functionalMlArray)
         self.covidResultsTable.AddColumn(functionalPercentArray)
         self.covidResultsTable.AddColumn(emphysemaMlArray)
@@ -1642,8 +1642,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         labelArray = vtk.vtkStringArray()
         labelArray.SetName("Lung areas")
 
-        affectedFunctionalMlArray = vtk.vtkDoubleArray()
-        affectedFunctionalMlArray.SetName("Total volume (ml)")
+        totalMlArray = vtk.vtkDoubleArray()
+        totalMlArray.SetName("Total volume (ml)")
 
         emphysemaMlArray = vtk.vtkDoubleArray()
         emphysemaMlArray.SetName("Emphysema (ml)")
@@ -1653,19 +1653,19 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
 
         labelArray.InsertNextValue("Total lungs")
-        affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
+        totalMlArray.InsertNextValue(self.totalLungVolume)
                 
         emphysemaMlArray.InsertNextValue(self.emphysemaTotalVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaTotalVolumePerc)
 
         labelArray.InsertNextValue("Right lung")
-        affectedFunctionalMlArray.InsertNextValue(self.rightLungVolume)
+        totalMlArray.InsertNextValue(self.rightLungVolume)
                
         emphysemaMlArray.InsertNextValue(self.emphysemaRightVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaRightVolumePerc)
 
         labelArray.InsertNextValue("Left lung")
-        affectedFunctionalMlArray.InsertNextValue(self.leftLungVolume)
+        totalMlArray.InsertNextValue(self.leftLungVolume)
                 
         emphysemaMlArray.InsertNextValue(self.emphysemaLeftVolume)
         emphysemaPercentArray.InsertNextValue(self.emphysemaLeftVolumePerc)
@@ -1675,7 +1675,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             for subSegmentProperty in self.subSegmentProperties:
                 self.getResultsFor(f"{subSegmentProperty['name']}")
                 labelArray.InsertNextValue(f"Lungs {subSegmentProperty['name']}")
-                affectedFunctionalMlArray.InsertNextValue(self.totalLungVolume)
+                totalMlArray.InsertNextValue(self.totalLungVolume)
                 emphysemaMlArray.InsertNextValue(self.emphysemaResultTotalVolume)
                 emphysemaPercentArray.InsertNextValue(self.emphysemaResultTotalVolumePerc)
                 
@@ -1683,37 +1683,37 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             segmentName = f"upper lobe"
             self.getResultsFor(segmentName)
             labelArray.InsertNextValue("Right upper lobe")
-            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            totalMlArray.InsertNextValue(self.rightResultLungVolume)
             emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
             emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
             segmentName = f"middle lobe"
             self.getResultsFor(segmentName)
             labelArray.InsertNextValue("Right middle lobe")
-            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            totalMlArray.InsertNextValue(self.rightResultLungVolume)
             emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
             emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
             segmentName = f"lower lobe"
             self.getResultsFor(segmentName)
             labelArray.InsertNextValue("Right lower lobe")
-            affectedFunctionalMlArray.InsertNextValue(self.rightResultLungVolume)
+            totalMlArray.InsertNextValue(self.rightResultLungVolume)
             emphysemaMlArray.InsertNextValue(self.emphysemaResultRightVolume)
             emphysemaPercentArray.InsertNextValue(self.emphysemaResultRightVolumePerc)
             segmentName = f"upper lobe"
             self.getResultsFor(segmentName)
             labelArray.InsertNextValue("Left upper lobe")
-            affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+            totalMlArray.InsertNextValue(self.leftResultLungVolume)
             emphysemaMlArray.InsertNextValue(self.emphysemaResultLeftVolume)
             emphysemaPercentArray.InsertNextValue(self.emphysemaResultLeftVolumePerc)
             segmentName = f"lower lobe"
             self.getResultsFor(segmentName)
             labelArray.InsertNextValue("Left lower lobe")
-            affectedFunctionalMlArray.InsertNextValue(self.leftResultLungVolume)
+            totalMlArray.InsertNextValue(self.leftResultLungVolume)
             emphysemaMlArray.InsertNextValue(self.emphysemaResultLeftVolume)
             emphysemaPercentArray.InsertNextValue(self.emphysemaResultLeftVolumePerc)
 
 
         self.emphysemaResultsTable.AddColumn(labelArray)
-        self.emphysemaResultsTable.AddColumn(affectedFunctionalMlArray)
+        self.emphysemaResultsTable.AddColumn(totalMlArray)
         self.emphysemaResultsTable.AddColumn(emphysemaMlArray)
         self.emphysemaResultsTable.AddColumn(emphysemaPercentArray)
    
@@ -1740,7 +1740,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         'user1',
         'user2',
         'user3',
-        'func+aff ml',
+        'total ml',
         'inflated ml',
         'inflated %',
         'emphysema ml',
@@ -1780,7 +1780,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         user_str1,
         user_str2,
         user_str3,
-        self.functionalTotalVolume+self.affectedTotalVolume,
+        self.totalLungVolume,
         self.functionalTotalVolume,
         self.functionalTotalVolumePerc,
         self.emphysemaTotalVolume,
@@ -1791,7 +1791,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.collapsedTotalVolumePerc,
         self.affectedTotalVolume,
         self.affectedTotalVolumePerc,
-        self.functionalRightVolume+self.affectedRightVolume,
+        self.rightLungVolume,
         self.functionalRightVolume,
         self.functionalRightVolumePerc,
         self.emphysemaRightVolume,
@@ -1802,7 +1802,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.collapsedRightVolumePerc,
         self.affectedRightVolume,
         self.affectedRightVolumePerc,
-        self.functionalLeftVolume+self.affectedLeftVolume,
+        self.leftLungVolume,
         self.functionalLeftVolume,
         self.functionalLeftVolumePerc,
         self.emphysemaLeftVolume,
@@ -1857,7 +1857,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         
         regions = ["upper", "middle", "lower", "ventral", "dorsal"]
         areas = [
-            'func+aff ml',
+            'total ml',
             'inflated ml',
             'inflated %',
             'emphysema ml',
@@ -1888,7 +1888,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 if self.areaAnalysis: 
                     for subSegmentProperty in self.subSegmentProperties:
                         self.getResultsFor(f"{subSegmentProperty['name']}")
-                        f.write(str(self.functionalResultTotalVolume + self.affectedResultTotalVolume))
+                        f.write(str(self.totalResultLungVolume))
                         f.write(";")
                         f.write(str(self.functionalResultTotalVolume))
                         f.write(";")
@@ -1937,7 +1937,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         
         lobes = ["right upper", "right middle", "right lower", "left upper", "left lower"]
         areas = [
-            'func+aff ml',
+            'total ml',
             'inflated ml',
             'inflated %',
             'emphysema ml',
@@ -1970,7 +1970,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     lobenames = ["upper lobe", "middle lobe", "lower lobe"]
                     for lobename in lobenames:
                         self.getResultsFor(lobename)
-                        f.write(str(self.functionalResultRightVolume + self.affectedResultRightVolume))
+                        f.write(str(self.rightResultLungVolume))
                         f.write(";")
                         f.write(str(self.functionalResultRightVolume))
                         f.write(";")
@@ -1995,7 +1995,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     lobenames = ["upper lobe", "lower lobe"]
                     for lobename in lobenames:
                         self.getResultsFor(lobename)
-                        f.write(str(self.functionalResultLeftVolume + self.affectedResultLeftVolume))
+                        f.write(str(self.leftResultLungVolume))
                         f.write(";")
                         f.write(str(self.functionalResultLeftVolume))
                         f.write(";")
@@ -2118,14 +2118,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
     @countBullae.setter
     def countBullae(self, on):
         self.getParameterNode().SetParameter("CountBullae", "true" if on else "false")
-
-    @property
-    def shrinkMasks(self):
-      return self.getParameterNode().GetParameter("ShrinkMasks") == "true"
-
-    @shrinkMasks.setter
-    def shrinkMasks(self, on):
-        self.getParameterNode().SetParameter("ShrinkMasks", "true" if on else "false")
 
     @property
     def lungMaskedVolume(self):
@@ -2399,8 +2391,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         self.progress =0
         steps = 7
-        if self.shrinkMasks:
-            steps +=1
         if self.areaAnalysis: 
             steps +=1
             
@@ -2439,35 +2429,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         # create masked volume
         self.maskLabelVolume = self.createMaskedVolume(keepMaskLabelVolume=True)
 
-        if self.shrinkMasks: 
-            self.showProgress("Shrinking lung masks ...")
-            # shrinking masks by 1 mm
-            logging.info('Creating temporary segment editor ... ')
-            self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
-            self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-            self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-            self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
-            self.segmentEditorWidget.setSegmentationNode(self.inputSegmentation)
-            self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
-
-            self.showStatusMessage('Shrinking right lung mask ...')
-            self.segmentEditorNode.SetSelectedSegmentID(self.rightLungMaskSegmentID)
-            self.segmentEditorWidget.setActiveEffectByName("Margin")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("MarginSizeMm","-1")
-            effect.self().onApply()
-            self.showStatusMessage('Shrinking left lung mask ...')
-            self.segmentEditorNode.SetSelectedSegmentID(self.leftLungMaskSegmentID)
-            self.segmentEditorWidget.setActiveEffectByName("Margin")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("MarginSizeMm","-1")
-            effect.self().onApply()
-            # Delete temporary segment editor
-            logging.info('Deleting temporary segment editor ... ')
-            self.segmentEditorWidget = None
-            slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
-            self.segmentEditorNode = None
-
 
         # Compute centroids
 
@@ -2503,10 +2464,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.createThresholdedSegments(self.maskLabelVolume)
 
 
-        #for segmentProperty in self.segmentProperties:
-        #    for side in ['left', 'right']:
-        #        for region in ['ventral', 'dorsal','upper','middle','lower']: 
-        #                segmentName = f"{segmentProperty['name']} {side} {region}"
         self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
