@@ -839,6 +839,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.shrinkMasks = False
         self.detailedMasks = False
         self.maskedVolume = None
+        self.updateAI = False
+
         
     def __del__(self):
         self.removeTemporaryObjects()
@@ -1664,14 +1666,22 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
             # Trigger display update
             self.outputSegmentation.Modified()
-            self.outputSegmentation.EndModify(wasModified)
+            self.outputSegmentation.EndModify(wasModified)           
             if self.engineAI.find("lungmask") == 0:
+                if self.updateAI:
+                    if not slicer.util.confirmYesNoDisplay("Updating lunkmask AI will restart 3D Slicer. Are you sure?"):
+                        self.showStatusMessage('Uninstalling lungmask AI ...')
+                        slicer.util.pip_uninstall("lungmask")
+                        # Slicer must be restarted for this to take effect.
+                        slicer.util.restart()
                 # Import the required libraries
                 self.showStatusMessage(' Importing lungmask AI ...')
                 try:
                     import lungmask
                 except ModuleNotFoundError:
-                    slicer.util.pip_install("git+https://github.com/JoHof/lungmask")
+                    self.showStatusMessage(' Installing lungmask AI ...')
+                    lungmaskPackage = "https://github.com/JoHof/lungmask/archive/master.zip"
+                    slicer.util.pip_install(lungmaskPackage)
                     import lungmask
                 
                 from lungmask import mask
