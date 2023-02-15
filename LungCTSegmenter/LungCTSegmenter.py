@@ -73,6 +73,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.fastOption = False
       self.shrinkMasks = False
       self.detailedMasks = False
+      self.smoothLungs = True
       self.isSufficientNumberOfPointsPlaced = False
       self.saveFiducials = False
       self.inputVolume = None
@@ -147,6 +148,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -170,6 +172,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
 
       self.ui.fastCheckBox.enabled = False
+      self.ui.smoothLungsCheckBox.enabled = True
 
 
   def cleanup(self):
@@ -380,6 +383,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
+      self.ui.smoothLungsCheckBox.checked = self.smoothLungs
+      
       
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
@@ -448,6 +453,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
+      self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
@@ -462,8 +468,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       if self.useAI:
         self.ui.LungThresholdRangeWidget.enabled = False
+        self.ui.smoothLungsCheckBox.enabled = True
       else:
         self.ui.LungThresholdRangeWidget.enabled = True
+        self.ui.smoothLungsCheckBox.enabled = False
 
 
     
@@ -588,6 +596,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.create3D = True
           self.logic.smoothLungs = True
           self.logic.fastOption = self.fastOption
+          self.logic.smoothLungs = self.smoothLungs
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
           # always save a copy of the current markups in Slicer temp dir for later use
