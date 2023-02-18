@@ -79,9 +79,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.inputVolume = None
       self.VolumeRenderingShift = 0
       self.volumeRenderingDisplayNode = None
-
-
-
+  
+  class checkboxDetails: 
+      def __init__(self, checkbox_name, uiID):
+        self.name = checkbox_name
+        self.id = uiID
+  
   def setup(self):
       """
       Called when the user opens the module the first time and the widget is initialized.
@@ -106,6 +109,23 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # in batch mode, without a graphical user interface.
       self.logic = LungCTSegmenterLogic()
 
+      self.outputCheckBoxesDict = {
+        "airways": self.ui.toggleAirwaysCheckBox, 
+        "right ribs": self.ui.toggleRibsRightCheckBox,
+        "left ribs": self.ui.toggleRibsLeftCheckBox,
+        "right lung":self.ui.toggleLungRightCheckBox,
+        "right upper lobe": self.ui.toggleUpperLobeRightCheckBox,
+        "right middle lobe": self.ui.toggleMiddleLobeRightCheckBox,
+        "right lower lobe": self.ui.toggleLowerLobeRightCheckBox,
+        "left lung": self.ui.toggleLungLeftCheckBox,
+        "left upper lobe": self.ui.toggleUpperLobeLeftCheckBox,
+        "left lower lobe": self.ui.toggleLowerLobeLeftCheckBox,
+        "vesselmask": self.ui.toggleVesselMaskCheckBox,
+        "PA": self.ui.togglePACheckBox,
+        "PV": self.ui.togglePVCheckBox,
+        "tumor": self.ui.toggleTumorCheckBox
+        }
+        
       for placeWidget in [self.ui.rightLungPlaceWidget, self.ui.leftLungPlaceWidget, self.ui.tracheaPlaceWidget]:
           placeWidget.buttonsVisible=False
           placeWidget.placeButton().show()
@@ -115,7 +135,17 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       list = ["low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
 
-      list = ["lungmask R231", "lungmask LTRCLobes", "lungmask LTRCLobes_R231", "lungmask R231CovidWeb", "MONAILabel", "TotalSegmentator lung basic", "TotalSegmentator lung extended", "TotalSegmentator all"]
+      list = [
+        "lungmask R231", 
+        "lungmask LTRCLobes", 
+        "lungmask LTRCLobes_R231", 
+        "lungmask R231CovidWeb", 
+        "MONAILabel", 
+        "TotalSegmentator lung basic", 
+        "TotalSegmentator lung extended", 
+        "TotalSegmentator all"
+        ]
+        
       self.ui.engineAIComboBox.addItems(list);
 
       # Connections
@@ -149,6 +179,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+
+      for key, uiid in self.outputCheckBoxesDict.items():
+        uiid.enabled = False
+        uiid.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -472,9 +507,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       else:
         self.ui.LungThresholdRangeWidget.enabled = True
         self.ui.smoothLungsCheckBox.enabled = False
-
-
-    
+      
+      self.setOutputVisibilityFromCheckBoxes()
+      
       self._parameterNode.EndModify(wasModified)
 
   def onToggleSegmentationVisibilityButton(self):
@@ -582,6 +617,26 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           import traceback
           traceback.print_exc()
 
+  def enableOutputCheckBox(self,labelname,_checked):
+      self.outputCheckBoxesDict[labelname].enabled = True
+      self.outputCheckBoxesDict[labelname].checked = _checked
+      
+  def disableOutputCheckBox(self,labelname):
+      self.outputCheckBoxesDict[labelname].enabled = False
+
+  def disableAllOutputCheckBoxes(self):
+    for key, uiid in self.outputCheckBoxesDict.items():
+        uiid.checked = False
+        uiid.enabled = False
+
+  def setOutputVisibilityFromCheckBoxes(self):
+    if self.logic.outputSegmentation:
+        for key, uiid in self.outputCheckBoxesDict.items():
+            if uiid.enabled:
+                segmentation = self.logic.outputSegmentation.GetSegmentation()
+                structureID = segmentation.GetSegmentIdBySegmentName(key)
+                self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+
   def runProcessing(self):
       """
       Run processing 
@@ -606,6 +661,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.setInstructions('Finalizing the segmentation, please wait...')
           self.logic.shrinkMasks = self.shrinkMasks
           self.logic.detailedMasks = self.detailedMasks
+          self.disableAllOutputCheckBoxes()
           self.logic.applySegmentation()
           segmentationNode = self.logic.outputSegmentation
           segmentationNode.CreateDefaultDisplayNodes()
@@ -625,6 +681,38 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           traceback.print_exc()
       self.setInstructions('')
       self.ui.applyButton.enabled = False
+      
+      self.enableOutputCheckBox("tumor", True)
+      
+      if self.createVessels:
+          self.enableOutputCheckBox("vesselmask", True)
+          self.enableOutputCheckBox("PA", True)
+          self.enableOutputCheckBox("PV", True)
+
+      if self.createDetailedAirways:
+          self.enableOutputCheckBox("airways", True)
+
+      if not self.useAI:
+          self.enableOutputCheckBox("right lung", True)
+          self.enableOutputCheckBox("left lung", True)
+      else:
+        if self.logic.engineAI.find("TotalSegmentator") == 0:
+          self.enableOutputCheckBox("ribs right", False)
+          self.enableOutputCheckBox("ribs left",False)
+        
+        if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator all" or self.logic.engineAI == "lungmask LTRCLobes" or self.logic.engineAI == "lungmask LTRCLobes_R231" or self.logic.engineAI == "MONAILabel" :
+          self.enableOutputCheckBox("right upper lobe",True)
+          self.enableOutputCheckBox("right middle lobe",True)
+          self.enableOutputCheckBox("right lower lobe",True)
+          self.enableOutputCheckBox("left upper lobe",True)
+          self.enableOutputCheckBox("left lower lobe",True)
+          self.enableOutputCheckBox("right lung",False)
+          self.enableOutputCheckBox("left lung",False)        
+          if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator all":
+            self.enableOutputCheckBox("airways",True)            
+        else:
+          self.enableOutputCheckBox("right lung",True)
+          self.enableOutputCheckBox("left lung",True)
 
   def onApplyButton(self):
       """
@@ -639,6 +727,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       try:
           self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
           self.isSufficientNumberOfPointsPlaced = False
+          self.disableAllOutputCheckBoxes()
           self.logic.cancelSegmentation()
           self.ui.toggleSegmentationVisibilityButton.enabled = False
           self.ui.toggleVolumeRenderingVisibilityButton.enabled = False
@@ -1557,7 +1646,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("ModifierSegmentID",modifierSegmentID)
         effect.setParameter("Operation","UNION")
         effect.self().onApply()
-
 
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>807</height>
+    <height>923</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -313,6 +313,138 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="outputCollapsibleButton">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text">
+      <string>Toggle lung segmentation outputs</string>
+     </property>
+     <property name="collapsed">
+      <bool>false</bool>
+     </property>
+     <layout class="QFormLayout" name="formLayout_3">
+      <item row="1" column="0">
+       <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0" columnstretch="0,0,0,0">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>3</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>3</number>
+        </property>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="toggleLungRightCheckBox">
+          <property name="text">
+           <string>right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QCheckBox" name="toggleLowerLobeLeftCheckBox">
+          <property name="text">
+           <string>lower left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="toggleLungLeftCheckBox">
+          <property name="text">
+           <string>left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QCheckBox" name="toggleLowerLobeRightCheckBox">
+          <property name="text">
+           <string>lower right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QCheckBox" name="toggleRibsRightCheckBox">
+          <property name="text">
+           <string>ribs right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QCheckBox" name="toggleUpperLobeRightCheckBox">
+          <property name="text">
+           <string>upper right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="toggleUpperLobeLeftCheckBox">
+          <property name="text">
+           <string>upper left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3">
+         <widget class="QCheckBox" name="toggleTumorCheckBox">
+          <property name="text">
+           <string>tumor</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QCheckBox" name="toggleMiddleLobeRightCheckBox">
+          <property name="text">
+           <string>middle right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="toggleVesselMaskCheckBox">
+          <property name="text">
+           <string>vesselmask</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="toggleAirwaysCheckBox">
+          <property name="text">
+           <string>airways</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QCheckBox" name="togglePVCheckBox">
+          <property name="text">
+           <string>PV</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="togglePACheckBox">
+          <property name="text">
+           <string>PA</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QCheckBox" name="toggleRibsLeftCheckBox">
+          <property name="text">
+           <string>ribs left</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
