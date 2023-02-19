@@ -1268,8 +1268,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
-        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("Lung segmentation"))
-        slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetFirstNodeByName("TotalSegmentator"))
+        slicer.mrmlScene.RemoveNode(self.outputSegmentation)
+        slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
+        slicer.mrmlScene.RemoveNode(self.tsOutputExtendedSegmentation)
         if self.maskedVolume: 
             slicer.mrmlScene.RemoveNode(self.maskedVolume)
         
@@ -1872,46 +1873,46 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 if not tslogic: 
                     raise RuntimeError("TotalSegmentator program logic not found - please install the TotalSegmentator extension.")
 
-                tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
-                tsOutputExtendedSegmentation = None
+                self.tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
+                self.tsOutputExtendedSegmentation = None
                 if self.fastOption: 
-                    tslogic.process(self.inputVolume, tsOutputSegmentation, True, "total")
+                    tslogic.process(self.inputVolume, self.tsOutputSegmentation, True, "total")
                     if self.engineAI == "TotalSegmentator lung extended":
                         slicer.util.warningDisplay("TotalSegmentator vessel analysis is not supported in --fast mode.\n")
                 else:
-                    tslogic.process(self.inputVolume, tsOutputSegmentation, False, "total")
+                    tslogic.process(self.inputVolume, self.tsOutputSegmentation, False, "total")
                     if self.engineAI == "TotalSegmentator lung extended":
-                        tsOutputExtendedSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator extended')
-                        tslogic.process(self.inputVolume, tsOutputExtendedSegmentation, True, "lung_vessels")
+                        self.tsOutputExtendedSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator extended')
+                        tslogic.process(self.inputVolume, self.tsOutputExtendedSegmentation, True, "lung_vessels")
 
                 # turn off visibility by default
-                tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
-                if tsOutputExtendedSegmentation:
-                    tsOutputExtendedSegmentation.GetDisplayNode().SetVisibility(False)
+                self.tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
+                if self.tsOutputExtendedSegmentation:
+                    self.tsOutputExtendedSegmentation.GetDisplayNode().SetVisibility(False)
                     
-                self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor, True)
-                self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor, True)
-                self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor, True)
-                self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor, True)
-                self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor, True)
-                self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor, True)
-                self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor, True)
-                self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor, True)
-                self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, tsOutputSegmentation, self.rightLungColor, True)
+                self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, self.tsOutputSegmentation, self.rightUpperLobeColor, True)
+                self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, self.tsOutputSegmentation, self.rightMiddleLobeColor, True)
+                self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, self.tsOutputSegmentation, self.rightLowerLobeColor, True)
+                self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, self.tsOutputSegmentation, self.leftUpperLobeColor, True)
+                self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, self.tsOutputSegmentation, self.leftLowerLobeColor, True)
+                self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, self.tsOutputSegmentation, self.tracheaColor, True)
+                self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, self.tsOutputSegmentation, self.pulmonaryArteryColor, True)
+                self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,self.tsOutputSegmentation, self.pulmonaryVeinColor, True)
+                self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, self.tsOutputSegmentation, self.rightLungColor, True)
                 
-                if tsOutputExtendedSegmentation:
-                    self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputExtendedSegmentation, self.vesselMaskColor, True)
-                    self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputExtendedSegmentation, self.tracheaColor, True)
+                if self.tsOutputExtendedSegmentation:
+                    self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, self.tsOutputExtendedSegmentation, self.vesselMaskColor, True)
+                    self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, self.tsOutputExtendedSegmentation, self.tracheaColor, True)
                     for i in range(1, 13):
-                        self.importTotalSegmentatorSegment("right rib " + str(i),"right rib " + str(i),self.outputSegmentation, tsOutputSegmentation, self.ribColor, False)
+                        self.importTotalSegmentatorSegment("right rib " + str(i),"right rib " + str(i),self.outputSegmentation, self.tsOutputSegmentation, self.ribColor, False)
                     for i in range(1, 13):
-                        self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, tsOutputSegmentation, self.ribColor, False)
+                        self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, self.tsOutputSegmentation, self.ribColor, False)
 
                 if self.removeAIOutputData: 
-                    if tsOutputSegmentation: 
-                        slicer.mrmlScene.RemoveNode(tsOutputSegmentation)
-                    if tsOutputExtendedSegmentation: 
-                        slicer.mrmlScene.RemoveNode(tsOutputExtendedSegmentation)
+                    if self.tsOutputSegmentation: 
+                        slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
+                    if self.tsOutputExtendedSegmentation: 
+                        slicer.mrmlScene.RemoveNode(self.tsOutputExtendedSegmentation)
                                 
                 logging.info("Segmentation done.")
                 
