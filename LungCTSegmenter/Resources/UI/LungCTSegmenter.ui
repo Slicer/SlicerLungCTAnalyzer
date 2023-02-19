@@ -345,6 +345,9 @@
         </property>
         <item row="1" column="0">
          <widget class="QCheckBox" name="toggleLungRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle right lung visibility.</string>
+          </property>
           <property name="text">
            <string>right</string>
           </property>
@@ -352,6 +355,9 @@
         </item>
         <item row="2" column="3">
          <widget class="QCheckBox" name="toggleLowerLobeLeftCheckBox">
+          <property name="toolTip">
+           <string>Toggle lower left lobe visibility.</string>
+          </property>
           <property name="text">
            <string>lower left</string>
           </property>
@@ -359,6 +365,9 @@
         </item>
         <item row="2" column="0">
          <widget class="QCheckBox" name="toggleLungLeftCheckBox">
+          <property name="toolTip">
+           <string>Toggle left lung visibility.</string>
+          </property>
           <property name="text">
            <string>left</string>
           </property>
@@ -366,6 +375,9 @@
         </item>
         <item row="1" column="3">
          <widget class="QCheckBox" name="toggleLowerLobeRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle lower right lobe visibility.</string>
+          </property>
           <property name="text">
            <string>lower right</string>
           </property>
@@ -373,6 +385,9 @@
         </item>
         <item row="0" column="2">
          <widget class="QCheckBox" name="toggleRibsRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle rib visibility.</string>
+          </property>
           <property name="text">
            <string>ribs right</string>
           </property>
@@ -380,6 +395,9 @@
         </item>
         <item row="1" column="1">
          <widget class="QCheckBox" name="toggleUpperLobeRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle upper right lobe visibility.</string>
+          </property>
           <property name="text">
            <string>upper right</string>
           </property>
@@ -387,6 +405,9 @@
         </item>
         <item row="2" column="1">
          <widget class="QCheckBox" name="toggleUpperLobeLeftCheckBox">
+          <property name="toolTip">
+           <string>Toggle upper left lobe visibility.</string>
+          </property>
           <property name="text">
            <string>upper left</string>
           </property>
@@ -394,6 +415,9 @@
         </item>
         <item row="3" column="3">
          <widget class="QCheckBox" name="toggleTumorCheckBox">
+          <property name="toolTip">
+           <string>Toggle tumor visibility, if manually segmented. </string>
+          </property>
           <property name="text">
            <string>tumor</string>
           </property>
@@ -401,6 +425,9 @@
         </item>
         <item row="1" column="2">
          <widget class="QCheckBox" name="toggleMiddleLobeRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle middle lobe visibility.</string>
+          </property>
           <property name="text">
            <string>middle right</string>
           </property>
@@ -408,6 +435,9 @@
         </item>
         <item row="3" column="0">
          <widget class="QCheckBox" name="toggleVesselMaskCheckBox">
+          <property name="toolTip">
+           <string>Toggle vesselmask visibility.</string>
+          </property>
           <property name="text">
            <string>vesselmask</string>
           </property>
@@ -415,6 +445,9 @@
         </item>
         <item row="0" column="0">
          <widget class="QCheckBox" name="toggleAirwaysCheckBox">
+          <property name="toolTip">
+           <string>Toggle airways visibility. </string>
+          </property>
           <property name="text">
            <string>airways</string>
           </property>
@@ -422,6 +455,9 @@
         </item>
         <item row="3" column="2">
          <widget class="QCheckBox" name="togglePVCheckBox">
+          <property name="toolTip">
+           <string>Toggle pulmonary vein visibility.</string>
+          </property>
           <property name="text">
            <string>PV</string>
           </property>
@@ -429,6 +465,9 @@
         </item>
         <item row="3" column="1">
          <widget class="QCheckBox" name="togglePACheckBox">
+          <property name="toolTip">
+           <string>Toggle pulmonary artery visibility.</string>
+          </property>
           <property name="text">
            <string>PA</string>
           </property>
@@ -436,6 +475,9 @@
         </item>
         <item row="0" column="3">
          <widget class="QCheckBox" name="toggleRibsLeftCheckBox">
+          <property name="toolTip">
+           <string>Toggle rib visibility.</string>
+          </property>
           <property name="text">
            <string>ribs left</string>
           </property>
