@@ -111,8 +111,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.outputCheckBoxesDict = {
         "airways": self.ui.toggleAirwaysCheckBox, 
-        "right ribs": self.ui.toggleRibsRightCheckBox,
-        "left ribs": self.ui.toggleRibsLeftCheckBox,
+        "ribs right": self.ui.toggleRibsRightCheckBox,
+        "ribs left": self.ui.toggleRibsLeftCheckBox,
         "right lung":self.ui.toggleLungRightCheckBox,
         "right upper lobe": self.ui.toggleUpperLobeRightCheckBox,
         "right middle lobe": self.ui.toggleMiddleLobeRightCheckBox,
@@ -143,7 +143,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         "MONAILabel", 
         "TotalSegmentator lung basic", 
         "TotalSegmentator lung extended", 
-        "TotalSegmentator all"
         ]
         
       self.ui.engineAIComboBox.addItems(list);
@@ -630,12 +629,37 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         uiid.enabled = False
 
   def setOutputVisibilityFromCheckBoxes(self):
+  
     if self.logic.outputSegmentation:
         for key, uiid in self.outputCheckBoxesDict.items():
             if uiid.enabled:
-                segmentation = self.logic.outputSegmentation.GetSegmentation()
-                structureID = segmentation.GetSegmentIdBySegmentName(key)
-                self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+            
+                if key == "ribs right":
+                    for i in range(1, 13):
+                        segmentation = self.logic.outputSegmentation.GetSegmentation()
+                        structureID = segmentation.GetSegmentIdBySegmentName("right rib " + str(i))
+                        self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+                elif key == "ribs left":
+                    for i in range(1, 13):
+                        segmentation = self.logic.outputSegmentation.GetSegmentation()
+                        structureID = segmentation.GetSegmentIdBySegmentName("left rib " + str(i))
+                        self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+                elif key == "airways":
+                    if self.logic.engineAI.find("TotalSegmentator") == 0:
+                        segmentation = self.logic.outputSegmentation.GetSegmentation()
+                        structureID = segmentation.GetSegmentIdBySegmentName("trachea")
+                        self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+                        segmentation = self.logic.outputSegmentation.GetSegmentation()
+                        structureID = segmentation.GetSegmentIdBySegmentName("airways and bronchi")
+                        self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+                    else:
+                        segmentation = self.logic.outputSegmentation.GetSegmentation()
+                        structureID = segmentation.GetSegmentIdBySegmentName(key)
+                        self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
+                else:
+                    segmentation = self.logic.outputSegmentation.GetSegmentation()
+                    structureID = segmentation.GetSegmentIdBySegmentName(key)
+                    self.logic.outputSegmentation.GetDisplayNode().SetSegmentVisibility(structureID,uiid.checked)
 
   def runProcessing(self):
       """
@@ -682,7 +706,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.setInstructions('')
       self.ui.applyButton.enabled = False
       
-      self.enableOutputCheckBox("tumor", True)
+      self.enableOutputCheckBox("tumor", False)
       
       if self.createVessels:
           self.enableOutputCheckBox("vesselmask", True)
@@ -696,11 +720,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.enableOutputCheckBox("right lung", True)
           self.enableOutputCheckBox("left lung", True)
       else:
-        if self.logic.engineAI.find("TotalSegmentator") == 0:
+        if self.logic.engineAI == "TotalSegmentator lung extended":
           self.enableOutputCheckBox("ribs right", False)
           self.enableOutputCheckBox("ribs left",False)
         
-        if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator all" or self.logic.engineAI == "lungmask LTRCLobes" or self.logic.engineAI == "lungmask LTRCLobes_R231" or self.logic.engineAI == "MONAILabel" :
+        if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator lung basic" or self.logic.engineAI == "lungmask LTRCLobes" or self.logic.engineAI == "lungmask LTRCLobes_R231" or self.logic.engineAI == "MONAILabel" :
+          self.enableOutputCheckBox("airways", True)
           self.enableOutputCheckBox("right upper lobe",True)
           self.enableOutputCheckBox("right middle lobe",True)
           self.enableOutputCheckBox("right lower lobe",True)
@@ -708,8 +733,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.enableOutputCheckBox("left lower lobe",True)
           self.enableOutputCheckBox("right lung",False)
           self.enableOutputCheckBox("left lung",False)        
-          if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator all":
-            self.enableOutputCheckBox("airways",True)            
         else:
           self.enableOutputCheckBox("right lung",True)
           self.enableOutputCheckBox("left lung",True)
@@ -1564,13 +1587,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         #    print(_name + " not handled during SetTag.")
         
                        
-    def importTotalSegmentatorSegment(self, _outputName, _inputName, _outputsegmentation, _inputsegmentation, _color):
+    def importTotalSegmentatorSegment(self, _outputName, _inputName, _outputsegmentation, _inputsegmentation, _color, _visibility):
         
         sourceSegmentId = None
         sourceSegmentId = _inputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_inputName)
         if sourceSegmentId:
             _outputsegmentation.GetSegmentation().CopySegmentFromSegmentation(_inputsegmentation.GetSegmentation(), sourceSegmentId)
             _segID = _outputsegmentation.GetSegmentation().GetSegmentIdBySegmentName(_inputName)
+            _outputsegmentation.GetDisplayNode().SetSegmentVisibility(_segID,_visibility)
             _outputsegmentation.GetSegmentation().GetSegment(_segID).SetName(_outputName)
             _outputsegmentation.GetSegmentation().GetSegment(_segID).SetColor(_color)
             self.setAnatomicalTag(_outputsegmentation, _outputName, _segID)
@@ -1860,27 +1884,28 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         tsOutputExtendedSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator extended')
                         tslogic.process(self.inputVolume, tsOutputExtendedSegmentation, True, "lung_vessels")
 
-                if self.engineAI == "TotalSegmentator all" :  
-                    # turn on visibility by default
-                    tsOutputSegmentation.GetDisplayNode().SetVisibility(True)
-                else:
-                    # turn off visibility by default
-                    tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
-                    if tsOutputExtendedSegmentation:
-                        tsOutputExtendedSegmentation.GetDisplayNode().SetVisibility(False)
-                    
-                self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor)
-                self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor)
-                self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor)
-                self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor)
-                self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor)
-                self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor)
-                self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor)
-                self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor)
-                self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, tsOutputSegmentation, self.rightLungColor)
+                # turn off visibility by default
+                tsOutputSegmentation.GetDisplayNode().SetVisibility(False)
                 if tsOutputExtendedSegmentation:
-                    self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputExtendedSegmentation, self.vesselMaskColor)
-                    self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputExtendedSegmentation, self.tracheaColor)
+                    tsOutputExtendedSegmentation.GetDisplayNode().SetVisibility(False)
+                    
+                self.importTotalSegmentatorSegment("right upper lobe","superior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightUpperLobeColor, True)
+                self.importTotalSegmentatorSegment("right middle lobe","middle lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightMiddleLobeColor, True)
+                self.importTotalSegmentatorSegment("right lower lobe","inferior lobe of right lung",self.outputSegmentation, tsOutputSegmentation, self.rightLowerLobeColor, True)
+                self.importTotalSegmentatorSegment("left upper lobe","superior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftUpperLobeColor, True)
+                self.importTotalSegmentatorSegment("left lower lobe","inferior lobe of left lung",self.outputSegmentation, tsOutputSegmentation, self.leftLowerLobeColor, True)
+                self.importTotalSegmentatorSegment("trachea","trachea",self.outputSegmentation, tsOutputSegmentation, self.tracheaColor, True)
+                self.importTotalSegmentatorSegment("pulmonary artery","pulmonary_artery",self.outputSegmentation, tsOutputSegmentation, self.pulmonaryArteryColor, True)
+                self.importTotalSegmentatorSegment("left atrium of heart","heart_atrium_left",self.outputSegmentation,tsOutputSegmentation, self.pulmonaryVeinColor, True)
+                self.importTotalSegmentatorSegment("lung","lung",self.outputSegmentation, tsOutputSegmentation, self.rightLungColor, True)
+                
+                if tsOutputExtendedSegmentation:
+                    self.importTotalSegmentatorSegment("lung vessels", "lung_vessels",self.outputSegmentation, tsOutputExtendedSegmentation, self.vesselMaskColor, True)
+                    self.importTotalSegmentatorSegment("airways and bronchi","lung_trachea_bronchia",self.outputSegmentation, tsOutputExtendedSegmentation, self.tracheaColor, True)
+                    for i in range(1, 13):
+                        self.importTotalSegmentatorSegment("right rib " + str(i),"right rib " + str(i),self.outputSegmentation, tsOutputSegmentation, self.ribColor, False)
+                    for i in range(1, 13):
+                        self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, tsOutputSegmentation, self.ribColor, False)
 
                 if self.removeAIOutputData: 
                     if tsOutputSegmentation: 
