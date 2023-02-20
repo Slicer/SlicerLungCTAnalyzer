@@ -725,7 +725,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.enableOutputCheckBox("ribs left",False)
         
         if self.logic.engineAI == "TotalSegmentator lung extended" or self.logic.engineAI == "TotalSegmentator lung basic" or self.logic.engineAI == "lungmask LTRCLobes" or self.logic.engineAI == "lungmask LTRCLobes_R231" or self.logic.engineAI == "MONAILabel" :
-          self.enableOutputCheckBox("airways", True)
+          if not self.logic.engineAI.find("lungmask") == 0:
+            self.enableOutputCheckBox("airways", True)
           self.enableOutputCheckBox("right upper lobe",True)
           self.enableOutputCheckBox("right middle lobe",True)
           self.enableOutputCheckBox("right lower lobe",True)
@@ -921,6 +922,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         Called when the logic class is instantiated. Can be used for initializing member variables.
         """
         ScriptedLoadableModuleLogic.__init__(self)
+        self.outputSegmentation = None
+        self.tsOutputSegmentation = None
+        self.tsOutputExtendedSegmentation = None
         self.rightLungSegmentId = None
         self.leftLungSegmentId = None
         self.tracheaSegmentId = None
@@ -961,6 +965,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.detailedMasks = False
         self.maskedVolume = None
         self.updateAI = False
+
 
         
     def __del__(self):
@@ -1268,9 +1273,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)
         slicer.mrmlScene.RemoveNode(self.tracheaFiducials)
-        slicer.mrmlScene.RemoveNode(self.outputSegmentation)
-        slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
-        slicer.mrmlScene.RemoveNode(self.tsOutputExtendedSegmentation)
+        if self.outputSegmentation:
+            slicer.mrmlScene.RemoveNode(self.outputSegmentation)
+        if self.tsOutputSegmentation:
+            slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
+        if self.tsOutputExtendedSegmentation:
+            slicer.mrmlScene.RemoveNode(self.tsOutputExtendedSegmentation)
         if self.maskedVolume: 
             slicer.mrmlScene.RemoveNode(self.maskedVolume)
         
