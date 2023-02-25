@@ -212,14 +212,14 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>Bulla / Pneu</string>
+         <string>Emphysema</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <widget class="ctkRangeWidget" name="BullaRangeWidget">
         <property name="toolTip">
-         <string>Set the threshold range for Bullae / Pneu here. </string>
+         <string>Set the threshold range for bulla / emphysema here. </string>
         </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -248,7 +248,7 @@
       <item row="1" column="1">
        <widget class="ctkRangeWidget" name="InflatedRangeWidget">
         <property name="toolTip">
-         <string>Set the threshold range for ventilated lung tissue here. </string>
+         <string>Set the threshold range for inflated lung tissue here. </string>
         </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -277,7 +277,7 @@
       <item row="2" column="1">
        <widget class="ctkRangeWidget" name="InfiltratedRangeWidget">
         <property name="toolTip">
-         <string>Set the threshold range for infiltrated lung tissue here. </string>
+         <string>Set the threshold range for infiltrated / GGO lung tissue here. </string>
         </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -306,7 +306,7 @@
       <item row="3" column="1">
        <widget class="ctkRangeWidget" name="CollapsedRangeWidget">
         <property name="toolTip">
-         <string>Set the threshold range for collapsed lung tissue. </string>
+         <string>Set the threshold range for collapsed / consolidated lung tissue. </string>
         </property>
         <property name="singleStep">
          <double>10.000000000000000</double>
@@ -335,7 +335,7 @@
       <item row="4" column="1">
        <widget class="ctkRangeWidget" name="VesselsRangeWidget">
         <property name="toolTip">
-         <string>Set the threshold range for intrapulmonary vessels here. </string>
+         <string>Set the threshold range for pulmonary vessels here. </string>
         </property>
         <property name="singleStep">
          <double>10.000000000000000</double>

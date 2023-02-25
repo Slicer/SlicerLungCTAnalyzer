@@ -2172,7 +2172,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode.SetSelectedSegmentID(id)
         if not self.segmentEditorWidget.effectByName("Surface cut"):
             slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
-            raise ValueError("Installation of module required")
+            raise ValueError("Installation of 'SegmentEditorExtraEffects' extension required.")
 
         self.segmentEditorWidget.setActiveEffectByName("Surface cut")
 
@@ -2409,18 +2409,21 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         inputVolume = parameterNode.GetNodeReference("InputVolume")
         if not inputVolume:
-            raise ValueError("Input lung CT is invalid")
+            self.progressbar.close()
+            raise ValueError("Input lung CT is invalid.")
+
 
         inputSegmentationNode = parameterNode.GetNodeReference("InputSegmentation")
         if not inputSegmentationNode:
-            raise ValueError("Input lung segmentation node is invalid")
+            self.progressbar.close()
+            raise ValueError("Input lung segmentation node is invalid.")
 
         rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName().upper()
         leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName().upper()
         if ( (rightMaskSegmentName != "RIGHT LUNG" and rightMaskSegmentName != "RIGHT LUNG MASK") or
             (leftMaskSegmentName != "LEFT LUNG" and leftMaskSegmentName != "LEFT LUNG MASK") ):
             if not slicer.util.confirmYesNoDisplay("Warning: segment names are expected to be 'left/right lung' ('left/right lung mask'). Are you sure you want to continue?"):
-              raise UserWarning("User cancelled the analysis")
+              raise UserWarning("User cancelled the analysis.")
 
         if ( (rightMaskSegmentName == "RIGHT LUNG MASK") or (leftMaskSegmentName == "LEFT LUNG MASK") ):
             #inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).SetName("right lung")
@@ -2544,8 +2547,9 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 newSeg.DeepCopy(sourceSeg)
             
             if numberLobesFound < 5:
-                raise ValueError("Lobe analysis was requested, but only " + str(numberLobesFound) + " lobes found (5 expected) in input segmentation. Abort.")
-                
+                self.progressbar.close()
+                raise ValueError("Lobe analysis was requested, but only " + str(numberLobesFound) + " lobes found (5 expected) in input segmentation.")
+
 
             lobeName = "upper lobe"
             side = "right"
