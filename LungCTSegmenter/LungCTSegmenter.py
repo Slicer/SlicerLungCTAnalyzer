@@ -207,6 +207,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.ui.fastCheckBox.enabled = False
       self.ui.smoothLungsCheckBox.enabled = True
+      self.ui.batchProcessingCollapsibleButton.collapsed = True
+      self.ui.outputCollapsibleButton.collapsed = True
 
 
   def cleanup(self):
@@ -706,6 +708,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.setInstructions('')
       self.ui.applyButton.enabled = False
       
+      self.ui.outputCollapsibleButton.collapsed = False
       self.enableOutputCheckBox("tumor", False)
       
       if self.createVessels:
@@ -759,6 +762,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.segmentationStarted = False
           self.logic.segmentationFinished = False
           self.logic.rightLungFiducials = self.logic.leftLungFiducials = self.logic.tracheaFiducials = None
+          self.ui.outputCollapsibleButton.collapsed = True
           self.updateGUIFromParameterNode()
           slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
       except Exception as e:
