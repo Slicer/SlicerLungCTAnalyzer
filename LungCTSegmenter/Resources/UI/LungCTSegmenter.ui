@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>1066</height>
+    <height>1112</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -338,6 +338,36 @@
         <property name="verticalSpacing">
          <number>3</number>
         </property>
+        <item row="0" column="2">
+         <widget class="QCheckBox" name="toggleRibsRightCheckBox">
+          <property name="toolTip">
+           <string>Toggle rib visibility.</string>
+          </property>
+          <property name="text">
+           <string>ribs right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3">
+         <widget class="QCheckBox" name="toggleTumorCheckBox">
+          <property name="toolTip">
+           <string>Toggle tumor visibility, if manually segmented. </string>
+          </property>
+          <property name="text">
+           <string>tumor</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="toggleAirwaysCheckBox">
+          <property name="toolTip">
+           <string>Toggle airways visibility. </string>
+          </property>
+          <property name="text">
+           <string>airways</string>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="0">
          <widget class="QCheckBox" name="toggleLungRightCheckBox">
           <property name="toolTip">
@@ -345,6 +375,36 @@
           </property>
           <property name="text">
            <string>right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="togglePACheckBox">
+          <property name="toolTip">
+           <string>Toggle pulmonary artery visibility.</string>
+          </property>
+          <property name="text">
+           <string>PA</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="toggleVesselMaskCheckBox">
+          <property name="toolTip">
+           <string>Toggle vesselmask visibility.</string>
+          </property>
+          <property name="text">
+           <string>vesselmask</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QCheckBox" name="toggleRibsLeftCheckBox">
+          <property name="toolTip">
+           <string>Toggle rib visibility.</string>
+          </property>
+          <property name="text">
+           <string>ribs left</string>
           </property>
          </widget>
         </item>
@@ -368,23 +428,23 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="3">
-         <widget class="QCheckBox" name="toggleLowerLobeRightCheckBox">
+        <item row="1" column="2">
+         <widget class="QCheckBox" name="toggleMiddleLobeRightCheckBox">
           <property name="toolTip">
-           <string>Toggle lower right lobe visibility.</string>
+           <string>Toggle middle lobe visibility.</string>
           </property>
           <property name="text">
-           <string>lower right</string>
+           <string>middle right</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
-         <widget class="QCheckBox" name="toggleRibsRightCheckBox">
+        <item row="3" column="2">
+         <widget class="QCheckBox" name="togglePVCheckBox">
           <property name="toolTip">
-           <string>Toggle rib visibility.</string>
+           <string>Toggle pulmonary vein visibility.</string>
           </property>
           <property name="text">
-           <string>ribs right</string>
+           <string>PV</string>
           </property>
          </widget>
         </item>
@@ -408,73 +468,13 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="3">
-         <widget class="QCheckBox" name="toggleTumorCheckBox">
+        <item row="1" column="3">
+         <widget class="QCheckBox" name="toggleLowerLobeRightCheckBox">
           <property name="toolTip">
-           <string>Toggle tumor visibility, if manually segmented. </string>
+           <string>Toggle lower right lobe visibility.</string>
           </property>
           <property name="text">
-           <string>tumor</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QCheckBox" name="toggleMiddleLobeRightCheckBox">
-          <property name="toolTip">
-           <string>Toggle middle lobe visibility.</string>
-          </property>
-          <property name="text">
-           <string>middle right</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QCheckBox" name="toggleVesselMaskCheckBox">
-          <property name="toolTip">
-           <string>Toggle vesselmask visibility.</string>
-          </property>
-          <property name="text">
-           <string>vesselmask</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QCheckBox" name="toggleAirwaysCheckBox">
-          <property name="toolTip">
-           <string>Toggle airways visibility. </string>
-          </property>
-          <property name="text">
-           <string>airways</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QCheckBox" name="togglePVCheckBox">
-          <property name="toolTip">
-           <string>Toggle pulmonary vein visibility.</string>
-          </property>
-          <property name="text">
-           <string>PV</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QCheckBox" name="togglePACheckBox">
-          <property name="toolTip">
-           <string>Toggle pulmonary artery visibility.</string>
-          </property>
-          <property name="text">
-           <string>PA</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QCheckBox" name="toggleRibsLeftCheckBox">
-          <property name="toolTip">
-           <string>Toggle rib visibility.</string>
-          </property>
-          <property name="text">
-           <string>ribs left</string>
+           <string>lower right</string>
           </property>
          </widget>
         </item>
@@ -512,32 +512,68 @@
         <property name="verticalSpacing">
          <number>4</number>
         </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Input folder</string>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="1">
          <widget class="ctkPathLineEdit" name="outputDirectoryPathLineEdit">
+          <property name="toolTip">
+           <string>Specify the output data directory for batch processing</string>
+          </property>
           <property name="filters">
            <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
           </property>
           <property name="options">
            <set>ctkPathLineEdit::ShowDirsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="niigzFormatCheckBox">
+          <property name="toolTip">
+           <string>CT.nrdd, each in a seperate subfolder, is the normal input format expected by batch processing. In case this is checked, batch processing expects ct.nii.gz in seperate subfolders  as input files. </string>
+          </property>
+          <property name="text">
+           <string>Input is *.nii.gz</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="testModeCheckBox">
+          <property name="toolTip">
+           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
+          </property>
+          <property name="text">
+           <string>Testmode: segment three cases from input folder</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QCheckBox" name="normalizeDataCheckBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Normalize data</string>
           </property>
          </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>Output directory</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Input directory</string>
+           <string>Output folder</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
          <widget class="ctkPathLineEdit" name="inputDirectoryPathLineEdit">
+          <property name="toolTip">
+           <string>Specify the input data directory for batch processing</string>
+          </property>
           <property name="filters">
            <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
           </property>
@@ -546,15 +582,25 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item row="1" column="0" colspan="2">
-       <widget class="QPushButton" name="batchProcessingPushButton">
+       <widget class="QPushButton" name="batchProcessingButton">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Run Lung CT Segmenter in batch processing mode. The input data directory will be recursively scanned for input files and segmented with options defined under &quot;Segmentation&quot;. &quot;*Use AI&quot; must be enabled and an appropriate AI engine must be selected in order to use batch processing.  Result files and CSV summary data will be written to the output directory. Depending on your input data and hardware, the process may run for hours.  </string>
         </property>
         <property name="text">
-         <string>Batch processing</string>
+         <string>Batch process</string>
         </property>
        </widget>
       </item>

@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import glob
 import unittest
 import logging
 import vtk, qt, ctk, slicer
@@ -79,6 +81,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.inputVolume = None
       self.VolumeRenderingShift = 0
       self.volumeRenderingDisplayNode = None
+      #self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
+      #self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
+      self.batchProcessingInputDir = ""
+      self.batchProcessingOutputDir = ""
+      self.batchProcessingTestMode = False
+      self.isNiiGzFormat = False
+      
+      
   
   class checkboxDetails: 
       def __init__(self, checkbox_name, uiID):
@@ -178,11 +188,16 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.niigzFormatCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       for key, uiid in self.outputCheckBoxesDict.items():
         uiid.enabled = False
         uiid.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
+      # Connect path selectors
+      self.ui.inputDirectoryPathLineEdit.connect('currentPathChanged(const QString&)', self.onInputDirectoryPathLineEditChanged)
+      self.ui.outputDirectoryPathLineEdit.connect('currentPathChanged(const QString&)', self.onOutputDirectoryPathLineEditChanged)
 
       # Buttons
       self.ui.startButton.connect('clicked(bool)', self.onStartButton)
@@ -190,6 +205,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.cancelButton.connect('clicked(bool)', self.onCancelButton)
       self.ui.updateIntensityButton.connect('clicked(bool)', self.onUpdateIntensityButton)
       self.ui.setDefaultButton.connect('clicked(bool)', self.onSetDefaultButton)
+      self.ui.batchProcessingButton.connect('clicked(bool)', self.onBatchProcessingButton)
       
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
       self.ui.toggleVolumeRenderingVisibilityButton.connect('clicked(bool)', self.onToggleVolumeRenderingVisibilityButton)
@@ -262,9 +278,102 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VesselThresholdRangeWidget.maximumValue = 3000
       self.updateParameterNodeFromGUI()
 
+  def onInputDirectoryPathLineEditChanged(self):
+      self.batchProcessingInputDir = self.ui.inputDirectoryPathLineEdit.currentPath
+
+  def onOutputDirectoryPathLineEditChanged(self):
+      self.batchProcessingOutputDir = self.ui.outputDirectoryPathLineEdit.currentPath
+      
+      
+  def onBatchProcessingButton(self):
+      if self.batchProcessingInputDir == "":
+          slicer.util.messageBox("No input directory given.")
+          raise ValueError("No input directory given.")
+      if self.batchProcessingOutputDir == "":
+          slicer.util.messageBox("No output directory given.")
+          raise ValueError("No output directory given. ")
+      if self.batchProcessingInputDir == self.batchProcessingOutputDir:
+          slicer.util.messageBox("Input and output directotry can not be the same path.")
+          raise ValueError("Input and output directotry can not be the same path.")
+      if not self.useAI:
+          slicer.util.messageBox("Batch processing can only be done with 'Use AI' checked.")
+          raise ValueError("'Use AI' must be checked.")
+      if self.createDetailedAirways:
+          slicer.util.messageBox("Batch processing can not be used with  Local Threshold airway analysis.")
+          raise ValueError("Batch processing can not be used with Local Threshold airway analysis.")
+
+      counter = 0
+      pattern = ''
+
+      if self.isNiiGzFormat: 
+          pattern = '/' '**/*.nii.gz'
+      else:
+          pattern = '/' '**/*.nrrd'
+          
+      filesToProcess = 0
+      for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+          pathhead, pathtail = os.path.split(filename)
+          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
+              filesToProcess += 1
+
+
+      minutesRequired = filesToProcess * 180 / 60
+      
+      if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each segmentation takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
+          logging.info('Batch processing cancelled by user.')
+          return
+
+      if self.batchProcessingTestMode and filesToProcess < 3:
+          slicer.util.messageBox("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
+          raise ValueError("Not enough files in input directory for test mode.")
+      
+
+      startWatchTime = time.time()
+          
+      counter = 0
+      for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+          pathhead, pathtail = os.path.split(filename)
+          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
+              counter += 1
+              slicer.mrmlScene.Clear(0)
+              self.inputVolume = slicer.util.loadVolume(filename)
+
+              print("Segmenting '" + filename + "' ...")
+              if self.useAI and not self.createDetailedAirways:
+                  self.onStartButton()
+              else:
+                  print("Unable to batch segment CT, AI must be enabled and/or airway segmentation can not be checked.")
+
+              print("Writing ouput for '" + filename + "' ...")
+              self.showStatusMessage("Writing ouput for '" + filename + "' ...")
+              outpathhead, outpathtail = os.path.split(pathhead)
+
+              targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"              
+              if not os.path.exists(targetdir):
+                  os.makedirs(targetdir)
+              sceneSaveFilename = targetdir + "CT_seg.mrb"
+              print('Saving scene to ' + sceneSaveFilename)
+              if slicer.util.saveScene(sceneSaveFilename):
+                logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+              else:
+                logging.error("Scene saving failed") 
+
+              # let slicer process events and update its display
+              slicer.app.processEvents()
+              time.sleep(3)
+
+          if self.batchProcessingTestMode and counter > 2:
+              break
+      stopWatchTime = time.time()
+      print('Batch processing completed in {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
+      self.showStatusMessage("Batch processing done.")
+
+      
+
   def onShiftSliderWidgetChanged(self):
        self.updateParameterNodeFromGUI()
        self.updateVolumeRendering()
+  
   def onLungThresholdRangeWidgetChanged(self):
        self.updateParameterNodeFromGUI()
       
@@ -420,8 +529,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
-      
-      
+      self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
+      self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
       self.ui.detailedMasksCheckBox.checked = self.detailedMasks
       self.ui.saveFiducialsCheckBox.checked = self.saveFiducials
@@ -490,6 +599,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
       self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
+      self.batchProcessingTestMode = self.ui.testModeCheckBox.checked 
+      self.isNiiGzFormat = self.ui.niigzFormatCheckBox.checked 
+      
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
@@ -1223,7 +1335,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           or not self.leftLungFiducials or self.leftLungFiducials.GetNumberOfControlPoints() < 6
           or not self.tracheaFiducials or self.tracheaFiducials.GetNumberOfControlPoints() < 1):
           # not yet ready for region growing
-          self.showStatusMessage('Not enough markups ...')
           return
 
       self.showStatusMessage('Update segmentation...')
