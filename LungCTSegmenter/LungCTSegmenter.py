@@ -284,6 +284,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onOutputDirectoryPathLineEditChanged(self):
       self.batchProcessingOutputDir = self.ui.outputDirectoryPathLineEdit.currentPath
       
+  def showStatusMessage(self, msg, timeoutMsec=500):
+      slicer.util.showStatusMessage(msg, timeoutMsec)
+      slicer.app.processEvents()
       
   def onBatchProcessingButton(self):
       if self.batchProcessingInputDir == "":
@@ -315,6 +318,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           pathhead, pathtail = os.path.split(filename)
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
               filesToProcess += 1
+              if self.batchProcessingTestMode: 
+                print("Input file '" + filename + "' detected ...")
 
 
       minutesRequired = filesToProcess * 180 / 60
@@ -331,6 +336,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       startWatchTime = time.time()
           
       counter = 0
+      if self.batchProcessingTestMode:
+          filesToProcess = 3
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
@@ -344,14 +351,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               else:
                   print("Unable to batch segment CT, AI must be enabled and/or airway segmentation can not be checked.")
 
-              print("Writing ouput for '" + filename + "' ...")
-              self.showStatusMessage("Writing ouput for '" + filename + "' ...")
               outpathhead, outpathtail = os.path.split(pathhead)
 
               targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"              
               if not os.path.exists(targetdir):
                   os.makedirs(targetdir)
               sceneSaveFilename = targetdir + "CT_seg.mrb"
+              self.showStatusMessage("Writing mrb output (input file " + str(counter) +  "/" + str(filesToProcess) + ") to '" + sceneSaveFilename + "' ...")
               print('Saving scene to ' + sceneSaveFilename)
               if slicer.util.saveScene(sceneSaveFilename):
                 logging.info("Scene saved to: {0}".format(sceneSaveFilename))
