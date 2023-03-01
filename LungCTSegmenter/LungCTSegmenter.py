@@ -304,6 +304,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if self.createDetailedAirways:
           slicer.util.messageBox("Batch processing can not be used with  Local Threshold airway analysis.")
           raise ValueError("Batch processing can not be used with Local Threshold airway analysis.")
+      if not os.path.exists(self.batchProcessingInputDir):
+          slicer.util.messageBox("Input folder does not exist.")
+          raise ValueError("Input folder does not exist.")
 
       counter = 0
       pattern = ''
