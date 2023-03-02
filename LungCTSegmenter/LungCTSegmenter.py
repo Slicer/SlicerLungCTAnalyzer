@@ -288,26 +288,24 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def showStatusMessage(self, msg, timeoutMsec=500):
       slicer.util.showStatusMessage(msg, timeoutMsec)
       slicer.app.processEvents()
+
+  def showCriticalError(self, msg):
+      slicer.util.messageBox(msg)
+      raise ValueError(msg)
       
   def onBatchProcessingButton(self):
       if self.batchProcessingInputDir == "":
-          slicer.util.messageBox("No input directory given.")
-          raise ValueError("No input directory given.")
+          self.showCriticalError("No input directory given.")
       if self.batchProcessingOutputDir == "":
-          slicer.util.messageBox("No output directory given.")
-          raise ValueError("No output directory given. ")
+          self.showCriticalError("No output directory given.")
       if self.batchProcessingInputDir == self.batchProcessingOutputDir:
-          slicer.util.messageBox("Input and output directotry can not be the same path.")
-          raise ValueError("Input and output directotry can not be the same path.")
+          self.showCriticalError("Input and output directotry can not be the same path.")
       if not self.useAI:
-          slicer.util.messageBox("Batch processing can only be done with 'Use AI' checked.")
-          raise ValueError("'Use AI' must be checked.")
+          self.showCriticalError("Batch processing can only be done with 'Use AI' checked.")
       if self.createDetailedAirways:
-          slicer.util.messageBox("Batch processing can not be used with  Local Threshold airway analysis.")
-          raise ValueError("Batch processing can not be used with Local Threshold airway analysis.")
+          self.showCriticalError("Batch processing can not be used with  Local Threshold airway analysis.")
       if not os.path.exists(self.batchProcessingInputDir):
-          slicer.util.messageBox("Input folder does not exist.")
-          raise ValueError("Input folder does not exist.")
+          self.showCriticalError("Input folder does not exist.")
 
       counter = 0
       pattern = ''
@@ -322,14 +320,18 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           pathhead, pathtail = os.path.split(filename)
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
               # input data must be in subdirectories of self.batchProcessingInputDir
-              if pathhead != self.batchProcessingInputDir:
-                  filesToProcess += 1
-                  if self.batchProcessingTestMode: 
-                    print("Input file '" + filename + "' detected ...")
+              if pathhead == self.batchProcessingInputDir:
+                  self.showCriticalError("Unsupported data structure: Data files in input folder detected, they must be placed in subfolders.")
+              # input data must be in immediate child directory of self.batchProcessingInputDir
+              parentDir = os.path.dirname(pathhead)
+              if parentDir != self.batchProcessingInputDir:
+                  self.showCriticalError("Unsupported data structure: There seem to be input data in sub-subfolders of the input folder. Only one subfolder dimension is allowed.")
+              filesToProcess += 1
+              if self.batchProcessingTestMode: 
+                print("Input file '" + filename + "' detected ...")
       
       if filesToProcess == 0: 
-          slicer.util.messageBox("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
-          raise ValueError("No files to process. Each input file must be placed in a singular separate subdirectory of the input folder.")
+          self.showCriticalError("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
 
 
       minutesRequired = filesToProcess * 180 / 60
@@ -339,9 +341,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           return
 
       if self.batchProcessingTestMode and filesToProcess < 3:
-          slicer.util.messageBox("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
-          raise ValueError("Not enough files in input directory for test mode.")
-      
+          self.showCriticalError("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
 
       startWatchTime = time.time()
           
@@ -401,7 +401,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       print('Batch processing completed in {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
       self.showStatusMessage("Batch processing done.")
 
-      
 
   def onShiftSliderWidgetChanged(self):
        self.updateParameterNodeFromGUI()
