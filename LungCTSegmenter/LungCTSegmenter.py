@@ -81,10 +81,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.inputVolume = None
       self.VolumeRenderingShift = 0
       self.volumeRenderingDisplayNode = None
-      #self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
-      #self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
-      self.batchProcessingInputDir = ""
-      self.batchProcessingOutputDir = ""
+      self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
+      self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
+      #self.batchProcessingInputDir = ""
+      #self.batchProcessingOutputDir = ""
       self.batchProcessingTestMode = False
       self.isNiiGzFormat = False
       
@@ -360,21 +360,29 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               if not os.path.exists(targetdir):
                   os.makedirs(targetdir)
 
-              #if self.isNiiGzFormat:
-              #    for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
-              #      volumeNode.AddDefaultStorageNode()
-              #      slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + ".nii.gz")
-
-              #    self.logic.outputSegmentation.AddDefaultStorageNode()
-              #    slicer.util.saveNode(self.logic.outputSegmentation, targetdir + "lungsegmentation.nii.gz")
-              #else: 
-              sceneSaveFilename = targetdir + "CT_seg.mrb"
-              self.showStatusMessage("Writing mrb output (input file " + str(counter) +  "/" + str(filesToProcess) + ") to '" + sceneSaveFilename + "' ...")
-              print('Saving scene to ' + sceneSaveFilename)
-              if slicer.util.saveScene(sceneSaveFilename):
-                logging.info("Scene saved to: {0}".format(sceneSaveFilename))
-              else:
-                logging.error("Scene saving failed") 
+              if self.isNiiGzFormat:
+                  self.showStatusMessage("Writing NIFTI outputs for input file " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
+                  for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
+                    volumeNode.AddDefaultStorageNode()
+                    slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + "_source.nii.gz")
+                  numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
+                  for i in range(numberOfSegments):
+                      segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
+                      labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+                      segID = self.logic.outputSegmentation.GetSegmentation().GetSegmentIdBySegment(segment)
+                      strArr = [str(segID)]                      
+                      slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode (self.logic.outputSegmentation, strArr, labelmapVolumeNode, self.logic.inputVolume)
+                      labelmapVolumeNode.AddDefaultStorageNode()
+                      slicer.util.saveNode(labelmapVolumeNode, targetdir + segment.GetName().replace(" ", "_") + ".seg.nii.gz")
+                      slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
+              else: 
+                  sceneSaveFilename = targetdir + "CT_seg.mrb"
+                  self.showStatusMessage("Writing mrb output for input file " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
+                  print('Saving scene to ' + sceneSaveFilename)
+                  if slicer.util.saveScene(sceneSaveFilename):
+                    logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+                  else:
+                    logging.error("Scene saving failed") 
 
               # let slicer process events and update its display
               slicer.app.processEvents()

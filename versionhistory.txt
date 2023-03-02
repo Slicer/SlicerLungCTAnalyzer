@@ -161,5 +161,8 @@ add SlicerTotalSegmentator support
 
 V 2.62
 Lung CT Analyzer: add lobe analysis
- 
+
+V 2.64
+
+ENH: add optional NIFTI input and output in Lung CT Segmenter batch processing 
  

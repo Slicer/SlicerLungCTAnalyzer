@@ -535,10 +535,10 @@
         <item row="3" column="1">
          <widget class="QCheckBox" name="niigzFormatCheckBox">
           <property name="toolTip">
-           <string>CT.nrdd, each in a seperate subfolder, is the normal input format expected by batch processing. In case this is checked, batch processing expects ct.nii.gz in seperate subfolders  as input files. </string>
+           <string>CT.nrdd, each in a seperate subfolder, is the normal input format expected by batch processing. In case this is checked, batch processing expects ct.nii.gz in seperate subfolders as input files. Output will be generated in NIFTI format. </string>
           </property>
           <property name="text">
-           <string>Input is *.nii.gz</string>
+           <string>Input is NIFTI format (*.nii.gz)</string>
           </property>
          </widget>
         </item>
