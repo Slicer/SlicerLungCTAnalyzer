@@ -81,6 +81,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.inputVolume = None
       self.VolumeRenderingShift = 0
       self.volumeRenderingDisplayNode = None
+      # for testing
       #self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
       #self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
       self.batchProcessingInputDir = ""
@@ -320,9 +321,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
-              filesToProcess += 1
-              if self.batchProcessingTestMode: 
-                print("Input file '" + filename + "' detected ...")
+              # input data must be in subdirectories of self.batchProcessingInputDir
+              if pathhead != self.batchProcessingInputDir:
+                  filesToProcess += 1
+                  if self.batchProcessingTestMode: 
+                    print("Input file '" + filename + "' detected ...")
+      
+      if filesToProcess == 0: 
+          slicer.util.messageBox("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
+          raise ValueError("No files to process. Each input file must be placed in a singular separate subdirectory of the input folder.")
 
 
       minutesRequired = filesToProcess * 180 / 60
@@ -343,7 +350,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           filesToProcess = 3
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
-          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
+          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
               slicer.mrmlScene.Clear(0)
               self.inputVolume = slicer.util.loadVolume(filename)
@@ -356,7 +363,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
               outpathhead, outpathtail = os.path.split(pathhead)
 
-              targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"              
+              targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
               if not os.path.exists(targetdir):
                   os.makedirs(targetdir)
 

@@ -597,7 +597,7 @@
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Run Lung CT Segmenter in batch processing mode. The input data directory will be recursively scanned for input files and segmented with options defined under &quot;Segmentation&quot;. &quot;*Use AI&quot; must be enabled and an appropriate AI engine must be selected in order to use batch processing.  Result files and CSV summary data will be written to the output directory. Depending on your input data and hardware, the process may run for hours.  </string>
+         <string>Run Lung CT Segmenter in batch processing mode. Each dataset must be present in a singular subfolder of the input folder. The input data directory will be recursively scanned for input files and segmented with options defined under &quot;Segmentation&quot;. &quot;*Use AI&quot; must be enabled and an appropriate AI engine must be selected in order to use batch processing.  Result files  will be written to the output directory in directories using the input subfolder names. Depending on your input data and hardware, the process may run for hours.  </string>
         </property>
         <property name="text">
          <string>Batch process</string>
