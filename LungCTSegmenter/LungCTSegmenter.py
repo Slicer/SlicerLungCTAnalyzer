@@ -81,10 +81,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.inputVolume = None
       self.VolumeRenderingShift = 0
       self.volumeRenderingDisplayNode = None
-      self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
-      self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
-      #self.batchProcessingInputDir = ""
-      #self.batchProcessingOutputDir = ""
+      #self.batchProcessingInputDir = "D:/Data/OpenSourceCOVIDData/"
+      #self.batchProcessingOutputDir = "D:/Data/OpenSourceCOVIDData/Segmented"
+      self.batchProcessingInputDir = ""
+      self.batchProcessingOutputDir = ""
       self.batchProcessingTestMode = False
       self.isNiiGzFormat = False
       
@@ -361,7 +361,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                   os.makedirs(targetdir)
 
               if self.isNiiGzFormat:
-                  self.showStatusMessage("Writing NIFTI outputs for input file " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
+                  self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
                   for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
                     volumeNode.AddDefaultStorageNode()
                     slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + "_source.nii.gz")
@@ -377,7 +377,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
               else: 
                   sceneSaveFilename = targetdir + "CT_seg.mrb"
-                  self.showStatusMessage("Writing mrb output for input file " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
+                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
                   print('Saving scene to ' + sceneSaveFilename)
                   if slicer.util.saveScene(sceneSaveFilename):
                     logging.info("Scene saved to: {0}".format(sceneSaveFilename))
