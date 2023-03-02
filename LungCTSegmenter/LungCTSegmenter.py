@@ -359,6 +359,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"              
               if not os.path.exists(targetdir):
                   os.makedirs(targetdir)
+
+              #if self.isNiiGzFormat:
+              #    for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
+              #      volumeNode.AddDefaultStorageNode()
+              #      slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + ".nii.gz")
+
+              #    self.logic.outputSegmentation.AddDefaultStorageNode()
+              #    slicer.util.saveNode(self.logic.outputSegmentation, targetdir + "lungsegmentation.nii.gz")
+              #else: 
               sceneSaveFilename = targetdir + "CT_seg.mrb"
               self.showStatusMessage("Writing mrb output (input file " + str(counter) +  "/" + str(filesToProcess) + ") to '" + sceneSaveFilename + "' ...")
               print('Saving scene to ' + sceneSaveFilename)
