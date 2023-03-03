@@ -88,6 +88,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.batchProcessingOutputDir = ""
       self.batchProcessingTestMode = False
       self.isNiiGzFormat = False
+      self.batchProcessingIsCancelled = False
       
       
   
@@ -207,6 +208,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.updateIntensityButton.connect('clicked(bool)', self.onUpdateIntensityButton)
       self.ui.setDefaultButton.connect('clicked(bool)', self.onSetDefaultButton)
       self.ui.batchProcessingButton.connect('clicked(bool)', self.onBatchProcessingButton)
+      self.ui.cancelBatchProcessingButton.connect('clicked(bool)', self.onCancelBatchProcessingButton)
       
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
       self.ui.toggleVolumeRenderingVisibilityButton.connect('clicked(bool)', self.onToggleVolumeRenderingVisibilityButton)
@@ -289,11 +291,16 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       slicer.util.showStatusMessage(msg, timeoutMsec)
       slicer.app.processEvents()
 
+  def onCancelBatchProcessingButton(self):
+      print("Batch processing is cancelled by user.")
+      self.batchProcessingIsCancelled = True
+
   def showCriticalError(self, msg):
       slicer.util.messageBox(msg)
       raise ValueError(msg)
       
   def onBatchProcessingButton(self):
+      self.batchProcessingIsCancelled = False
       if self.batchProcessingInputDir == "":
           self.showCriticalError("No input directory given.")
       if self.batchProcessingOutputDir == "":
@@ -394,12 +401,18 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               # let slicer process events and update its display
               slicer.app.processEvents()
               time.sleep(3)
-
+      
+          if self.batchProcessingIsCancelled: 
+              break
           if self.batchProcessingTestMode and counter > 2:
               break
       stopWatchTime = time.time()
-      print('Batch processing completed in {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
-      self.showStatusMessage("Batch processing done.")
+      if self.batchProcessingIsCancelled: 
+          print('Batch processing cancelled after {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
+          self.showStatusMessage("Batch processing cancelled.")
+      else: 
+          print('Batch processing completed in {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
+          self.showStatusMessage("Batch processing done.")
 
 
   def onShiftSliderWidgetChanged(self):
