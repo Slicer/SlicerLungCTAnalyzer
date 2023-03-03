@@ -213,6 +213,33 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.toggleSegmentationVisibilityButton.connect('clicked(bool)', self.onToggleSegmentationVisibilityButton)
       self.ui.toggleVolumeRenderingVisibilityButton.connect('clicked(bool)', self.onToggleVolumeRenderingVisibilityButton)
       self.ui.engineAIComboBox.enabled = False
+      
+      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+      self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingInputFolder", "")      
+      self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingOutputFolder", "")
+         
+      
+      if settings.value("LungCtSegmenter/testModeCheckBoxChecked", "") == "True":
+        self.batchProcessingTestMode = True
+        self.ui.testModeCheckBox.checked = True
+      else: 
+        self.batchProcessingTestMode = False
+        self.ui.testModeCheckBox.checked = False
+
+      if settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", "") == "True":
+        self.isNiiGzFormat = True
+        self.ui.niigzFormatCheckBox.checked = True
+      else: 
+        self.isNiiGzFormat = False
+        self.ui.niigzFormatCheckBox.checked = False
+
+      if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") == "True":
+        self.smoothLungs = True
+        self.ui.smoothLungsCheckBox.checked = True
+      else: 
+        self.smoothLungs = False
+        self.ui.smoothLungsCheckBox.checked = False
+
       # Make sure parameter node is initialized (needed for module reload)
       
       self.initializeParameterNode()
@@ -225,9 +252,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
 
       self.ui.fastCheckBox.enabled = False
-      self.ui.smoothLungsCheckBox.enabled = True
+      self.ui.smoothLungsCheckBox.enabled = False
       self.ui.batchProcessingCollapsibleButton.collapsed = True
       self.ui.outputCollapsibleButton.collapsed = True
+      
+      
+
 
 
   def cleanup(self):
@@ -283,10 +313,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def onInputDirectoryPathLineEditChanged(self):
       self.batchProcessingInputDir = self.ui.inputDirectoryPathLineEdit.currentPath
+      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+      settings.setValue("LungCtSegmenter/batchProcessingInputFolder", self.ui.inputDirectoryPathLineEdit.currentPath);
 
   def onOutputDirectoryPathLineEditChanged(self):
       self.batchProcessingOutputDir = self.ui.outputDirectoryPathLineEdit.currentPath
-      
+      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+      settings.setValue("LungCtSegmenter/batchProcessingOutputFolder", self.ui.outputDirectoryPathLineEdit.currentPath);
+
   def showStatusMessage(self, msg, timeoutMsec=500):
       slicer.util.showStatusMessage(msg, timeoutMsec)
       slicer.app.processEvents()
@@ -643,10 +677,27 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
-      self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
-      self.batchProcessingTestMode = self.ui.testModeCheckBox.checked 
-      self.isNiiGzFormat = self.ui.niigzFormatCheckBox.checked 
       
+      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+      
+      self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
+      if self.batchProcessingTestMode: 
+        settings.setValue("LungCtSegmenter/testModeCheckBoxChecked", "True")
+      else: 
+        settings.setValue("LungCtSegmenter/testModeCheckBoxChecked", "False")
+        
+      self.isNiiGzFormat = self.ui.niigzFormatCheckBox.checked 
+      if self.isNiiGzFormat: 
+        settings.setValue("LungCtSegmenter/niigzFormatCheckBoxChecked", "True")
+      else: 
+        settings.setValue("LungCtSegmenter/niigzFormatCheckBoxChecked", "False")
+
+      self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
+      if self.smoothLungs: 
+        settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", "True");
+      else:       
+        settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", "False");
+        
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
