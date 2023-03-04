@@ -89,6 +89,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.batchProcessingTestMode = False
       self.isNiiGzFormat = False
       self.batchProcessingIsCancelled = False
+      self.normalizeData = False
       
       
   
@@ -215,19 +216,41 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.engineAIComboBox.enabled = False
       
       settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+
       self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingInputFolder", "")      
       self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingOutputFolder", "")
          
-               
-      self.batchProcessingTestMode = eval(settings.value("LungCtSegmenter/testModeCheckBoxChecked", ""))
-      self.ui.testModeCheckBox.checked = eval(settings.value("LungCtSegmenter/testModeCheckBoxChecked", ""))
+      if settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", "") != "":               
+        self.ui.LungThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))
+      if settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", "") != "":               
+        self.ui.LungThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", ""))
 
-      self.isNiiGzFormat = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
-      self.ui.niigzFormatCheckBox.checked = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
+      if settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", "") != "":               
+        self.ui.AirwayThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", ""))
+      if settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", "") != "":               
+        self.ui.AirwayThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", ""))
 
-      self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
-      self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
+      if settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", "") != "":               
+        self.ui.VesselThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", ""))
+      if settings.value("LungCtSegmenter/veselThresholdRangeMaximumValue", "") != "":               
+        self.ui.VesselThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMaximumValue", ""))
+
+      if settings.value("LungCtSegmenter/testModeCheckBoxChecked", "") != "":               
+          self.batchProcessingTestMode = eval(settings.value("LungCtSegmenter/testModeCheckBoxChecked", ""))
+          self.ui.testModeCheckBox.checked = eval(settings.value("LungCtSegmenter/testModeCheckBoxChecked", ""))
+
+      if settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", "") != "":
+        self.isNiiGzFormat = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
+        self.ui.niigzFormatCheckBox.checked = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
+
+      if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") != "":
+          self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
+          self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
       
+      if settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", "") != "":
+          self.normalizeData = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
+          self.ui.normalizeDataCheckBox.checked = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
+
       # Make sure parameter node is initialized (needed for module reload)
       
       self.initializeParameterNode()
@@ -243,8 +266,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.smoothLungsCheckBox.enabled = False
       self.ui.batchProcessingCollapsibleButton.collapsed = True
       self.ui.outputCollapsibleButton.collapsed = True
-      
-      
+      self.ui.normalizeDataCheckBox.enabled = False
 
 
 
@@ -294,7 +316,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.LungThresholdRangeWidget.minimumValue = -1500
       self.ui.LungThresholdRangeWidget.maximumValue = -400
       self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
-      self.ui.AirwayThresholdRangeWidget.maximumValue = -850
+      self.ui.AirwayThresholdRangeWidget.maximumValue = -700
       self.ui.VesselThresholdRangeWidget.minimumValue = -0
       self.ui.VesselThresholdRangeWidget.maximumValue = 3000
       self.updateParameterNodeFromGUI()
@@ -596,6 +618,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
+      self.ui.normalizeDataCheckBox.checked = self.normalizeData
+      
       self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
       self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
       self.ui.shrinkMasksCheckBox.checked = self.shrinkMasks
@@ -652,21 +676,27 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
+      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+
       self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
       self.VolumeRenderingShift = self.ui.VolumeRenderingShiftSliderWidget.value
       self.logic.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
+      settings.setValue("LungCtSegmenter/lungThresholdRangeMinimumValue", str(self.ui.LungThresholdRangeWidget.minimumValue))
       self.logic.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
+      settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.LungThresholdRangeWidget.maximumValue))
       self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
+      settings.setValue("LungCtSegmenter/airwayThresholdRangeMinimumValue", str(self.ui.AirwayThresholdRangeWidget.minimumValue))
       self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
+      settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.AirwayThresholdRangeWidget.maximumValue))
       self.logic.vesselThresholdMin = self.ui.VesselThresholdRangeWidget.minimumValue
+      settings.setValue("LungCtSegmenter/vesselThresholdRangeMinimumValue", str(self.ui.VesselThresholdRangeWidget.minimumValue))
       self.logic.vesselThresholdMax = self.ui.VesselThresholdRangeWidget.maximumValue
+      settings.setValue("LungCtSegmenter/vesselThresholdRangeMaximumValue", str(self.ui.VesselThresholdRangeWidget.maximumValue))
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
-      
-      settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
       
       self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
       settings.setValue("LungCtSegmenter/testModeCheckBoxChecked", str(self.batchProcessingTestMode))
@@ -677,6 +707,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
       settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", str(self.smoothLungs))
         
+      self.normalizeData = self.ui.normalizeDataCheckBox.checked 
+      settings.setValue("LungCtSegmenter/normalizeDataCheckBoxChecked", str(self.normalizeData))
+
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
       self.detailedMasks = self.ui.detailedMasksCheckBox.checked 
@@ -686,8 +719,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       if self.logic.engineAI.find("TotalSegmentator") == 0:            
           self.ui.fastCheckBox.enabled = True
+          self.ui.normalizeDataCheckBox.enabled = True
       else:
           self.ui.fastCheckBox.enabled = False
+          self.ui.normalizeDataCheckBox.enabled = False
       
       if self.useAI:
         self.ui.LungThresholdRangeWidget.enabled = False
@@ -865,6 +900,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.smoothLungs = True
           self.logic.fastOption = self.fastOption
           self.logic.smoothLungs = self.smoothLungs
+          self.logic.normalizeData = self.normalizeData
+          
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
           # always save a copy of the current markups in Slicer temp dir for later use
@@ -1149,6 +1186,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.useAI = False
         self.create3D = True
         self.smoothLungs = True
+        self.normalizeData = False
         self.removeAIOutputData = False
         self.fastOption = False
         self.engineAI = "None"
@@ -1244,6 +1282,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def inputVolume(self, node):
         self.getParameterNode().SetNodeReferenceID("InputVolume", node.GetID() if node else None)
 
+    @property
+    def normalizedInputVolume(self):
+        return self.getParameterNode().GetNodeReference("NormalizedInputVolume")
+
+    @normalizedInputVolume.setter
+    def normalizedInputVolume(self, node):
+        self.getParameterNode().SetNodeReferenceID("NormalizedInputVolume", node.GetID() if node else None)
+ 
     @property
     def outputSegmentation(self):
         return self.getParameterNode().GetNodeReference("OutputSegmentation")
@@ -1691,14 +1737,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.util.updateSegmentBinaryLabelmapFromArray(segment_np, outputSegmentation, segmentId, inputVolume)
 
 
-    def normalizeImageHU(self, img, air, fat):
+    def normalizeImageHU(self, img, air, muscle):
         air_HU = -1000
-        fat_HU = -100
+        # fat_HU = -100
+        muscle_HU = 30
         
-        delta_air_fat_HU = abs(air_HU - fat_HU)
+        delta_air_muscle_HU = abs(air_HU - muscle_HU)
         delta_air = abs(air - air_HU)
-        delta_fat_air_rgb = abs(fat - air)
-        ratio = delta_air_fat_HU / delta_fat_air_rgb
+        delta_muscle_air_rgb = abs(muscle - air)
+        ratio = delta_air_muscle_HU / delta_muscle_air_rgb
         
         img = img - air
         img = img * ratio
@@ -2106,12 +2153,47 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     for i in range(1, 13):
                         self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, self.tsOutputSegmentation, self.ribColor, False)
 
+                if self.normalizeData: 
+                
+                    import SegmentStatistics
+            
+                    segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+                  
+                    segStatLogic.getParameterNode().SetParameter("Segmentation", self.tsOutputSegmentation.GetID())
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+                    segStatLogic.computeStatistics()
+                    stats = segStatLogic.getStatistics()
+                    
+                    # Get mean HU of each segment, use trachea (air = -1000) and left ileopsoaic muscle (muscle = 30) for normalization
+                    air = 0.
+                    muscle = 0.
+                    for segmentId in stats["SegmentIDs"]:
+                        mean_hu = stats[segmentId,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                        segmentName = self.tsOutputSegmentation.GetSegmentation().GetSegment(segmentId).GetName()
+                        # print(f"{segmentName} mean = {mean_hu} HU")
+                        if segmentName == "trachea": 
+                            air = mean_hu
+                        if segmentName == "left iliopsoas muscle": 
+                            muscle = mean_hu
+                    print(f"air = {air} HU")
+                    print(f"muscle = {muscle} HU")
+
+                    self.normalizedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_normalized")
+                    img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
+                    img_normalized = self.normalizeImageHU(img, air, muscle)
+                    sitkUtils.PushVolumeToSlicer(img_normalized, self.normalizedInputVolumeNode)
+
+                    print(f"Normalized volume creatwd.")
+
                 if self.removeAIOutputData: 
                     if self.tsOutputSegmentation: 
                         slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
                     if self.tsOutputExtendedSegmentation: 
                         slicer.mrmlScene.RemoveNode(self.tsOutputExtendedSegmentation)
-                                
+                                                        
                 logging.info("Segmentation done.")
                 
             elif self.engineAI.find("MONAILabel") == 0:
@@ -2532,7 +2614,7 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         #logic.process(inputVolume, -1000.,-200.,False)
         resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
-        # Compute stats
+        # Compute statistics
         import SegmentStatistics
         
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()

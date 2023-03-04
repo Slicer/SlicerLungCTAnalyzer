@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>1141</height>
+    <height>1143</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -793,6 +793,9 @@
        <widget class="QCheckBox" name="normalizeDataCheckBox">
         <property name="enabled">
          <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Check this to create a normalized copy of the input volume in the scene when using TotalSegmentator AI. The normalization function will use mean HU of &quot;trachea&quot; to define &quot;air&quot; (-1000 HU) and mean HU of &quot;left ileopsoas muscle&quot; to define &quot;muscle&quot; (30 HU) and  all voxels in the numpy array of the normalized volume will be adapted. </string>
         </property>
         <property name="text">
          <string>Normalize data</string>
