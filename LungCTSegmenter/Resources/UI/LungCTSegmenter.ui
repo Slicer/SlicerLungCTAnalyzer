@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>1112</height>
+    <height>1141</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -519,56 +519,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="ctkPathLineEdit" name="outputDirectoryPathLineEdit">
-          <property name="toolTip">
-           <string>Specify the output data directory for batch processing</string>
-          </property>
-          <property name="filters">
-           <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
-          </property>
-          <property name="options">
-           <set>ctkPathLineEdit::ShowDirsOnly</set>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QCheckBox" name="niigzFormatCheckBox">
-          <property name="toolTip">
-           <string>CT.nrdd, each in a seperate subfolder, is the normal input format expected by batch processing. In case this is checked, batch processing expects ct.nii.gz in seperate subfolders as input files. Output will be generated in NIFTI format. </string>
-          </property>
-          <property name="text">
-           <string>Input is NIFTI format (*.nii.gz)</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="testModeCheckBox">
-          <property name="toolTip">
-           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
-          </property>
-          <property name="text">
-           <string>Testmode: segment three cases from input folder</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QCheckBox" name="normalizeDataCheckBox">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Normalize data</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>Output folder: </string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="ctkPathLineEdit" name="inputDirectoryPathLineEdit">
           <property name="toolTip">
@@ -582,10 +532,43 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_13">
+        <item row="1" column="1">
+         <widget class="ctkPathLineEdit" name="outputDirectoryPathLineEdit">
+          <property name="toolTip">
+           <string>Specify the output data directory for batch processing</string>
+          </property>
+          <property name="filters">
+           <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
+          </property>
+          <property name="options">
+           <set>ctkPathLineEdit::ShowDirsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="testModeCheckBox">
+          <property name="toolTip">
+           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
+          </property>
           <property name="text">
-           <string/>
+           <string>Testmode: segment three cases from input folder</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Output folder: </string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="niigzFormatCheckBox">
+          <property name="toolTip">
+           <string>CT.nrdd, each in a seperate subfolder, is the normal input format expected by batch processing. In case this is checked, batch processing expects ct.nii.gz in seperate subfolders as input files. Output will be generated in NIFTI format. </string>
+          </property>
+          <property name="text">
+           <string>Input is NIFTI format (*.nii.gz)</string>
           </property>
          </widget>
         </item>
@@ -776,7 +759,7 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
+      <item row="8" column="0">
        <widget class="QCheckBox" name="shrinkMasksCheckBox">
         <property name="toolTip">
          <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
@@ -786,7 +769,7 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
+      <item row="9" column="0">
        <widget class="QCheckBox" name="fastCheckBox">
         <property name="toolTip">
          <string>Try this on systems with low GPU memory (&lt; 7GB)</string>
@@ -796,13 +779,23 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
+      <item row="10" column="0">
        <widget class="QCheckBox" name="smoothLungsCheckBox">
         <property name="toolTip">
          <string>Smooth AI generated lungs and lobes. Prolongs processing and is on by default.  </string>
         </property>
         <property name="text">
          <string>Smooth lungs and lobes</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="normalizeDataCheckBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>Normalize data</string>
         </property>
        </widget>
       </item>
