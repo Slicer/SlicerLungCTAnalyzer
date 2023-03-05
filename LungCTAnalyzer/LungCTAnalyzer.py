@@ -103,6 +103,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.batchProcessingIsCancelled = False
         self.csvOnly = False
         self.useNormalizedCT = False
+        self.lobeAnalysis = False
+        self.areaAnalysis = False
         
 
 
@@ -188,6 +190,31 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtAnalyzer/batchProcessingInputFolder", "")      
         self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtAnalyzer/batchProcessingOutputFolder", "")
+
+        if settings.value("LungCtAnalyzer/BullaRangeWidgetMinimumValue", "") != "":               
+            self.ui.BullaRangeWidget.minimumValue =  float(settings.value("LungCtAnalyzer/BullaRangeWidgetMinimumValue", ""))
+        if settings.value("LungCtAnalyzer/BullaRangeMaximumValue", "") != "":               
+            self.ui.BullaRangeWidget.maximumValue =  float(settings.value("LungCtAnalyzer/BullaRangeWidgetMaximumValue", ""))
+
+        if settings.value("LungCtAnalyzer/InflatedRangeWidgetMinimumValue", "") != "":               
+            self.ui.InflatedRangeWidget.minimumValue =  float(settings.value("LungCtAnalyzer/InflatedRangeWidgetMinimumValue", ""))
+        if settings.value("LungCtAnalyzer/InflatedRangeMaximumValue", "") != "":               
+            self.ui.InflatedRangeWidget.maximumValue =  float(settings.value("LungCtAnalyzer/InflatedRangeWidgetMaximumValue", ""))
+
+        if settings.value("LungCtAnalyzer/InfiltratedRangeWidgetMinimumValue", "") != "":               
+            self.ui.InfiltratedRangeWidget.minimumValue =  float(settings.value("LungCtAnalyzer/InfiltratedRangeWidgetMinimumValue", ""))
+        if settings.value("LungCtAnalyzer/InfiltratedRangeMaximumValue", "") != "":               
+            self.ui.InfiltratedRangeWidget.maximumValue =  float(settings.value("LungCtAnalyzer/InfiltratedRangeWidgetMaximumValue", ""))
+
+        if settings.value("LungCtAnalyzer/CollapsedRangeWidgetMinimumValue", "") != "":               
+            self.ui.CollapsedRangeWidget.minimumValue =  float(settings.value("LungCtAnalyzer/CollapsedRangeWidgetMinimumValue", ""))
+        if settings.value("LungCtAnalyzer/CollapsedRangeMaximumValue", "") != "":               
+            self.ui.CollapsedRangeWidget.maximumValue =  float(settings.value("LungCtAnalyzer/CollapsedRangeWidgetMaximumValue", ""))
+
+        if settings.value("LungCtAnalyzer/VesselsRangeWidgetMinimumValue", "") != "":               
+            self.ui.VesselsRangeWidget.minimumValue =  float(settings.value("LungCtAnalyzer/VesselsRangeWidgetMinimumValue", ""))
+        if settings.value("LungCtAnalyzer/VesselsRangeMaximumValue", "") != "":               
+            self.ui.VesselsRangeWidget.maximumValue =  float(settings.value("LungCtAnalyzer/VesselsRangeWidgetMaximumValue", ""))
          
         if settings.value("LungCtAnalyzer/testModeCheckBoxChecked", "") != "":               
             self.batchProcessingTestMode = eval(settings.value("LungCtAnalyzer/testModeCheckBoxChecked", ""))
@@ -200,6 +227,14 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", "") != "":               
             self.useNormalizedCT = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
             self.ui.useNormalizedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
+
+        if settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", "") != "":               
+            self.lobeAnalysis = eval(settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", ""))
+            self.ui.lobeAnalysisCheckBox.checked = eval(settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", ""))
+
+        if settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", "") != "":               
+            self.areaAnalysis = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
+            self.ui.areaAnalysisCheckBox.checked = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
 
         # Report Dir
        
@@ -496,8 +531,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
-        self.ui.lobeAnalysisCheckBox.checked = self.logic.lobeAnalysis
-        self.ui.areaAnalysisCheckBox.checked = self.logic.areaAnalysis
+        self.ui.lobeAnalysisCheckBox.checked = self.lobeAnalysis
+        self.ui.areaAnalysisCheckBox.checked = self.areaAnalysis
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -557,6 +592,17 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         thresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
         self.logic.thresholds = thresholds
 
+        settings.setValue("LungCtAnalyzer/bullaRangeWidgetMinimumValue", str(self.ui.BullaRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/bullaRangeWidgetMaximumValue", str(self.ui.BullaRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/inflatedRangeWidgetMinimumValue", str(self.ui.InflatedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/inflatedRangeWidgetMaximumValue", str(self.ui.InflatedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/infiltratedRangeWidgetMinimumValue", str(self.ui.InfiltratedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/infiltratedRangeWidgetMaximumValue", str(self.ui.InfiltratedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/collapsedRangeWidgetMinimumValue", str(self.ui.CollapsedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/collapsedRangeWidgetMaximumValue", str(self.ui.CollapsedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/vesselsRangeWidgetMinimumValue", str(self.ui.VesselsRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/vesselsRangeWidgetMaximumValue", str(self.ui.VesselsRangeWidget.maximumValue))
+
         self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
         settings.setValue("LungCtAnalyzer/testModeCheckBoxChecked", str(self.batchProcessingTestMode))          
         self.csvOnly = self.ui.csvOnlyCheckBox.checked
@@ -572,8 +618,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.checkForUpdates = self.ui.checkForUpdatesCheckBox.checked
         
         self.logic.generateStatistics = self.ui.generateStatisticsCheckBox.checked
-        self.logic.lobeAnalysis = self.ui.lobeAnalysisCheckBox.checked
-        self.logic.areaAnalysis = self.ui.areaAnalysisCheckBox.checked
+        self.lobeAnalysis = self.ui.lobeAnalysisCheckBox.checked
+        settings.setValue("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", str(self.lobeAnalysis))
+        self.areaAnalysis = self.ui.areaAnalysisCheckBox.checked
+        settings.setValue("LungCtAnalyzer/areaAnalysisCheckBoxChecked", str(self.areaAnalysis))
         self.logic.countBullae = False
 
         self._parameterNode.EndModify(wasModified)
@@ -687,7 +735,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InflatedRangeWidget.minimum
         scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximum
         scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximum
-        self.setThresholds(self.getParameterNode(), scriptThresholds)
+        self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
 
         startWatchTime = time.time()
               
@@ -1046,6 +1094,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         try:
             # Compute output
             logging.info('Apply')
+            self.logic.lobeAnalysis = self.lobeAnalysis
+            self.logic.areaAnalysis = self.areaAnalysis
             self.logic.process()
 
             self.onShowResultsTable()
