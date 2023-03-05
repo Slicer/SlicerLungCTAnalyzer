@@ -2186,7 +2186,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     img_normalized = self.normalizeImageHU(img, air, muscle)
                     sitkUtils.PushVolumeToSlicer(img_normalized, self.normalizedInputVolumeNode)
 
-                    print(f"Normalized volume creatwd.")
+                    print(f"Normalized volume created.")
 
                 if self.removeAIOutputData: 
                     if self.tsOutputSegmentation: 

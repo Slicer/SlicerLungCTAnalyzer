@@ -1,5 +1,7 @@
 import os
 import unittest
+import glob
+import time
 import logging
 import vtk, qt, ctk, slicer
 import sys, subprocess
@@ -95,6 +97,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self._parameterNode = None
         self._updatingGUIFromParameterNode = False
         self.inputFilename = None
+        self.batchProcessingInputDir = ""
+        self.batchProcessingOutputDir = ""
+        self.batchProcessingTestMode = False
+        self.batchProcessingIsCancelled = False
+        self.csvOnly = False
+        self.useNormalizedCT = False
+        
 
 
     def setup(self):
@@ -150,6 +159,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+        self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.csvOnlyCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.useNormalizedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
         # Advanced options
         self.ui.checkForUpdatesCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -165,7 +177,30 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.loadThresholdsButton.connect('clicked(bool)', self.onLoadThresholdsButton)
         self.ui.createPDFReportButton.connect('clicked(bool)', self.onCreatePDFReportButton)
         
+        # Connect path selectors
+        self.ui.inputDirectoryPathLineEdit.connect('currentPathChanged(const QString&)', self.onInputDirectoryPathLineEditChanged)
+        self.ui.outputDirectoryPathLineEdit.connect('currentPathChanged(const QString&)', self.onOutputDirectoryPathLineEditChanged)
         
+        self.ui.batchProcessingButton.connect('clicked(bool)', self.onBatchProcessingButton)
+        self.ui.cancelBatchProcessingButton.connect('clicked(bool)', self.onCancelBatchProcessingButton)
+          
+        settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+
+        self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtAnalyzer/batchProcessingInputFolder", "")      
+        self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtAnalyzer/batchProcessingOutputFolder", "")
+         
+        if settings.value("LungCtAnalyzer/testModeCheckBoxChecked", "") != "":               
+            self.batchProcessingTestMode = eval(settings.value("LungCtAnalyzer/testModeCheckBoxChecked", ""))
+            self.ui.testModeCheckBox.checked = eval(settings.value("LungCtAnalyzer/testModeCheckBoxChecked", ""))
+
+        if settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", "") != "":               
+            self.csvOnly = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
+            self.ui.csvOnlyCheckBox.checked = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
+       
+        if settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", "") != "":               
+            self.useNormalizedCT = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
+            self.ui.useNormalizedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
+
         # Report Dir
        
         self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
@@ -455,6 +490,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.volumeRenderingPropertyNodeSelector.setCurrentNode(self.logic.volumeRenderingPropertyNode)
         self.ui.selectReportDirectoryButton.directory = self.reportFolder
 
+        self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
+        self.ui.csvOnlyCheckBox.checked = self.csvOnly
+        self.ui.useNormalizedCTCheckBox.checked = self.useNormalizedCT
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
@@ -501,6 +539,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
+        settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+  
         self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
         self.logic.inputSegmentation = self.ui.inputSegmentationSelector.currentNode()
         if self.logic.inputSegmentation:
@@ -516,6 +556,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         thresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
         thresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
         self.logic.thresholds = thresholds
+
+        self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
+        settings.setValue("LungCtAnalyzer/testModeCheckBoxChecked", str(self.batchProcessingTestMode))          
+        self.csvOnly = self.ui.csvOnlyCheckBox.checked
+        settings.setValue("LungCtAnalyzer/csvOnlyCheckBoxChecked", str(self.csvOnly))
+        self.useNormalizedCT = self.ui.useNormalizedCTCheckBox.checked
+        settings.setValue("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", str(self.useNormalizedCT))
 
         self.logic.lungMaskedVolume = self.ui.lungMaskedVolumeSelector.currentNode()
         self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
@@ -558,6 +605,159 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             volumeProperty = volumeRenderingPropertyNode.GetVolumeProperty()
             volumeProperty.GetScalarOpacity().DeepCopy(scalarOpacity)
             volumeProperty.GetRGBTransferFunction().DeepCopy(colorTransferFunction)
+
+
+    def onInputDirectoryPathLineEditChanged(self):
+        self.batchProcessingInputDir = self.ui.inputDirectoryPathLineEdit.currentPath
+        settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+        settings.setValue("LungCtAnalyzer/batchProcessingInputFolder", self.ui.inputDirectoryPathLineEdit.currentPath);
+
+    def onOutputDirectoryPathLineEditChanged(self):
+        self.batchProcessingOutputDir = self.ui.outputDirectoryPathLineEdit.currentPath
+        settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
+        settings.setValue("LungCtAnalyzer/batchProcessingOutputFolder", self.ui.outputDirectoryPathLineEdit.currentPath);
+
+    def showStatusMessage(self, msg, timeoutMsec=500):
+        slicer.util.showStatusMessage(msg, timeoutMsec)
+        slicer.app.processEvents()
+
+    def onCancelBatchProcessingButton(self):
+        print("Batch processing is cancelled by user.")
+        self.batchProcessingIsCancelled = True
+
+    def showCriticalError(self, msg):
+        slicer.util.messageBox(msg)
+        raise ValueError(msg)
+          
+    def onBatchProcessingButton(self):
+        self.batchProcessingIsCancelled = False
+        if self.batchProcessingInputDir == "":
+            self.showCriticalError("No input directory given.")
+        if self.batchProcessingOutputDir == "":
+            self.showCriticalError("No output directory given.")
+        if self.batchProcessingInputDir == self.batchProcessingOutputDir:
+            self.showCriticalError("Input and output directotry can not be the same path.")
+        if not os.path.exists(self.batchProcessingInputDir):
+            self.showCriticalError("Input folder does not exist.")
+
+        counter = 0
+        pattern = ''
+
+        pattern = '/' '**/*.mrb'
+              
+        filesToProcess = 0
+        for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+            pathhead, pathtail = os.path.split(filename)
+            if (pathtail == "CT_seg.mrb"):
+                # input data must be in subdirectories of self.batchProcessingInputDir
+                if pathhead == self.batchProcessingInputDir:
+                    self.showCriticalError("Unsupported data structure: Data files in input folder detected, they must be placed in subfolders.")
+                # input data must be in immediate child directory of self.batchProcessingInputDir
+                parentDir = os.path.dirname(pathhead)
+                if parentDir != self.batchProcessingInputDir:
+                    self.showCriticalError("Unsupported data structure: There seem to be input data in sub-subfolders of the input folder. Only one subfolder dimension is allowed.")
+                filesToProcess += 1
+                if self.batchProcessingTestMode: 
+                  print("Input file '" + filename + "' detected ...")
+          
+        if filesToProcess == 0: 
+            self.showCriticalError("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
+
+        minutesRequired = filesToProcess * 20 / 60
+          
+        if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each segmentation takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
+            logging.info('Batch processing cancelled by user.')
+            return
+
+        if self.batchProcessingTestMode and filesToProcess < 3:
+            self.showCriticalError("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
+
+
+        scriptThresholds = {
+            'thresholdBullaLower': -1050.,
+            'thresholdBullaInflated': -950.,
+            'thresholdInflatedInfiltrated': -750.,
+            'thresholdInfiltratedCollapsed': -400.,
+            'thresholdCollapsedVessels': 0.,
+            'thresholdVesselsUpper': 3000.,
+            }
+        scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimum
+        scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximum
+        scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.minimum
+        scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InflatedRangeWidget.minimum
+        scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximum
+        scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximum
+        self.setThresholds(self.getParameterNode(), scriptThresholds)
+
+        startWatchTime = time.time()
+              
+        counter = 0
+        if self.batchProcessingTestMode:
+            filesToProcess = 3
+        for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+            pathhead, pathtail = os.path.split(filename)
+            if (pathtail == "CT_seg.mrb") and pathhead != self.batchProcessingInputDir:
+                counter += 1
+                slicer.mrmlScene.Clear(0)
+                slicer.util.loadScene(filename) 
+                if self.useNormalizedCT: 
+                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_normalized")
+                    # to prevent crash
+                    ctVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
+                    if ctVolumeNode: 
+                        slicer.mrmlScene.RemoveNode(ctVolumeNode)
+                else: 
+                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
+                if firstVolumeNode:
+                    self.logic.inputVolume = firstVolumeNode
+                else: 
+                    raise ValueError("No input volume.")
+                if not self.logic.inputSegmentation:
+                    segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
+                    if segNode:
+                        self.logic.inputSegmentation = segNode                    
+
+                print("Analyzing '" + filename + "' ...")
+                self.onApplyButton()
+
+                outpathhead, outpathtail = os.path.split(pathhead)
+
+                targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
+                if not os.path.exists(targetdir):
+                    os.makedirs(targetdir)
+                    
+                print('Saving CSV data to ' + self.batchProcessingOutputDir)
+                self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv", filename, counter, outpathtail)
+                print('Saving CSV data to ' + self.batchProcessingOutputDir)
+                self.logic.saveExtendedRegionDataToFile(self.batchProcessingOutputDir + "/regionResults.csv", filename, counter, outpathtail)
+                print('Saving CSV data to ' + self.batchProcessingOutputDir)
+                self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filename, counter, outpathtail)
+
+                if not self.csvOnly:
+                    sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
+                    self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
+                    print('Saving scene to ' + sceneSaveFilename)
+                    if slicer.util.saveScene(sceneSaveFilename):
+                      logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+                    else:
+                      logging.error("Scene saving failed") 
+
+                # let slicer process events and update its display
+                slicer.app.processEvents()
+                time.sleep(3)
+          
+            if self.batchProcessingIsCancelled: 
+                break
+            if self.batchProcessingTestMode and counter > 2:
+                break
+        stopWatchTime = time.time()
+        if self.batchProcessingIsCancelled: 
+            print('Batch processing cancelled after {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
+            self.showStatusMessage("Batch processing cancelled.")
+        else: 
+            print('Batch processing completed in {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
+            self.showStatusMessage("Batch processing done.")
+
 
     def onInputSegmentationSelected(self, segmentationNode):
 

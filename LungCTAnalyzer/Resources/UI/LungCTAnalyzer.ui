@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>1008</height>
+    <height>1160</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -225,13 +225,13 @@
          <double>10.000000000000000</double>
         </property>
         <property name="minimum">
-         <double>-1050.000000000000000</double>
+         <double>-1200.000000000000000</double>
         </property>
         <property name="maximum">
          <double>1000.000000000000000</double>
         </property>
         <property name="minimumValue">
-         <double>-1030.000000000000000</double>
+         <double>-1200.000000000000000</double>
         </property>
         <property name="maximumValue">
          <double>-900.000000000000000</double>
@@ -254,7 +254,7 @@
          <double>10.000000000000000</double>
         </property>
         <property name="minimum">
-         <double>-1000.000000000000000</double>
+         <double>-1100.000000000000000</double>
         </property>
         <property name="maximum">
          <double>1000.000000000000000</double>
@@ -714,6 +714,133 @@
     </spacer>
    </item>
    <item>
+    <widget class="ctkCollapsibleButton" name="batchProcessingCollapsibleButton">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text">
+      <string>Batch processing</string>
+     </property>
+     <property name="collapsed">
+      <bool>false</bool>
+     </property>
+     <layout class="QFormLayout" name="formLayout_3">
+      <item row="0" column="0" colspan="2">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>3</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>4</number>
+        </property>
+        <item row="1" column="1">
+         <widget class="ctkPathLineEdit" name="outputDirectoryPathLineEdit">
+          <property name="toolTip">
+           <string>Specify the output data directory for batch processing</string>
+          </property>
+          <property name="filters">
+           <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
+          </property>
+          <property name="options">
+           <set>ctkPathLineEdit::ShowDirsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="ctkPathLineEdit" name="inputDirectoryPathLineEdit">
+          <property name="toolTip">
+           <string>Specify the input data directory for batch processing</string>
+          </property>
+          <property name="filters">
+           <set>ctkPathLineEdit::Dirs|ctkPathLineEdit::Drives|ctkPathLineEdit::Executable|ctkPathLineEdit::NoDot|ctkPathLineEdit::NoDotDot|ctkPathLineEdit::Readable</set>
+          </property>
+          <property name="options">
+           <set>ctkPathLineEdit::ShowDirsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Output folder: </string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Input folder:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="testModeCheckBox">
+          <property name="toolTip">
+           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
+          </property>
+          <property name="text">
+           <string>Testmode: analyze three cases from input folder</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="csvOnlyCheckBox">
+          <property name="toolTip">
+           <string>Do not write CT_seg_analyzed mrb file, just add data to the CSV file. </string>
+          </property>
+          <property name="text">
+           <string>Write CSV results only</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QCheckBox" name="useNormalizedCTCheckBox">
+          <property name="toolTip">
+           <string>Use the normalized CT in the input dataset if present</string>
+          </property>
+          <property name="text">
+           <string>use normalized CT</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="cancelBatchProcessingButton">
+        <property name="toolTip">
+         <string>Press this button several time to cancel batch processing. </string>
+        </property>
+        <property name="text">
+         <string>Cancel batch processing</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="batchProcessingButton">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Run Lung CT Analyzer in batch processing mode. Each dataset must be present in a singular subfolder of the input folder. The input data directory will be recursively scanned for input files and analyzed  with options defined. &quot;*Use AI&quot; must be enabled and an appropriate AI engine must be selected in order to use batch processing.  Result files  will be written to the output directory in directories using the input subfolder names. Depending on your input data and hardware, the process may take a minute for each case.  </string>
+        </property>
+        <property name="text">
+         <string>Batch process</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="ctkCollapsibleButton" name="otutputOptionsCollapsibleButton">
      <property name="text">
       <string>Advanced</string>
@@ -923,6 +1050,11 @@
    <class>ctkDirectoryButton</class>
    <extends>QWidget</extends>
    <header>ctkDirectoryButton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ctkPathLineEdit</class>
+   <extends>QWidget</extends>
+   <header>ctkPathLineEdit.h</header>
   </customwidget>
   <customwidget>
    <class>ctkRangeWidget</class>
