@@ -740,11 +740,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         startWatchTime = time.time()
               
         counter = 0
+        durationProcess = 0
         if self.batchProcessingTestMode:
             filesToProcess = 3
         for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
             pathhead, pathtail = os.path.split(filename)
             if (pathtail == "CT_seg.mrb") and pathhead != self.batchProcessingInputDir:
+                startProcessWatchTime = time.time()
                 counter += 1
                 slicer.mrmlScene.Clear(0)
                 slicer.util.loadScene(filename) 
@@ -783,12 +785,15 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
                 if not self.csvOnly:
                     sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
-                    self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
+                    self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
                     print('Saving scene to ' + sceneSaveFilename)
                     if slicer.util.saveScene(sceneSaveFilename):
                       logging.info("Scene saved to: {0}".format(sceneSaveFilename))
                     else:
                       logging.error("Scene saving failed") 
+    
+                stopProcessWatchTime = time.time()
+                durationProcess = stopProcessWatchTime - startProcessWatchTime
 
                 # let slicer process events and update its display
                 slicer.app.processEvents()
@@ -2796,11 +2801,6 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                 newSeg = self.outputSegmentation.GetSegmentation().GetSegment(newSegId)
                 newSeg.DeepCopy(sourceSeg)
             
-            if numberLobesFound < 5:
-                self.progressbar.close()
-                raise ValueError("Lobe analysis was requested, but only " + str(numberLobesFound) + " lobes found (5 expected) in input segmentation.")
-
-
             lobeName = "upper lobe"
             side = "right"
             self.showProgress("Analyzing " + side + " " + lobeName + " ...")

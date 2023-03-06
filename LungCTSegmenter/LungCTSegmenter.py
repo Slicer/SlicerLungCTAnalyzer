@@ -397,12 +397,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       startWatchTime = time.time()
           
       counter = 0
+      durationProcess = 0
       if self.batchProcessingTestMode:
           filesToProcess = 3
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
+              startProcessWatchTime = time.time()
               slicer.mrmlScene.Clear(0)
               self.inputVolume = slicer.util.loadVolume(filename)
 
@@ -435,12 +437,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
               else: 
                   sceneSaveFilename = targetdir + "CT_seg.mrb"
-                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + sceneSaveFilename + "' ...")
+                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (with {0:.2f} seconds".format(durationProcess) + " per process) to '" + sceneSaveFilename + "' ...")
                   print('Saving scene to ' + sceneSaveFilename)
                   if slicer.util.saveScene(sceneSaveFilename):
                     logging.info("Scene saved to: {0}".format(sceneSaveFilename))
                   else:
                     logging.error("Scene saving failed") 
+              stopProcessWatchTime = time.time()
+              durationProcess = stopProcessWatchTime - startProcessWatchTime
+              
 
               # let slicer process events and update its display
               slicer.app.processEvents()
