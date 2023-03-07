@@ -2168,6 +2168,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     segStatLogic.getParameterNode().SetParameter("Segmentation", self.tsOutputSegmentation.GetID())
                     segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
                     segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
                     segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
                     segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
                     segStatLogic.computeStatistics()
@@ -2176,14 +2177,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
                     air = 0.
                     muscle = 0.
-                    for segmentId in stats["SegmentIDs"]:
-                        mean_hu = stats[segmentId,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                        segmentName = self.tsOutputSegmentation.GetSegmentation().GetSegment(segmentId).GetName()
-                        # print(f"{segmentName} mean = {mean_hu} HU")
-                        if segmentName == "trachea": 
-                            air = mean_hu
-                        if segmentName == "left erector spinae muscle": 
-                            muscle = mean_hu
+                    centroid_trachea = [0,0,0]
+                    
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+                    air = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                    muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    
                     print(f"air = {air} HU")
                     print(f"muscle = {muscle} HU")
 
@@ -2192,8 +2193,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                     img_normalized = self.normalizeImageHU(img, air, muscle)
                     sitkUtils.PushVolumeToSlicer(img_normalized, self.normalizedInputVolumeNode)
-
+                    
+                    if self.detailedAirways:
+                        # add one fiducial 
+                        self.tracheaFiducials.CreateDefaultDisplayNodes()
+                        self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
+                        
                     print(f"Normalized volume created.")
+
 
                 if self.removeAIOutputData: 
                     if self.tsOutputSegmentation: 
