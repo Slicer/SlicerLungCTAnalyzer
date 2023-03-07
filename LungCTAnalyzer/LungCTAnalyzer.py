@@ -1239,6 +1239,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.toggleOutputSegmentationVisibility3DPushButton.text = "Show output segments in 3D" 
 
     def onMaskedVolumeDisplay3D(self):
+        self.updateParameterNodeFromGUI()
+        if not self.logic.inputVolume or not self.logic.inputSegmentation: 
+            slicer.util.messageBox("Input volume or input segmentation missing.")
+            raise ValueError("No input volume or segmentation.")
         # Make sure the masked volume is up-to-date
         self.logic.createMaskedVolume()
 
@@ -1281,6 +1285,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     def onMaskedVolumeDisplay2D(self):
+        self.updateParameterNodeFromGUI()
+        if not self.logic.inputVolume or not self.logic.inputSegmentation: 
+            slicer.util.messageBox("Input volume or input segmentation missing.")
+            raise ValueError("No input volume or segmentation.")
         self.logic.showLungMaskedVolumeIn2D = not self.logic.showLungMaskedVolumeIn2D
 
         if self.logic.showLungMaskedVolumeIn2D:
