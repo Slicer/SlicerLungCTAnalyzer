@@ -437,7 +437,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
               else: 
                   sceneSaveFilename = targetdir + "CT_seg.mrb"
-                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (with {0:.2f} seconds".format(durationProcess) + " per process) to '" + sceneSaveFilename + "' ...")
+                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
                   print('Saving scene to ' + sceneSaveFilename)
                   if slicer.util.saveScene(sceneSaveFilename):
                     logging.info("Scene saved to: {0}".format(sceneSaveFilename))
@@ -2162,6 +2162,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
                     import SegmentStatistics
             
+                    self.showStatusMessage('Data normalization: determine air and muscle HU ...')
                     segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
                   
                     segStatLogic.getParameterNode().SetParameter("Segmentation", self.tsOutputSegmentation.GetID())
@@ -2172,7 +2173,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     segStatLogic.computeStatistics()
                     stats = segStatLogic.getStatistics()
                     
-                    # Get mean HU of each segment, use trachea (air = -1000) and left ileopsoaic muscle (muscle = 30) for normalization
+                    # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
                     air = 0.
                     muscle = 0.
                     for segmentId in stats["SegmentIDs"]:
@@ -2181,11 +2182,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         # print(f"{segmentName} mean = {mean_hu} HU")
                         if segmentName == "trachea": 
                             air = mean_hu
-                        if segmentName == "left iliopsoas muscle": 
+                        if segmentName == "left erector spinae muscle": 
                             muscle = mean_hu
                     print(f"air = {air} HU")
                     print(f"muscle = {muscle} HU")
 
+                    self.showStatusMessage('Normalize data ...')
                     self.normalizedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_normalized")
                     img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                     img_normalized = self.normalizeImageHU(img, air, muscle)
