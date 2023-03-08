@@ -193,6 +193,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.niigzFormatCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.normalizeDataCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       for key, uiid in self.outputCheckBoxesDict.items():
         uiid.enabled = False
@@ -246,7 +247,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") != "":
           self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
           self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
-      
       if settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", "") != "":
           self.normalizeData = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
           self.ui.normalizeDataCheckBox.checked = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
@@ -595,10 +595,17 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.setInstructionPlaceMorePoints("left lung", 3, 6, leftLungF)
               self.ui.leftLungPlaceWidget.placeModeEnabled = True
               slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
-          elif tracheaF < 1 and (not self.useAI or self.createDetailedAirways):
-              self.setInstructionPlaceMorePoints("trachea", 0, 1, tracheaF)
-              self.ui.tracheaPlaceWidget.placeModeEnabled = True
-              slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
+          elif tracheaF < 1:
+              if self.useAI and not self.createDetailedAirways: 
+                 # no trachea markup needed, so skip placement
+                 pass
+              elif self.createDetailedAirways and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0:
+                 # markup will be generated from TS trachea centroid
+                 pass
+              else: 
+                  self.setInstructionPlaceMorePoints("trachea", 0, 1, tracheaF)
+                  self.ui.tracheaPlaceWidget.placeModeEnabled = True
+                  slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpGreenSliceView)
           else:
               if self.useAI:
                   self.setInstructions('Click "Apply" to finalize.')
@@ -722,7 +729,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.airwaySegmentationDetailLevel = self.ui.detailLevelComboBox.currentText
       self.logic.engineAI = self.ui.engineAIComboBox.currentText
       
-      if self.logic.engineAI.find("TotalSegmentator") == 0:            
+      if self.logic.engineAI.find("TotalSegmentator") == 0:
           self.ui.fastCheckBox.enabled = True
           self.ui.normalizeDataCheckBox.enabled = True
       else:
@@ -836,7 +843,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.ui.VolumeRenderingShiftSliderWidget.enabled = False
           # if AI checked and no airway segmentation planned no need to place markups so 
           # run processing immediately from the start button
-          if self.useAI and not self.createDetailedAirways:
+          if (self.useAI and not self.createDetailedAirways) or (self.useAI and self.createDetailedAirways and self.logic.engineAI.find("TotalSegmentator") == 0):
               self.runProcessing()
           qt.QApplication.restoreOverrideCursor()
       except Exception as e:
@@ -2163,9 +2170,27 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     import SegmentStatistics
             
                     self.showStatusMessage('Data normalization: determine air and muscle HU ...')
+                    
+                    tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
+                    tempSegmentationNode.CreateDefaultDisplayNodes()
+ 
+                    newSeg = slicer.vtkSegment()
+                    newSeg.SetName("trachea")
+                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"trachea")
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
+                    newSeg.SetName("trachea")
+
+                    newSeg = slicer.vtkSegment()
+                    newSeg.SetName("left erector spinae muscle")
+                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"left erector spinae muscle")
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
+                    newSeg.SetName("left erector spinae muscle")
+
                     segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
                   
-                    segStatLogic.getParameterNode().SetParameter("Segmentation", self.tsOutputSegmentation.GetID())
+                    segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
                     segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
                     segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
                     segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
@@ -2179,10 +2204,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     muscle = 0.
                     centroid_trachea = [0,0,0]
                     
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
                     centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
                     air = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
                     muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     
                     print(f"air = {air} HU")
@@ -2200,8 +2225,47 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
                         
                     print(f"Normalized volume created.")
+                    slicer.mrmlScene.RemoveNode(tempSegmentationNode)
 
 
+                if self.detailedAirways and not self.normalizeData: 
+
+                    import SegmentStatistics
+            
+                    self.showStatusMessage('Determine centroid of trachea ...')
+                    tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
+                    tempSegmentationNode.CreateDefaultDisplayNodes()
+ 
+                    newSeg = slicer.vtkSegment()
+                    newSeg.SetName("trachea")
+                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"trachea")
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
+                    newSeg.SetName("trachea")
+
+                    segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+                  
+                    segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+                    segStatLogic.computeStatistics()
+                    stats = segStatLogic.getStatistics()
+                    
+                    centroid_trachea = [0,0,0]
+                    
+                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+                    
+                    
+                    # add one fiducial 
+                    self.tracheaFiducials.CreateDefaultDisplayNodes()
+                    self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
+
+                    slicer.mrmlScene.RemoveNode(tempSegmentationNode)
+                        
                 if self.removeAIOutputData: 
                     if self.tsOutputSegmentation: 
                         slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
@@ -2266,9 +2330,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             else:
                 self.showStatusMessage('Airway segmentation ...')
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
-                self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
                 wasModified = self.outputSegmentation.StartModify()
-                self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
+                self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+                if self.normalizeData: 
+                    self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.normalizedInputVolumeNode)
+                    self.segmentEditorWidget.setSourceVolumeNode(self.normalizedInputVolumeNode)
+                else: 
+                    self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
+                    self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
                 # Trigger display update
                 self.outputSegmentation.Modified()
                 self.outputSegmentation.EndModify(wasModified)
