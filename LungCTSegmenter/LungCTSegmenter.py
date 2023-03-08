@@ -2332,7 +2332,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-                if self.normalizeData: 
+                if self.normalizeData and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0: 
                     self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.normalizedInputVolumeNode)
                     self.segmentEditorWidget.setSourceVolumeNode(self.normalizedInputVolumeNode)
                 else: 
