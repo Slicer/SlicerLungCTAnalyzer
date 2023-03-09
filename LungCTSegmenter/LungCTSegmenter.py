@@ -91,6 +91,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.batchProcessingIsCancelled = False
       self.normalizeData = False
       
+      self.lungThresholdMin = 0.
+      self.lungThresholdMax = 0. 
+      self.airwayThresholdMin = 0.
+      self.airwayThresholdMax = 0.
+      self.vesselThresholdMin = 0.
+      self.vesselThresholdMax = 0.
+
       
   
   class checkboxDetails: 
@@ -222,19 +229,19 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingOutputFolder", "")
          
       if settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", "") != "":               
-        self.ui.LungThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))
+        self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin =  float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))
+         
       if settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", "") != "":               
-        self.ui.LungThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", ""))
-
+        self.ui.LungThresholdRangeWidget.maximumValue = self.lungThresholdMax =  float(settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", ""))
       if settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", "") != "":               
-        self.ui.AirwayThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", ""))
+        self.ui.AirwayThresholdRangeWidget.minimumValue = self.airwayThresholdMin =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", ""))
       if settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", "") != "":               
-        self.ui.AirwayThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", ""))
+        self.ui.AirwayThresholdRangeWidget.maximumValue = self.airwayThresholdMax =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", ""))
 
       if settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", "") != "":               
-        self.ui.VesselThresholdRangeWidget.minimumValue =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", ""))
+        self.ui.VesselThresholdRangeWidget.minimumValue = self.vesselThresholdMin =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", ""))
       if settings.value("LungCtSegmenter/veselThresholdRangeMaximumValue", "") != "":               
-        self.ui.VesselThresholdRangeWidget.maximumValue =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMaximumValue", ""))
+        self.ui.VesselThresholdRangeWidget.maximumValue = self.vesselThresholdMax =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMaximumValue", ""))
 
       if settings.value("LungCtSegmenter/testModeCheckBoxChecked", "") != "":               
           self.batchProcessingTestMode = eval(settings.value("LungCtSegmenter/testModeCheckBoxChecked", ""))
@@ -244,6 +251,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.isNiiGzFormat = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
         self.ui.niigzFormatCheckBox.checked = eval(settings.value("LungCtSegmenter/niigzFormatCheckBoxChecked", ""))
 
+      if settings.value("LungCtSegmenter/fastCheckBoxChecked", "") != "":
+          self.fastOption = eval(settings.value("LungCtSegmenter/fastCheckBoxChecked", ""))
+          self.ui.fastCheckBox.checked = eval(settings.value("LungCtSegmenter/fastCheckBoxChecked", ""))
       if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") != "":
           self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
           self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
@@ -640,12 +650,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailLevelComboBox.currentText = self.logic.airwaySegmentationDetailLevel
       self.ui.engineAIComboBox.currentText = self.logic.engineAI      
       self.ui.VolumeRenderingShiftSliderWidget.value = self.VolumeRenderingShift
-      self.ui.LungThresholdRangeWidget.minimumValue = self.logic.lungThresholdMin
-      self.ui.LungThresholdRangeWidget.maximumValue = self.logic.lungThresholdMax 
-      self.ui.AirwayThresholdRangeWidget.minimumValue = self.logic.airwayThresholdMin
-      self.ui.AirwayThresholdRangeWidget.maximumValue = self.logic.airwayThresholdMax       
-      self.ui.VesselThresholdRangeWidget.minimumValue = self.logic.vesselThresholdMin
-      self.ui.VesselThresholdRangeWidget.maximumValue = self.logic.vesselThresholdMax       
+      self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin
+      self.ui.LungThresholdRangeWidget.maximumValue = self.lungThresholdMax 
+      self.ui.AirwayThresholdRangeWidget.minimumValue = self.airwayThresholdMin
+      self.ui.AirwayThresholdRangeWidget.maximumValue = self.airwayThresholdMax
+      self.ui.VesselThresholdRangeWidget.minimumValue = self.vesselThresholdMin
+      self.ui.VesselThresholdRangeWidget.maximumValue = self.vesselThresholdMax
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -693,22 +703,23 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
       self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
       self.VolumeRenderingShift = self.ui.VolumeRenderingShiftSliderWidget.value
-      self.logic.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
+      self.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/lungThresholdRangeMinimumValue", str(self.ui.LungThresholdRangeWidget.minimumValue))
-      self.logic.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
+      self.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
       settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.LungThresholdRangeWidget.maximumValue))
-      self.logic.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
+      self.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/airwayThresholdRangeMinimumValue", str(self.ui.AirwayThresholdRangeWidget.minimumValue))
-      self.logic.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
+      self.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
       settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.AirwayThresholdRangeWidget.maximumValue))
-      self.logic.vesselThresholdMin = self.ui.VesselThresholdRangeWidget.minimumValue
+      self.vesselThresholdMin = self.ui.VesselThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/vesselThresholdRangeMinimumValue", str(self.ui.VesselThresholdRangeWidget.minimumValue))
-      self.logic.vesselThresholdMax = self.ui.VesselThresholdRangeWidget.maximumValue
+      self.vesselThresholdMax = self.ui.VesselThresholdRangeWidget.maximumValue
       settings.setValue("LungCtSegmenter/vesselThresholdRangeMaximumValue", str(self.ui.VesselThresholdRangeWidget.maximumValue))
       self.createDetailedAirways = self.ui.detailedAirwaysCheckBox.checked 
       self.createVessels = self.ui.createVesselsCheckBox.checked 
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
+      settings.setValue("LungCtSegmenter/fastCheckBoxChecked", str(self.smoothLungs))
       
       self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
       settings.setValue("LungCtSegmenter/testModeCheckBoxChecked", str(self.batchProcessingTestMode))
@@ -905,6 +916,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.updateIntensityButton.enabled = False
 
       try:
+
+          self.logic.lungThresholdMin = self.lungThresholdMin
+          self.logic.lungThresholdMax = self.lungThresholdMax 
+          self.logic.airwayThresholdMin = self.airwayThresholdMin
+          self.logic.airwayThresholdMax = self.airwayThresholdMax
+          self.logic.vesselThresholdMin = self.vesselThresholdMin
+          self.logic.vesselThresholdMax = self.vesselThresholdMax
+
           self.logic.detailedAirways = self.createDetailedAirways
           self.logic.createVessels = self.createVessels
           self.logic.useAI = self.useAI
@@ -2332,7 +2351,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-                if self.normalizeData and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0: 
+                if self.normalizeData and self.useAI and self.engineAI.find("TotalSegmentator") == 0: 
                     self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.normalizedInputVolumeNode)
                     self.segmentEditorWidget.setSourceVolumeNode(self.normalizedInputVolumeNode)
                 else: 
