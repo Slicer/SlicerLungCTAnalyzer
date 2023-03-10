@@ -790,15 +790,15 @@
        </widget>
       </item>
       <item row="7" column="0">
-       <widget class="QCheckBox" name="normalizeDataCheckBox">
+       <widget class="QCheckBox" name="calibrateDataCheckBox">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Check this to create a normalized copy of the input volume in the scene when using TotalSegmentator AI. The normalization function will use mean HU of &quot;trachea&quot; to define &quot;air&quot; (-1000 HU) and mean HU of &quot;left ileopsoas muscle&quot; to define &quot;muscle&quot; (30 HU) and  all voxels in the numpy array of the normalized volume will be adapted. </string>
+         <string>Check this to create a standardized copy of the input volume in the scene when using TotalSegmentator AI. The standardization function will use mean HU of &quot;trachea&quot; to define &quot;air&quot; (-1000 HU) and mean HU of &quot;left ileopsoas muscle&quot; to define &quot;muscle&quot; (30 HU) and  all voxels in the numpy array of the standardized  volume will be adapted. After this, the standardized volume will be normalized to air HU (-1000) and blood HU (30).  </string>
         </property>
         <property name="text">
-         <string>Normalize data</string>
+         <string>CT Calibration</string>
         </property>
        </widget>
       </item>

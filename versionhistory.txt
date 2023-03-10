@@ -165,4 +165,8 @@ Lung CT Analyzer: add lobe analysis
 V 2.64
 
 ENH: add optional NIFTI input and output in Lung CT Segmenter batch processing 
+
+V 2.65
+
+ENH: implement CT data calibration 
  

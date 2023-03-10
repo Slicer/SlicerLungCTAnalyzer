@@ -89,7 +89,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.batchProcessingTestMode = False
       self.isNiiGzFormat = False
       self.batchProcessingIsCancelled = False
-      self.normalizeData = False
+      self.calibrateData = False
       
       self.lungThresholdMin = 0.
       self.lungThresholdMax = 0. 
@@ -200,7 +200,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.niigzFormatCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-      self.ui.normalizeDataCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.calibrateDataCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
       for key, uiid in self.outputCheckBoxesDict.items():
         uiid.enabled = False
@@ -257,9 +257,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") != "":
           self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
           self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
-      if settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", "") != "":
-          self.normalizeData = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
-          self.ui.normalizeDataCheckBox.checked = eval(settings.value("LungCtSegmenter/normalizeDataCheckBoxChecked", ""))
+      if settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", "") != "":
+          self.calibrateData = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
+          self.ui.calibrateDataCheckBox.checked = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
 
       # Make sure parameter node is initialized (needed for module reload)
       
@@ -276,7 +276,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.smoothLungsCheckBox.enabled = False
       self.ui.batchProcessingCollapsibleButton.collapsed = True
       self.ui.outputCollapsibleButton.collapsed = True
-      self.ui.normalizeDataCheckBox.enabled = False
+      self.ui.calibrateDataCheckBox.enabled = False
 
 
 
@@ -640,7 +640,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
-      self.ui.normalizeDataCheckBox.checked = self.normalizeData
+      self.ui.calibrateDataCheckBox.checked = self.calibrateData
       
       self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
       self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
@@ -730,8 +730,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
       settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", str(self.smoothLungs))
         
-      self.normalizeData = self.ui.normalizeDataCheckBox.checked 
-      settings.setValue("LungCtSegmenter/normalizeDataCheckBoxChecked", str(self.normalizeData))
+      self.calibrateData = self.ui.calibrateDataCheckBox.checked 
+      settings.setValue("LungCtSegmenter/calibrateDataCheckBoxChecked", str(self.calibrateData))
 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
@@ -742,10 +742,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       if self.logic.engineAI.find("TotalSegmentator") == 0:
           self.ui.fastCheckBox.enabled = True
-          self.ui.normalizeDataCheckBox.enabled = True
+          self.ui.calibrateDataCheckBox.enabled = True
       else:
           self.ui.fastCheckBox.enabled = False
-          self.ui.normalizeDataCheckBox.enabled = False
+          self.ui.calibrateDataCheckBox.enabled = False
       
       if self.useAI:
         self.ui.LungThresholdRangeWidget.enabled = False
@@ -931,7 +931,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.logic.smoothLungs = True
           self.logic.fastOption = self.fastOption
           self.logic.smoothLungs = self.smoothLungs
-          self.logic.normalizeData = self.normalizeData
+          self.logic.calibrateData = self.calibrateData
           
           if self.useAI:
             self.logic.engineAI = self.ui.engineAIComboBox.currentText
@@ -1217,7 +1217,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.useAI = False
         self.create3D = True
         self.smoothLungs = True
-        self.normalizeData = False
+        self.calibrateData = False
         self.removeAIOutputData = False
         self.fastOption = False
         self.engineAI = "None"
@@ -1314,12 +1314,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.getParameterNode().SetNodeReferenceID("InputVolume", node.GetID() if node else None)
 
     @property
-    def normalizedInputVolume(self):
-        return self.getParameterNode().GetNodeReference("NormalizedInputVolume")
+    def calibratedInputVolume(self):
+        return self.getParameterNode().GetNodeReference("calibratedInputVolume")
 
-    @normalizedInputVolume.setter
-    def normalizedInputVolume(self, node):
-        self.getParameterNode().SetNodeReferenceID("NormalizedInputVolume", node.GetID() if node else None)
+    @calibratedInputVolume.setter
+    def calibratedInputVolume(self, node):
+        self.getParameterNode().SetNodeReferenceID("calibratedInputVolume", node.GetID() if node else None)
  
     @property
     def outputSegmentation(self):
@@ -1782,6 +1782,62 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         img = img * ratio
         img = img + air_HU
         return img
+        
+    def normalize_ct_scan(self, ct_scan, air_hu=-1000, blood_hu=30):
+        """
+        Normalize a CT scan based on the HU values of air and blood.
+
+        Args:
+            ct_scan (ndarray): A 3D numpy array representing the CT scan.
+            air_hu (int, optional): The Hounsfield unit value of air. Defaults to -1000.
+            blood_hu (int, optional): The Hounsfield unit value of blood. Defaults to 30.
+
+        Returns:
+            ndarray: A normalized version of the CT scan.
+        """
+        import numpy as np
+        
+        # Find the min and max HU values in the CT scan
+        min_hu = np.min(ct_scan)
+        max_hu = np.max(ct_scan)
+
+        # Calculate the slope and intercept for normalization
+        slope = (blood_hu - air_hu) / (max_hu - min_hu)
+        intercept = air_hu - (slope * min_hu)
+
+        # Apply the normalization
+        normalized_ct_scan = (ct_scan * slope) + intercept
+
+        return normalized_ct_scan
+
+    def standardize_ct_scan(self, ct_scan, air_mean_hu, muscle_mean_hu):
+        """
+        Standardize the mean HU values of air and muscle in a CT scan to the HU values of -1000 and 30, respectively.
+
+        Args:
+            ct_scan (ndarray): A 3D numpy array representing the CT scan.
+            air_mean_hu (float): The mean Hounsfield unit value of air in the CT scan.
+            muscle_mean_hu (float): The mean Hounsfield unit value of muscle in the CT scan.
+
+        Returns:
+            ndarray: A standardized version of the CT scan.
+        """
+        # Calculate the HU value of air and muscle
+        air_hu = -1000
+        muscle_hu = 30
+
+        # Calculate the slope and intercept for standardization
+        delta_air_muscle_hu = abs(air_hu - muscle_hu)
+        delta_air = air_mean_hu - air_hu
+        delta_muscle = muscle_mean_hu - muscle_hu
+        slope = delta_air_muscle_hu / (delta_air + delta_muscle)
+        intercept = air_hu - (slope * air_mean_hu)
+        #print("amhu: " + str(air_mean_hu) + " mmhu: " + str(muscle_mean_hu) + " damh: " + str(delta_air_muscle_hu) + " da: " + str(delta_air) + " dm: " + str(delta_muscle) + " s: " + str(slope) + " i: " + str(intercept))
+
+        # Apply the standardization
+        standardized_ct_scan = (ct_scan * slope) + intercept
+        
+        return standardized_ct_scan
 
     def get_script_path(self):
         return os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -2184,11 +2240,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     for i in range(1, 13):
                         self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, self.tsOutputSegmentation, self.ribColor, False)
 
-                if self.normalizeData: 
+                if self.calibrateData: 
                 
                     import SegmentStatistics
             
-                    self.showStatusMessage('Data normalization: determine air and muscle HU ...')
+                    self.showStatusMessage('Data calibration: determine air and muscle HU ...')
                     
                     tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
                     tempSegmentationNode.CreateDefaultDisplayNodes()
@@ -2219,35 +2275,37 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     stats = segStatLogic.getStatistics()
                     
                     # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
-                    air = 0.
-                    muscle = 0.
+                    mean_air = 0.
+                    mean_muscle = 0.
                     centroid_trachea = [0,0,0]
                     
                     segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
                     centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
-                    air = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    mean_air = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
-                    muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    mean_muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     
-                    print(f"air = {air} HU")
-                    print(f"muscle = {muscle} HU")
+                    print(f"Mean air = {mean_air} HU")
+                    print(f"Mean muscle = {mean_muscle} HU")
 
-                    self.showStatusMessage('Normalize data ...')
-                    self.normalizedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_normalized")
+                    self.showStatusMessage('Calibrate data ...')
+                    self.calibratedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_calibrated")
                     img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-                    img_normalized = self.normalizeImageHU(img, air, muscle)
-                    sitkUtils.PushVolumeToSlicer(img_normalized, self.normalizedInputVolumeNode)
+                    img_standardized = self.standardize_ct_scan(img, mean_air, mean_muscle)
+                    print(f"Standardized volume created.")
+                    img_calibrated = self.normalizeImageHU(img, -1000, 30)
+                    sitkUtils.PushVolumeToSlicer(img_calibrated, self.calibratedInputVolumeNode)
                     
                     if self.detailedAirways:
                         # add one fiducial 
                         self.tracheaFiducials.CreateDefaultDisplayNodes()
                         self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
                         
-                    print(f"Normalized volume created.")
+                    print(f"Calibrated volume created.")
                     slicer.mrmlScene.RemoveNode(tempSegmentationNode)
 
 
-                if self.detailedAirways and not self.normalizeData: 
+                if self.detailedAirways and not self.calibrateData: 
 
                     import SegmentStatistics
             
@@ -2351,9 +2409,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
-                if self.normalizeData and self.useAI and self.engineAI.find("TotalSegmentator") == 0: 
-                    self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.normalizedInputVolumeNode)
-                    self.segmentEditorWidget.setSourceVolumeNode(self.normalizedInputVolumeNode)
+                if self.calibrateData and self.useAI and self.engineAI.find("TotalSegmentator") == 0: 
+                    self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.calibratedInputVolumeNode)
+                    self.segmentEditorWidget.setSourceVolumeNode(self.calibratedInputVolumeNode)
                 else: 
                     self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
                     self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
