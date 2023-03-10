@@ -363,7 +363,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.showCriticalError("Input and output directotry can not be the same path.")
       if not self.useAI:
           self.showCriticalError("Batch processing can only be done with 'Use AI' checked.")
-      if self.createDetailedAirways:
+      if self.createDetailedAirways and not (self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0):
           self.showCriticalError("Batch processing can not be used with  Local Threshold airway analysis.")
       if not os.path.exists(self.batchProcessingInputDir):
           self.showCriticalError("Input folder does not exist.")
@@ -419,7 +419,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               self.inputVolume = slicer.util.loadVolume(filename)
 
               print("Segmenting '" + filename + "' ...")
-              if self.useAI and not self.createDetailedAirways:
+              if self.useAI and (not self.createDetailedAirways or (self.createDetailedAirways and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0)):
                   self.onStartButton()
               else:
                   print("Unable to batch segment CT, AI must be enabled and/or airway segmentation can not be checked.")
