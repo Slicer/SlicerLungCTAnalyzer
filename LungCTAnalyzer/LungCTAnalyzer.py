@@ -102,7 +102,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.batchProcessingTestMode = False
         self.batchProcessingIsCancelled = False
         self.csvOnly = False
-        self.useNormalizedCT = False
+        self.useCalibratedCT = False
         self.lobeAnalysis = False
         self.areaAnalysis = False
         
@@ -163,7 +163,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.csvOnlyCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        self.ui.useNormalizedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
         # Advanced options
         self.ui.checkForUpdatesCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -224,9 +224,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.csvOnly = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
             self.ui.csvOnlyCheckBox.checked = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
        
-        if settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", "") != "":               
-            self.useNormalizedCT = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
-            self.ui.useNormalizedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", ""))
+        if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
+            self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+            self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
 
         if settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", "") != "":               
             self.lobeAnalysis = eval(settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", ""))
@@ -527,7 +527,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
         self.ui.csvOnlyCheckBox.checked = self.csvOnly
-        self.ui.useNormalizedCTCheckBox.checked = self.useNormalizedCT
+        self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
@@ -607,8 +607,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         settings.setValue("LungCtAnalyzer/testModeCheckBoxChecked", str(self.batchProcessingTestMode))          
         self.csvOnly = self.ui.csvOnlyCheckBox.checked
         settings.setValue("LungCtAnalyzer/csvOnlyCheckBoxChecked", str(self.csvOnly))
-        self.useNormalizedCT = self.ui.useNormalizedCTCheckBox.checked
-        settings.setValue("LungCtAnalyzer/useNormalizedCTCheckBoxChecked", str(self.useNormalizedCT))
+        self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
+        settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
 
         self.logic.lungMaskedVolume = self.ui.lungMaskedVolumeSelector.currentNode()
         self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
@@ -750,8 +750,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 counter += 1
                 slicer.mrmlScene.Clear(0)
                 slicer.util.loadScene(filename) 
-                if self.useNormalizedCT: 
-                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_normalized")
+                if self.useCalibratedCT: 
+                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
                     # to prevent crash
                     ctVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
                     if ctVolumeNode: 

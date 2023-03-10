@@ -803,12 +803,12 @@
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QCheckBox" name="useNormalizedCTCheckBox">
+         <widget class="QCheckBox" name="useCalibratedCTCheckBox">
           <property name="toolTip">
            <string>Use the normalized CT in the input dataset if present</string>
           </property>
           <property name="text">
-           <string>use normalized CT</string>
+           <string>use calibrated CT</string>
           </property>
          </widget>
         </item>

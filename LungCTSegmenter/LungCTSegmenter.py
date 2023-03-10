@@ -227,10 +227,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingInputFolder", "")      
       self.ui.outputDirectoryPathLineEdit.currentPath = settings.value("LungCtSegmenter/batchProcessingOutputFolder", "")
-         
       if settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", "") != "":               
-        self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin =  float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))
-         
+        self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin = float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))  
       if settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", "") != "":               
         self.ui.LungThresholdRangeWidget.maximumValue = self.lungThresholdMax =  float(settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", ""))
       if settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", "") != "":               
@@ -240,7 +238,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       if settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", "") != "":               
         self.ui.VesselThresholdRangeWidget.minimumValue = self.vesselThresholdMin =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", ""))
-      if settings.value("LungCtSegmenter/veselThresholdRangeMaximumValue", "") != "":               
+      if settings.value("LungCtSegmenter/vesselThresholdRangeMaximumValue", "") != "":               
         self.ui.VesselThresholdRangeWidget.maximumValue = self.vesselThresholdMax =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMaximumValue", ""))
 
       if settings.value("LungCtSegmenter/testModeCheckBoxChecked", "") != "":               
@@ -706,7 +704,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.lungThresholdMin = self.ui.LungThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/lungThresholdRangeMinimumValue", str(self.ui.LungThresholdRangeWidget.minimumValue))
       self.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
-      settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.LungThresholdRangeWidget.maximumValue))
+      settings.setValue("LungCtSegmenter/lungThresholdRangeMaximumValue", str(self.ui.LungThresholdRangeWidget.maximumValue))
       self.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/airwayThresholdRangeMinimumValue", str(self.ui.AirwayThresholdRangeWidget.minimumValue))
       self.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
