@@ -404,8 +404,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       startWatchTime = time.time()
       
-      start = 77
-      stop = 99
+      start = 0
+      stop = 0
       counter = 0
       durationProcess = 0
       if self.batchProcessingTestMode:
@@ -415,13 +415,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
               startProcessWatchTime = time.time()
-              if counter < start: 
-                  print("Skipping file # " + str(counter) + " ("  + filename + ")")
-                  continue
-              if counter > stop: 
-                  print("Skipping file after  # " + str(stop) + " ("  + filename + ")")
-                  continue
-
+              if start != 0 and stop != 0: 
+                  if counter < start: 
+                      print("Skipping file # " + str(counter) + " ("  + filename + ")")
+                      continue
+                  if counter > stop: 
+                      print("Skipping file after  # " + str(stop) + " ("  + filename + ")")
+                      continue
               print("Processing '" + filename + "' ...")
               # continue
                             
