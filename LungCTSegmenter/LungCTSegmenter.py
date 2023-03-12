@@ -415,7 +415,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
               startProcessWatchTime = time.time()
-              if start != 0 and stop != 0: 
+              if start != 0 or stop != 0: 
                   if counter < start: 
                       print("Skipping file # " + str(counter) + " ("  + filename + ")")
                       continue
