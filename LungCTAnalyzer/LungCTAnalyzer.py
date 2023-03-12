@@ -103,6 +103,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.batchProcessingIsCancelled = False
         self.csvOnly = False
         self.useCalibratedCT = False
+        self.scanInput = False
         self.lobeAnalysis = False
         self.areaAnalysis = False
         
@@ -164,6 +165,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.csvOnlyCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.scanInputCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
         # Advanced options
         self.ui.checkForUpdatesCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -227,6 +229,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
             self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
             self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+
+        if settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", "") != "":               
+            self.scanInput = eval(settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", ""))
+            self.ui.scanInputCheckBox.checked = eval(settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", ""))
 
         if settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", "") != "":               
             self.lobeAnalysis = eval(settings.value("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", ""))
@@ -528,6 +534,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
         self.ui.csvOnlyCheckBox.checked = self.csvOnly
         self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
+        self.ui.scanInputCheckBox.checked = self.scanInput
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
@@ -609,6 +616,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         settings.setValue("LungCtAnalyzer/csvOnlyCheckBoxChecked", str(self.csvOnly))
         self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
         settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
+        self.scanInput = self.ui.scanInputCheckBox.checked
+        settings.setValue("LungCtAnalyzer/scanInputCheckBoxChecked", str(self.scanInput))
 
         self.logic.lungMaskedVolume = self.ui.lungMaskedVolumeSelector.currentNode()
         self.logic.outputSegmentation = self.ui.outputSegmentationSelector.currentNode()
@@ -713,7 +722,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         minutesRequired = filesToProcess * 20 / 60
           
-        if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each segmentation takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
+        if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each analysis takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
             logging.info('Batch processing cancelled by user.')
             return
 
@@ -721,25 +730,18 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.showCriticalError("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
 
 
-        scriptThresholds = {
-            'thresholdBullaLower': -1050.,
-            'thresholdBullaInflated': -950.,
-            'thresholdInflatedInfiltrated': -750.,
-            'thresholdInfiltratedCollapsed': -400.,
-            'thresholdCollapsedVessels': 0.,
-            'thresholdVesselsUpper': 3000.,
-            }
-        scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimum
-        scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximum
-        scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.minimum
-        scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InflatedRangeWidget.minimum
-        scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximum
-        scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximum
-        self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
 
         startWatchTime = time.time()
               
         counter = 0
+        
+        if self.scanInput:
+            _doanalyze = False
+            _dowrite = False
+        else: 
+            _doanalyze = True
+            _dowrite = True
+        
         durationProcess = 0
         if self.batchProcessingTestMode:
             filesToProcess = 3
@@ -749,7 +751,24 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 startProcessWatchTime = time.time()
                 counter += 1
                 slicer.mrmlScene.Clear(0)
-                slicer.util.loadScene(filename) 
+                slicer.util.loadScene(filename)
+
+                scriptThresholds = {
+                    'thresholdBullaLower': -1050.,
+                    'thresholdBullaInflated': -950.,
+                    'thresholdInflatedInfiltrated': -750.,
+                    'thresholdInfiltratedCollapsed': -400.,
+                    'thresholdCollapsedVessels': 0.,
+                    'thresholdVesselsUpper': 3000.,
+                    }
+                scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimum
+                scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximum
+                scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximum
+                scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximum 
+                scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximum
+                scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximum
+                self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
+                               
                 if self.useCalibratedCT: 
                     firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
                     # to prevent crash
@@ -767,30 +786,28 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     if segNode:
                         self.logic.inputSegmentation = segNode                    
 
-                print("Analyzing '" + filename + "' ...")
-                self.onApplyButton()
+                print("Analyzing '" + filename + "' ...", end='\r')
+                if _doanalyze: 
+                    self.onApplyButton()
 
-                outpathhead, outpathtail = os.path.split(pathhead)
+                if _dowrite: 
+                    outpathhead, outpathtail = os.path.split(pathhead)
 
-                targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
-                if not os.path.exists(targetdir):
-                    os.makedirs(targetdir)
-                    
-                print('Saving CSV data to ' + self.batchProcessingOutputDir)
-                self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv", filename, counter, outpathtail)
-                print('Saving CSV data to ' + self.batchProcessingOutputDir)
-                self.logic.saveExtendedRegionDataToFile(self.batchProcessingOutputDir + "/regionResults.csv", filename, counter, outpathtail)
-                print('Saving CSV data to ' + self.batchProcessingOutputDir)
-                self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filename, counter, outpathtail)
+                    targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
+                    if not os.path.exists(targetdir):
+                        os.makedirs(targetdir)
+                        
+                    self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv", filename, counter, outpathtail)
+                    self.logic.saveExtendedRegionDataToFile(self.batchProcessingOutputDir + "/regionResults.csv", filename, counter, outpathtail)
+                    self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filename, counter, outpathtail)
 
-                if not self.csvOnly:
-                    sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
-                    self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
-                    print('Saving scene to ' + sceneSaveFilename)
-                    if slicer.util.saveScene(sceneSaveFilename):
-                      logging.info("Scene saved to: {0}".format(sceneSaveFilename))
-                    else:
-                      logging.error("Scene saving failed") 
+                    if not self.csvOnly:
+                        sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
+                        self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
+                        if slicer.util.saveScene(sceneSaveFilename):
+                          logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+                        else:
+                          logging.error("Scene saving failed") 
     
                 stopProcessWatchTime = time.time()
                 durationProcess = stopProcessWatchTime - startProcessWatchTime
@@ -1087,7 +1104,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         os.remove(f"{self.reportFolder}/{coronalLightboxImageFilename}")
 
         # Open in PDF viewer
-        print("Starting '"+reportPath+"' ...")
+        logging.info("Starting '"+reportPath+"' ...")
         #slash/backlash replacements because of active directory
         self.openFile(reportPath)
   
@@ -1126,13 +1143,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def onOpenReportDirectoryButton(self):
         # show file
-        print("Open Directory")
+        logging.info("Open Directory")
         import subprocess        
         subprocess.Popen(f'explorer {os.path.realpath(self.reportFolder)}')
     
     def onReportDirectoryChanged(self):
         
-        print("Directory changed")
+        logging.info("Directory changed")
         self.reportFolder = self.ui.selectReportDirectoryButton.directory
         # save new path locally
         import configparser
@@ -1147,13 +1164,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             parser.write(configfile)
 
     def onSelectReportDirectoryButton(self):
-        print("Directory button clicked")
+        logging.info("Directory button clicked")
 
     def onShowResultsTable(self):
         self.logic.showTable(self.logic.resultsTable)
 
     def onSaveResultsCSV(self):
-        print("Saving CSV ...")
+        logging.info("Saving CSV ...")
         from time import gmtime, strftime
         timestampString = strftime("%Y%m%d_%H%M%S", gmtime())
         familyName = self.logic.resultsTable.GetAttribute("LungCTAnalyzer.patientFamilyName")
@@ -1172,7 +1189,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             reportPathWithoutExtension = f"{self.reportFolder}/{inputVolumeNodeName}-{timestampString}-LungCTReport"
             descriptorString = f"{timestampString}"
         self.logic.saveDataToFile(reportPathWithoutExtension,descriptorString,"","")
-        print("Done.")
 
     def onShowCovidResultsTable(self):
         slicer.util.messageBox("COVID segmentations have not been clinically evaluated yet. Do not base treatment decisions on that values.",
@@ -1376,7 +1392,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
          
         inputVolume = parameterNode.GetNodeReference("InputVolume")
         if not inputVolume:
-            print("Error. Cannot get input volume node, unable to write threshold to volume directory. ")
+            logging.error("Error. Cannot get input volume node, unable to write threshold to volume directory. ")
         else: 
             storageNode = inputVolume.GetStorageNode()
             inputFilename = storageNode.GetFileName()
@@ -1397,7 +1413,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         parameterNode = self.getParameterNode()
         inputVolume = parameterNode.GetNodeReference("InputVolume")
         if not inputVolume:
-            print("Error. Cannot get input volume node reference and unable to write thresholed to the volume directory. ")
+            logging.info("Error. Cannot get input volume node reference and unable to write thresholed to the volume directory. ")
         else: 
             storageNode = inputVolume.GetStorageNode()
             inputFilename = storageNode.GetFileName()
@@ -2099,7 +2115,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                     f.write(";")
                 f.write("\n")
         except IOError:
-            print("I/O error")
+            logging.error("I/O error")
         
         
         
@@ -2181,7 +2197,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                         f.write(";")
                 f.write("\n")
         except IOError:
-            print("I/O error")
+            logging.error("I/O error")
         
     def saveExtendedLobeDataToFile(self, filename,user_str1,user_str2,user_str3):
 
@@ -2288,7 +2304,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
                         f.write(";")
                 f.write("\n")
         except IOError:
-            print("I/O error")
+            logging.error("I/O error")
         
 
     @property
@@ -2706,7 +2722,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
 
         import SegmentStatistics
         self.showProgress("Computing input stats and centroids ...")
-        print("Computing input stats and centroids ...")    
+        logging.info("Computing input stats and centroids ...")    
         rightMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.rightLungMaskSegmentID).GetName()        
         leftMaskSegmentName = inputSegmentationNode.GetSegmentation().GetSegment(self.leftLungMaskSegmentID).GetName()        
         

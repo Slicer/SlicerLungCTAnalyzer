@@ -403,7 +403,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.showCriticalError("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
 
       startWatchTime = time.time()
-          
+      
+      start = 77
+      stop = 99
       counter = 0
       durationProcess = 0
       if self.batchProcessingTestMode:
@@ -413,44 +415,67 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
               startProcessWatchTime = time.time()
+              if counter < start: 
+                  print("Skipping file # " + str(counter) + " ("  + filename + ")")
+                  continue
+              if counter > stop: 
+                  print("Skipping file after  # " + str(stop) + " ("  + filename + ")")
+                  continue
+
+              print("Processing '" + filename + "' ...")
+              # continue
+                            
               slicer.mrmlScene.Clear(0)
+
+              import torch
+              torch.cuda.empty_cache() 
+              
+              import gc
+              gc.collect()
+              
               self.inputVolume = slicer.util.loadVolume(filename)
 
-              print("Segmenting '" + filename + "' ...")
+              # let slicer process events and update its display
+              slicer.app.processEvents()
+              time.sleep(5)
+
+              print("Processing '" + filename + "' ...")
               if self.useAI and (not self.createDetailedAirways or (self.createDetailedAirways and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0)):
                   self.onStartButton()
               else:
-                  print("Unable to batch segment CT, AI must be enabled and/or airway segmentation can not be checked.")
+                  print("Unable to batch process CT, AI must be enabled and/or airway segmentation can not be checked.")
 
-              outpathhead, outpathtail = os.path.split(pathhead)
+              _dowrite = True
+              if _dowrite: 
+                  outpathhead, outpathtail = os.path.split(pathhead)
 
-              targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
-              if not os.path.exists(targetdir):
-                  os.makedirs(targetdir)
+                  targetdir = self.batchProcessingOutputDir + "/" + outpathtail + "/"
+                  if not os.path.exists(targetdir):
+                      os.makedirs(targetdir)
 
-              if self.isNiiGzFormat:
-                  self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
-                  for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
-                    volumeNode.AddDefaultStorageNode()
-                    slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + "_source.nii.gz")
-                  numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
-                  for i in range(numberOfSegments):
-                      segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
-                      labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
-                      segID = self.logic.outputSegmentation.GetSegmentation().GetSegmentIdBySegment(segment)
-                      strArr = [str(segID)]                      
-                      slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode (self.logic.outputSegmentation, strArr, labelmapVolumeNode, self.logic.inputVolume)
-                      labelmapVolumeNode.AddDefaultStorageNode()
-                      slicer.util.saveNode(labelmapVolumeNode, targetdir + segment.GetName().replace(" ", "_") + ".seg.nii.gz")
-                      slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
-              else: 
-                  sceneSaveFilename = targetdir + "CT_seg.mrb"
-                  self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
-                  print('Saving scene to ' + sceneSaveFilename)
-                  if slicer.util.saveScene(sceneSaveFilename):
-                    logging.info("Scene saved to: {0}".format(sceneSaveFilename))
-                  else:
-                    logging.error("Scene saving failed") 
+                  if self.isNiiGzFormat:
+                      self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
+                      for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
+                        volumeNode.AddDefaultStorageNode()
+                        slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + "_source.nii.gz")
+                      numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
+                      for i in range(numberOfSegments):
+                          segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
+                          labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+                          segID = self.logic.outputSegmentation.GetSegmentation().GetSegmentIdBySegment(segment)
+                          strArr = [str(segID)]                      
+                          slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode (self.logic.outputSegmentation, strArr, labelmapVolumeNode, self.logic.inputVolume)
+                          labelmapVolumeNode.AddDefaultStorageNode()
+                          slicer.util.saveNode(labelmapVolumeNode, targetdir + segment.GetName().replace(" ", "_") + ".seg.nii.gz")
+                          slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
+                  else: 
+                      sceneSaveFilename = targetdir + "CT_seg.mrb"
+                      self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + ", time remaining {0:.2f} m ".format((durationProcess *(filesToProcess-counter))/60.) + ") to '" + sceneSaveFilename + "' ...")
+                      print('Saving scene to ' + sceneSaveFilename)
+                      if slicer.util.saveScene(sceneSaveFilename):
+                        logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+                      else:
+                        logging.error("Scene saving failed") 
               stopProcessWatchTime = time.time()
               durationProcess = stopProcessWatchTime - startProcessWatchTime
               
@@ -2015,7 +2040,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             # Ensure closed surface representation is not present (would slow down computations)
             self.outputSegmentation.RemoveClosedSurfaceRepresentation()
 
-            self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+            # self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
             self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteAllSegments) 
             self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
 
@@ -2283,8 +2308,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
                     mean_muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     
-                    print(f"Mean air = {mean_air} HU")
-                    print(f"Mean muscle = {mean_muscle} HU")
+                    print(f"Mean radiodensity of trachea = {mean_air} HU")
+                    print(f"Mean radiodensity of left erector spinae muscle = {mean_muscle} HU")
 
                     self.showStatusMessage('Calibrate data ...')
                     self.calibratedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_calibrated")
@@ -2292,6 +2317,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     img_standardized = self.standardize_ct_scan(img, mean_air, mean_muscle)
                     print(f"Standardized volume created.")
                     img_calibrated = self.normalizeImageHU(img, -1000, 30)
+                    print(f"Normalized volume created.")
                     sitkUtils.PushVolumeToSlicer(img_calibrated, self.calibratedInputVolumeNode)
                     
                     if self.detailedAirways:
@@ -2300,6 +2326,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                         self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
                         
                     print(f"Calibrated volume created.")
+                    
+                    del img
+                    del img_standardized
+                    del img_calibrated
+                    
                     slicer.mrmlScene.RemoveNode(tempSegmentationNode)
 
 
@@ -2401,10 +2432,10 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             airwaySegID = self.addSegment(self.outputSegmentation, "airways", self.tracheaColor)
 
             if not self.segmentEditorWidget.effectByName("Local Threshold"):
-                slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using Extension Manager.")
+                slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using the extension manager.")
             else:
                 self.showStatusMessage('Airway segmentation ...')
-                self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
+                # self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
                 if self.calibrateData and self.useAI and self.engineAI.find("TotalSegmentator") == 0: 
@@ -2654,6 +2685,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         # Restore confirmation popup setting for editing a hidden segment
         if not self.useAI: 
             slicer.app.settings().setValue("Segmentations/ConfirmEditHiddenSegment", previousConfirmEditHiddenSegmentSetting)
+
+        import gc
+        gc.collect()
 
         slicer.mrmlScene.RemoveNode(self.rightLungFiducials)
         slicer.mrmlScene.RemoveNode(self.leftLungFiducials)

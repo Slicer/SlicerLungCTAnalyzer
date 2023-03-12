@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>1160</height>
+    <height>1182</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -782,13 +782,13 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="testModeCheckBox">
+        <item row="4" column="1">
+         <widget class="QCheckBox" name="useCalibratedCTCheckBox">
           <property name="toolTip">
-           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
+           <string>Use the normalized CT in the input dataset if present</string>
           </property>
           <property name="text">
-           <string>Testmode: analyze three cases from input folder</string>
+           <string>Use calibrated CT</string>
           </property>
          </widget>
         </item>
@@ -802,13 +802,23 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
-         <widget class="QCheckBox" name="useCalibratedCTCheckBox">
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="testModeCheckBox">
           <property name="toolTip">
-           <string>Use the normalized CT in the input dataset if present</string>
+           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
           </property>
           <property name="text">
-           <string>use calibrated CT</string>
+           <string>Test mode: analyze three cases from input folder</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QCheckBox" name="scanInputCheckBox">
+          <property name="toolTip">
+           <string>Just load the input files one after another for inspection, no analysis, no writing. </string>
+          </property>
+          <property name="text">
+           <string>Scan input files  only</string>
           </property>
          </widget>
         </item>

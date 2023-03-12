@@ -551,7 +551,7 @@
            <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
           </property>
           <property name="text">
-           <string>Testmode: segment three cases from input folder</string>
+           <string>Test mode: segment three cases from input folder</string>
           </property>
          </widget>
         </item>
