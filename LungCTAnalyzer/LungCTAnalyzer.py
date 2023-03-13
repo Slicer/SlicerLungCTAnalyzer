@@ -106,6 +106,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.scanInput = False
         self.lobeAnalysis = False
         self.areaAnalysis = False
+        self.batchProcessing = False
         
 
 
@@ -513,17 +514,18 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.inputSegmentationSelector.setCurrentNode(self.logic.inputSegmentation)
         self.ui.inputSegmentationSelector.blockSignals(wasBlocked)
 
-        thresholds = self.logic.thresholds
-        self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-        self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
-        self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
-        self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
-        self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
-        self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
-        self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
-        self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
-        self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
-        self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
+        if not self.batchProcessing: 
+            thresholds = self.logic.thresholds
+            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
+            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
 
         self.ui.lungMaskedVolumeSelector.setCurrentNode(self.logic.lungMaskedVolume)
         self.ui.outputSegmentationSelector.setCurrentNode(self.logic.outputSegmentation)
@@ -732,7 +734,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         startWatchTime = time.time()
-              
+        
+        self.batchProcessing = True             
         counter = 0
         
         if self.scanInput:
@@ -811,6 +814,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
                 stopProcessWatchTime = time.time()
                 durationProcess = stopProcessWatchTime - startProcessWatchTime
+                self.batchProcessing = False             
 
                 # let slicer process events and update its display
                 slicer.app.processEvents()
@@ -2761,17 +2765,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
         self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
 
-        for side in ['right','left']:
+        #for side in ['right','left']:
             # fill holes in vessel segmentations
-            self.showProgress(f'Filling holes in segment "Vessels {side}" ...')
-            self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
-            self.segmentEditorWidget.setActiveEffectByName("Smoothing")
-            effect = self.segmentEditorWidget.activeEffect()
-            effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
-            spacing = self.inputVolume.GetSpacing()
-            kernelSize = spacing[0] * 3.
-            effect.setParameter("KernelSizeMm",str(kernelSize))
-            effect.self().onApply()
+            #self.showProgress(f'Filling holes in segment "Vessels {side}" ...')
+            #self.segmentEditorNode.SetSelectedSegmentID(f'Vessels {side}')
+            #self.segmentEditorWidget.setActiveEffectByName("Smoothing")
+            #effect = self.segmentEditorWidget.activeEffect()
+            #effect.setParameter("SmoothingMethod","MORPHOLOGICAL_CLOSING")
+            #spacing = self.inputVolume.GetSpacing()
+            #kernelSize = spacing[0] * 3.
+            #effect.setParameter("KernelSizeMm",str(kernelSize))
+            #effect.self().onApply()
 
         # Delete temporary segment editor
         logging.info('Deleting temporary segment editor ... ')

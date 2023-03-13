@@ -818,7 +818,7 @@
            <string>Just load the input files one after another for inspection, no analysis, no writing. </string>
           </property>
           <property name="text">
-           <string>Scan input files  only</string>
+           <string>Load iinput files  only</string>
           </property>
          </widget>
         </item>
