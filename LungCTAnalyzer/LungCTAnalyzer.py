@@ -146,6 +146,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
+        # These connections ensure that we update the GUI when scene is imported
+        self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndImportEvent, self.onSceneEndImport)
+
         # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
         # (in the selected parameter node).
 
@@ -189,6 +192,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.batchProcessingButton.connect('clicked(bool)', self.onBatchProcessingButton)
         self.ui.cancelBatchProcessingButton.connect('clicked(bool)', self.onCancelBatchProcessingButton)
           
+        # Report Dir
+       
+        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
+        self.ui.selectReportDirectoryButton.directoryChanged.connect(self.onReportDirectoryChanged)
+        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
+        self.ui.openReportDirectoryButton.connect('clicked(bool)', self.onOpenReportDirectoryButton)
+
         settings=qt.QSettings(slicer.app.launcherSettingsFilePath, qt.QSettings.IniFormat)
 
         self.ui.inputDirectoryPathLineEdit.currentPath = settings.value("LungCtAnalyzer/batchProcessingInputFolder", "")      
@@ -243,12 +253,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.areaAnalysis = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
             self.ui.areaAnalysisCheckBox.checked = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
 
-        # Report Dir
-       
-        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
-        self.ui.selectReportDirectoryButton.directoryChanged.connect(self.onReportDirectoryChanged)
-        self.ui.selectReportDirectoryButton.connect('clicked(bool)', self.onSelectReportDirectoryButton)
-        self.ui.openReportDirectoryButton.connect('clicked(bool)', self.onOpenReportDirectoryButton)
+        
         # Opacities
         self.opacitySliders = {
             "Emphysema": self.ui.bullaOpacityWidget,
@@ -259,6 +264,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             }
         for segment in self.opacitySliders:
             self.opacitySliders[segment].connect('valueChanged(double)', self.updateVolumeRenderingPropertyFromGUI)
+
 
         # Buttons
         self.ui.downloadCovidDataButton.connect('clicked()', self.onDownloadCovidData)
@@ -430,6 +436,23 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Parameter node will be reset, do not use it anymore
         self.setParameterNode(None)
 
+    def onSceneEndImport(self, caller, event):
+        """
+        Called just after the scene is imported
+        """
+        if not self.batchProcessing: 
+            thresholds = self.logic.thresholds
+            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
+            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
+
     def onSceneEndClose(self, caller, event):
         """
         Called just after the scene is closed.
@@ -514,19 +537,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.inputSegmentationSelector.setCurrentNode(self.logic.inputSegmentation)
         self.ui.inputSegmentationSelector.blockSignals(wasBlocked)
 
-        if not self.batchProcessing: 
-            thresholds = self.logic.thresholds
-            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
-
         self.ui.lungMaskedVolumeSelector.setCurrentNode(self.logic.lungMaskedVolume)
         self.ui.outputSegmentationSelector.setCurrentNode(self.logic.outputSegmentation)
         self.ui.outputResultsTableSelector.setCurrentNode(self.logic.resultsTable)
@@ -601,16 +611,16 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         thresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
         self.logic.thresholds = thresholds
 
-        settings.setValue("LungCtAnalyzer/bullaRangeWidgetMinimumValue", str(self.ui.BullaRangeWidget.minimumValue))
-        settings.setValue("LungCtAnalyzer/bullaRangeWidgetMaximumValue", str(self.ui.BullaRangeWidget.maximumValue))
-        settings.setValue("LungCtAnalyzer/inflatedRangeWidgetMinimumValue", str(self.ui.InflatedRangeWidget.minimumValue))
-        settings.setValue("LungCtAnalyzer/inflatedRangeWidgetMaximumValue", str(self.ui.InflatedRangeWidget.maximumValue))
-        settings.setValue("LungCtAnalyzer/infiltratedRangeWidgetMinimumValue", str(self.ui.InfiltratedRangeWidget.minimumValue))
-        settings.setValue("LungCtAnalyzer/infiltratedRangeWidgetMaximumValue", str(self.ui.InfiltratedRangeWidget.maximumValue))
-        settings.setValue("LungCtAnalyzer/collapsedRangeWidgetMinimumValue", str(self.ui.CollapsedRangeWidget.minimumValue))
-        settings.setValue("LungCtAnalyzer/collapsedRangeWidgetMaximumValue", str(self.ui.CollapsedRangeWidget.maximumValue))
-        settings.setValue("LungCtAnalyzer/vesselsRangeWidgetMinimumValue", str(self.ui.VesselsRangeWidget.minimumValue))
-        settings.setValue("LungCtAnalyzer/vesselsRangeWidgetMaximumValue", str(self.ui.VesselsRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/BullaRangeWidgetMinimumValue", str(self.ui.BullaRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/BullaRangeWidgetMaximumValue", str(self.ui.BullaRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/InflatedRangeWidgetMinimumValue", str(self.ui.InflatedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/InflatedRangeWidgetMaximumValue", str(self.ui.InflatedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/InfiltratedRangeWidgetMinimumValue", str(self.ui.InfiltratedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/InfiltratedRangeWidgetMaximumValue", str(self.ui.InfiltratedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/CollapsedRangeWidgetMinimumValue", str(self.ui.CollapsedRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/CollapsedRangeWidgetMaximumValue", str(self.ui.CollapsedRangeWidget.maximumValue))
+        settings.setValue("LungCtAnalyzer/VesselsRangeWidgetMinimumValue", str(self.ui.VesselsRangeWidget.minimumValue))
+        settings.setValue("LungCtAnalyzer/VesselsRangeWidgetMaximumValue", str(self.ui.VesselsRangeWidget.maximumValue))
 
         self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
         settings.setValue("LungCtAnalyzer/testModeCheckBoxChecked", str(self.batchProcessingTestMode))          
