@@ -774,12 +774,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     'thresholdCollapsedVessels': 0.,
                     'thresholdVesselsUpper': 3000.,
                     }
-                scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimum
-                scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximum
-                scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximum
-                scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximum 
-                scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximum
-                scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximum
+                scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
+                scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximumValue
+                scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximumValue
+                scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximumValue 
+                scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
+                scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
+                print(scriptThresholds)
                 self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
                                
                 if self.useCalibratedCT: 
