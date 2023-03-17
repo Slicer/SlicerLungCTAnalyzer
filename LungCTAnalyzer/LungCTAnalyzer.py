@@ -440,19 +440,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called just after the scene is imported
         """
-        if not self.batchProcessing: 
-            thresholds = self.logic.thresholds
-            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
-
+        return
+        
     def onSceneEndClose(self, caller, event):
         """
         Called just after the scene is closed.
@@ -530,6 +519,20 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
         self._updatingGUIFromParameterNode = True
+
+        if not self.batchProcessing: 
+            thresholds = self.logic.thresholds
+            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
+            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
+
 
         # Update node selectors and sliders
         self.ui.inputVolumeSelector.setCurrentNode(self.logic.inputVolume)
@@ -697,6 +700,23 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def showCriticalError(self, msg):
         slicer.util.messageBox(msg)
         raise ValueError(msg)
+
+    def setThresholdsFromGUI(self):
+        scriptThresholds = {
+            'thresholdBullaLower': -1050.,
+            'thresholdBullaInflated': -950.,
+            'thresholdInflatedInfiltrated': -750.,
+            'thresholdInfiltratedCollapsed': -400.,
+            'thresholdCollapsedVessels': 0.,
+            'thresholdVesselsUpper': 3000.,
+            }
+        scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
+        scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximumValue
+        scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximumValue
+        scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximumValue 
+        scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
+        scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
+        self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
           
     def onBatchProcessingButton(self):
         self.batchProcessingIsCancelled = False
@@ -766,23 +786,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 slicer.mrmlScene.Clear(0)
                 slicer.util.loadScene(filename)
 
-                scriptThresholds = {
-                    'thresholdBullaLower': -1050.,
-                    'thresholdBullaInflated': -950.,
-                    'thresholdInflatedInfiltrated': -750.,
-                    'thresholdInfiltratedCollapsed': -400.,
-                    'thresholdCollapsedVessels': 0.,
-                    'thresholdVesselsUpper': 3000.,
-                    }
-                scriptThresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
-                scriptThresholds['thresholdBullaInflated'] = self.ui.BullaRangeWidget.maximumValue
-                scriptThresholds['thresholdInflatedInfiltrated'] = self.ui.InflatedRangeWidget.maximumValue
-                scriptThresholds['thresholdInfiltratedCollapsed'] = self.ui.InfiltratedRangeWidget.maximumValue 
-                scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
-                scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
-                print(scriptThresholds)
-                self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
-                               
                 if self.useCalibratedCT: 
                     firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
                     # to prevent crash
