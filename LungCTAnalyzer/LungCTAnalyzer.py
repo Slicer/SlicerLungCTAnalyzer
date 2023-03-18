@@ -168,7 +168,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.csvOnlyCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        #self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.scanInputCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
         # Advanced options
@@ -237,9 +237,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.csvOnly = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
             self.ui.csvOnlyCheckBox.checked = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
        
-        if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
-            self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
-            self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+       
+        self.useCalibratedCT = False
+        self.ui.useCalibratedCTCheckBox.checked = False
+       
+        #if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
+        #    self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+        #    self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
 
         if settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", "") != "":               
             self.scanInput = eval(settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", ""))
@@ -548,7 +552,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
         self.ui.csvOnlyCheckBox.checked = self.csvOnly
-        self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
+        self.ui.useCalibratedCTCheckBox.checked = False
+        # self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
         self.ui.scanInputCheckBox.checked = self.scanInput
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
@@ -629,8 +634,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         settings.setValue("LungCtAnalyzer/testModeCheckBoxChecked", str(self.batchProcessingTestMode))          
         self.csvOnly = self.ui.csvOnlyCheckBox.checked
         settings.setValue("LungCtAnalyzer/csvOnlyCheckBoxChecked", str(self.csvOnly))
-        self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
-        settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
+        
+        self.useCalibratedCT = False
+        settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "False")
+        
+        #self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
+        #settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
+        
         self.scanInput = self.ui.scanInputCheckBox.checked
         settings.setValue("LungCtAnalyzer/scanInputCheckBoxChecked", str(self.scanInput))
 

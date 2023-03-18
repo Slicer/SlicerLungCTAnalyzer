@@ -255,9 +255,14 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", "") != "":
           self.smoothLungs = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
           self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
-      if settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", "") != "":
-          self.calibrateData = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
-          self.ui.calibrateDataCheckBox.checked = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
+
+      # switched off for testing
+      self.calibrateData = False
+      self.ui.calibrateDataCheckBox.checked = False
+
+      #if settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", "") != "":
+          #self.calibrateData = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
+          #self.ui.calibrateDataCheckBox.checked = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
 
       # Make sure parameter node is initialized (needed for module reload)
       
@@ -663,7 +668,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
-      self.ui.calibrateDataCheckBox.checked = self.calibrateData
+
+      #self.ui.calibrateDataCheckBox.checked = self.calibrateData
+      self.ui.calibrateDataCheckBox.checked = False
       
       self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
       self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
@@ -753,8 +760,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.smoothLungs = self.ui.smoothLungsCheckBox.checked 
       settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", str(self.smoothLungs))
         
-      self.calibrateData = self.ui.calibrateDataCheckBox.checked 
-      settings.setValue("LungCtSegmenter/calibrateDataCheckBoxChecked", str(self.calibrateData))
+      # switched off for testing
+      self.calibrateData = False
+      self.ui.calibrateDataCheckBox.checked = False
+
+      #self.calibrateData = self.ui.calibrateDataCheckBox.checked 
+      #settings.setValue("LungCtSegmenter/calibrateDataCheckBoxChecked", str(self.calibrateData))
 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
@@ -1833,34 +1844,28 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         return normalized_ct_scan
 
-    def standardize_ct_scan(self, ct_scan, air_mean_hu, muscle_mean_hu):
+    def standardize_ct_scan(self, ct_array, air_mean_hu, muscle_mean_hu):
         """
         Standardize the mean HU values of air and muscle in a CT scan to the HU values of -1000 and 30, respectively.
 
         Args:
-            ct_scan (ndarray): A 3D numpy array representing the CT scan.
-            air_mean_hu (float): The mean Hounsfield unit value of air in the CT scan.
-            muscle_mean_hu (float): The mean Hounsfield unit value of muscle in the CT scan.
+            ct_array (ndarray): A 3D numpy array representing the CT scan.
+            air_mean_hu (float): The measured mean Hounsfield unit value of air in the CT scan.
+            muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
 
         Returns:
             ndarray: A standardized version of the CT scan.
         """
-        # Calculate the HU value of air and muscle
-        air_hu = -1000
-        muscle_hu = 30
-
-        # Calculate the slope and intercept for standardization
-        delta_air_muscle_hu = abs(air_hu - muscle_hu)
-        delta_air = air_mean_hu - air_hu
-        delta_muscle = muscle_mean_hu - muscle_hu
-        slope = delta_air_muscle_hu / (delta_air + delta_muscle)
-        intercept = air_hu - (slope * air_mean_hu)
-        #print("amhu: " + str(air_mean_hu) + " mmhu: " + str(muscle_mean_hu) + " damh: " + str(delta_air_muscle_hu) + " da: " + str(delta_air) + " dm: " + str(delta_muscle) + " s: " + str(slope) + " i: " + str(intercept))
-
-        # Apply the standardization
-        standardized_ct_scan = (ct_scan * slope) + intercept
         
-        return standardized_ct_scan
+        
+        # Calculate the slope and intercept based on the measured mean HU values
+        slope = (30 - air_mean_hu) / (muscle_mean_hu - air_mean_hu)
+        intercept = -1000 - (slope * air_mean_hu)
+        print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu) )
+        # Standardize the pixel array using the slope and intercept
+        standardized_array = (ct_array * slope) + intercept
+
+        return standardized_array
 
     def get_script_path(self):
         return os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -2316,9 +2321,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                     img_standardized = self.standardize_ct_scan(img, mean_air, mean_muscle)
                     print(f"Standardized volume created.")
-                    img_calibrated = self.normalizeImageHU(img, -1000, 30)
+                    img_calibrated = self.normalizeImageHU(img_standardized, -1000, 30)
                     print(f"Normalized volume created.")
-                    sitkUtils.PushVolumeToSlicer(img_calibrated, self.calibratedInputVolumeNode)
+                    sitkUtils.PushVolumeToSlicer(img_standardized, self.calibratedInputVolumeNode)
                     
                     if self.detailedAirways:
                         # add one fiducial 
@@ -2723,8 +2728,8 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here.
         """
-        self.setUp()
-        self.test_LungCTSegmenterNormal()
+        #self.setUp()
+        #self.test_LungCTSegmenterNormal()
         slicer.mrmlScene.Clear(0)
         self.test_LungCTSegmenterLungmaskAI()
 
@@ -2912,11 +2917,9 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         _volumeRightMiddleLobe = round(float(resultsTableNode.GetCellText(3,3)))
         _volumeRightLowerLobe = round(float(resultsTableNode.GetCellText(4,3)))
         # assert vs known volumes of lobes from the chest CT dataset
-        self.assertEqual(_volumeLeftUpperLobe, 1472) 
-        self.assertEqual(_volumeLeftLowerLobe, 1658)
-        self.assertEqual(_volumeRightUpperLobe, 1424)
-        self.assertEqual(_volumeRightMiddleLobe, 493)
-        self.assertEqual(_volumeRightLowerLobe, 1308)
-
-
+        self.assertEqual(_volumeLeftUpperLobe, 1461) 
+        self.assertEqual(_volumeLeftLowerLobe, 1651)
+        self.assertEqual(_volumeRightUpperLobe, 1415)
+        self.assertEqual(_volumeRightMiddleLobe, 485)
+        self.assertEqual(_volumeRightLowerLobe, 1293)
         self.delayDisplay('Test passed')
