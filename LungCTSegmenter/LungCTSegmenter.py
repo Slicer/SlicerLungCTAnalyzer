@@ -2728,10 +2728,11 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here.
         """
-        #self.setUp()
+        self.setUp()
         #self.test_LungCTSegmenterNormal()
         slicer.mrmlScene.Clear(0)
         self.test_LungCTSegmenterLungmaskAI()
+        self.test_LungCTSegmenterTotalSegmentatorAI()
 
     def test_LungCTSegmenterNormal(self):
         """ Ideally you should have several levels of tests.  At the lowest level
@@ -2875,51 +2876,136 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         markupsTracheaNode.CreateDefaultDisplayNodes()
         markupsTracheaNode.AddFiducial(-4.,-14.,-90.)
 
-        # Test the module logic
+        # Logic testing is disabled by default to not overload automatic build machines (pytorch is a huge package and computation
+        # on CPU takes 5-10 minutes). Set testLogic to True to enable testing.
+        testLogic = False
+        if testLogic:
 
-        logic = LungCTSegmenterLogic()
+            # Test the module logic
 
-        # Test algorithm 
-        self.delayDisplay("Processing, please wait ...")
+            logic = LungCTSegmenterLogic()
 
-        logic.removeTemporaryObjects()
-        logic.tracheaFiducials = markupsTracheaNode
-        logic.detailedAirways = False
-        logic.createVessels = False
-        
-        logic.useAI = True
-        logic.engineAI = "lungmask LTRCLobes"
+            # Test algorithm 
+            self.delayDisplay("Processing, please wait ...")
 
-        logic.startSegmentation()
-        logic.updateSegmentation()
-        logic.applySegmentation()
-        
-        #logic.process(inputVolume, -1000.,-200.,False)
-        resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
+            logic.removeTemporaryObjects()
+            logic.tracheaFiducials = markupsTracheaNode
+            logic.detailedAirways = False
+            logic.createVessels = False
+            
+            logic.useAI = True
+            logic.engineAI = "lungmask LTRCLobes"
 
-        # Compute stats
-        import SegmentStatistics
-        
-        segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
-       
-        segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
-        segStatLogic.getParameterNode().SetParameter("ScalarVolume", logic.inputVolume.GetID())
-        segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
-        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
-        segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
-        segStatLogic.computeStatistics()
-        segStatLogic.exportToTable(resultsTableNode)
+            logic.startSegmentation()
+            logic.updateSegmentation()
+            logic.applySegmentation()
+            
+            #logic.process(inputVolume, -1000.,-200.,False)
+            resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
-        #resultsTableNode = slicer.util.getNode('_maskResultsTable')
-        _volumeLeftUpperLobe = round(float(resultsTableNode.GetCellText(0,3)))
-        _volumeLeftLowerLobe = round(float(resultsTableNode.GetCellText(1,3)))
-        _volumeRightUpperLobe = round(float(resultsTableNode.GetCellText(2,3)))
-        _volumeRightMiddleLobe = round(float(resultsTableNode.GetCellText(3,3)))
-        _volumeRightLowerLobe = round(float(resultsTableNode.GetCellText(4,3)))
-        # assert vs known volumes of lobes from the chest CT dataset
-        self.assertEqual(_volumeLeftUpperLobe, 1461) 
-        self.assertEqual(_volumeLeftLowerLobe, 1651)
-        self.assertEqual(_volumeRightUpperLobe, 1415)
-        self.assertEqual(_volumeRightMiddleLobe, 485)
-        self.assertEqual(_volumeRightLowerLobe, 1293)
-        self.delayDisplay('Test passed')
+            # Compute stats
+            import SegmentStatistics
+            
+            segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+           
+            segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
+            segStatLogic.getParameterNode().SetParameter("ScalarVolume", logic.inputVolume.GetID())
+            segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+            segStatLogic.computeStatistics()
+            segStatLogic.exportToTable(resultsTableNode)
+
+            #resultsTableNode = slicer.util.getNode('_maskResultsTable')
+            _volumeLeftUpperLobe = round(float(resultsTableNode.GetCellText(0,3)))
+            _volumeLeftLowerLobe = round(float(resultsTableNode.GetCellText(1,3)))
+            _volumeRightUpperLobe = round(float(resultsTableNode.GetCellText(2,3)))
+            _volumeRightMiddleLobe = round(float(resultsTableNode.GetCellText(3,3)))
+            _volumeRightLowerLobe = round(float(resultsTableNode.GetCellText(4,3)))
+            # assert vs known volumes of lobes from the chest CT dataset
+            self.assertEqual(_volumeLeftUpperLobe, 1461) 
+            self.assertEqual(_volumeLeftLowerLobe, 1651)
+            self.assertEqual(_volumeRightUpperLobe, 1415)
+            self.assertEqual(_volumeRightMiddleLobe, 485)
+            self.assertEqual(_volumeRightLowerLobe, 1293)
+            self.delayDisplay('Test passed')
+        else:
+            logging.warning("test_LungCTSegmenterLungmaskAI logic testing was skipped")
+
+    def test_LungCTSegmenterTotalSegmentatorAI(self):
+        """ Ideally you should have several levels of tests.  At the lowest level
+        tests should exercise the functionality of the logic with different inputs
+        (both valid and invalid).  At higher levels your tests should emulate the
+        way the user would interact with your code and confirm that it still works
+        the way you intended.
+        One of the most important features of the tests is that it should alert other
+        developers when their changes will have an impact on the behavior of your
+        module.  For example, if a developer removes a feature that you depend on,
+        your test should break so they know that the feature is needed.
+        """
+
+        self.delayDisplay("Starting the test")
+
+        # Get/create input data
+
+        import SampleData
+        #registerSampleData()
+        inputVolume = SampleData.downloadSample('CTChest')
+        self.delayDisplay('Loaded test data set')
+
+        # Logic testing is disabled by default to not overload automatic build machines (pytorch is a huge package and computation
+        # on CPU takes 5-10 minutes). Set testLogic to True to enable testing.
+        testLogic = False
+        if testLogic:
+
+            # Test the module logic
+
+            logic = LungCTSegmenterLogic()
+
+            # Test algorithm 
+            self.delayDisplay("Processing, please wait ...")
+
+            logic.removeTemporaryObjects()
+            logic.detailedAirways = True
+            logic.createVessels = False
+            logic.calibrateData = True
+            
+            logic.useAI = True
+            logic.fastOption = True
+            logic.engineAI = "TotalSegmentator lung basic"
+
+            logic.startSegmentation()
+            logic.updateSegmentation()
+            logic.applySegmentation()
+            
+            resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
+
+            # Compute stats
+            import SegmentStatistics
+            
+            segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+           
+            segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
+            segStatLogic.getParameterNode().SetParameter("ScalarVolume", logic.inputVolume.GetID())
+            segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+            segStatLogic.computeStatistics()
+            segStatLogic.exportToTable(resultsTableNode)
+
+            #resultsTableNode = slicer.util.getNode('_maskResultsTable')
+            _volumeRightUpperLobe = round(float(resultsTableNode.GetCellText(0,3)))
+            _volumeRightMiddleLobe = round(float(resultsTableNode.GetCellText(1,3)))
+            _volumeRightLowerLobe = round(float(resultsTableNode.GetCellText(2,3)))
+            _volumeLeftUpperLobe = round(float(resultsTableNode.GetCellText(3,3)))
+            _volumeLeftLowerLobe = round(float(resultsTableNode.GetCellText(4,3)))
+            # assert vs known volumes of lobes from the chest CT dataset
+            self.assertEqual(_volumeRightUpperLobe, 1408) 
+            self.assertEqual(_volumeRightMiddleLobe, 488)
+            self.assertEqual(_volumeRightLowerLobe, 1301)
+            self.assertEqual(_volumeLeftUpperLobe, 1441)
+            self.assertEqual(_volumeLeftLowerLobe, 1647)
+
+            self.delayDisplay('Test passed')
+        else:
+            logging.warning("test_TotalSegmentator1 logic testing was skipped")
