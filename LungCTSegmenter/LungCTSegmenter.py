@@ -257,12 +257,12 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.ui.smoothLungsCheckBox.checked = eval(settings.value("LungCtSegmenter/smoothLungsCheckBoxChecked", ""))
 
       # switched off for testing
-      self.calibrateData = False
-      self.ui.calibrateDataCheckBox.checked = False
+      # self.calibrateData = False
+      # self.ui.calibrateDataCheckBox.checked = False
 
-      #if settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", "") != "":
-          #self.calibrateData = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
-          #self.ui.calibrateDataCheckBox.checked = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
+      if settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", "") != "":
+          self.calibrateData = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
+          self.ui.calibrateDataCheckBox.checked = eval(settings.value("LungCtSegmenter/calibrateDataCheckBoxChecked", ""))
 
       # Make sure parameter node is initialized (needed for module reload)
       
@@ -669,8 +669,8 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.fastCheckBox.checked = self.fastOption
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
 
-      #self.ui.calibrateDataCheckBox.checked = self.calibrateData
-      self.ui.calibrateDataCheckBox.checked = False
+      self.ui.calibrateDataCheckBox.checked = self.calibrateData
+      # self.ui.calibrateDataCheckBox.checked = False
       
       self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
       self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
@@ -761,11 +761,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       settings.setValue("LungCtSegmenter/smoothLungsCheckBoxChecked", str(self.smoothLungs))
         
       # switched off for testing
-      self.calibrateData = False
-      self.ui.calibrateDataCheckBox.checked = False
+      # self.calibrateData = False
+      # self.ui.calibrateDataCheckBox.checked = False
 
-      #self.calibrateData = self.ui.calibrateDataCheckBox.checked 
-      #settings.setValue("LungCtSegmenter/calibrateDataCheckBoxChecked", str(self.calibrateData))
+      self.calibrateData = self.ui.calibrateDataCheckBox.checked 
+      settings.setValue("LungCtSegmenter/calibrateDataCheckBoxChecked", str(self.calibrateData))
 
       self.ui.engineAIComboBox.enabled = self.useAI
       self.shrinkMasks = self.ui.shrinkMasksCheckBox.checked 
@@ -1844,12 +1844,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         return normalized_ct_scan
 
-    def standardize_ct_scan(self, ct_array, air_mean_hu, muscle_mean_hu):
+    def standardize_ct_scan(self, ct_pixel_array, air_mean_hu, muscle_mean_hu):
         """
         Standardize the mean HU values of air and muscle in a CT scan to the HU values of -1000 and 30, respectively.
 
         Args:
-            ct_array (ndarray): A 3D numpy array representing the CT scan.
+            ct_pixel_array (ndarray): A 3D numpy array representing the CT scan.
             air_mean_hu (float): The measured mean Hounsfield unit value of air in the CT scan.
             muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
 
@@ -1857,15 +1857,22 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             ndarray: A standardized version of the CT scan.
         """
         
+        # Store the data type of the input array
+        _dtype = ct_pixel_array.dtype
         
         # Calculate the slope and intercept based on the measured mean HU values
-        slope = (30 - air_mean_hu) / (muscle_mean_hu - air_mean_hu)
+        slope = (30 - (-1000)) / (muscle_mean_hu - air_mean_hu)
         intercept = -1000 - (slope * air_mean_hu)
-        print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu) )
-        # Standardize the pixel array using the slope and intercept
-        standardized_array = (ct_array * slope) + intercept
 
-        return standardized_array
+        print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
+
+        # Standardize the pixel array using the slope and intercept
+        standardized_array = (ct_pixel_array * slope) + intercept
+
+        # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
+        array = standardized_array.astype(_dtype)
+
+        return array
 
     def get_script_path(self):
         return os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -2317,25 +2324,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     print(f"Mean radiodensity of left erector spinae muscle = {mean_muscle} HU")
 
                     self.showStatusMessage('Calibrate data ...')
-                    self.calibratedInputVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "CT_calibrated")
-                    img = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
-                    img_standardized = self.standardize_ct_scan(img, mean_air, mean_muscle)
-                    print(f"Standardized volume created.")
-                    img_calibrated = self.normalizeImageHU(img_standardized, -1000, 30)
-                    print(f"Normalized volume created.")
-                    sitkUtils.PushVolumeToSlicer(img_standardized, self.calibratedInputVolumeNode)
-                    
-                    if self.detailedAirways:
-                        # add one fiducial 
-                        self.tracheaFiducials.CreateDefaultDisplayNodes()
-                        self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
-                        
+                    self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
+                    voxels = slicer.util.arrayFromVolume(self.inputVolume)
+                    voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
+                    slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_standardized)
+                    slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
                     print(f"Calibrated volume created.")
                     
-                    del img
-                    del img_standardized
-                    del img_calibrated
-                    
+                    if self.detailedAirways:
+                        # add one fiducial markup
+                        self.tracheaFiducials.CreateDefaultDisplayNodes()
+                        self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
+                                                                
                     slicer.mrmlScene.RemoveNode(tempSegmentationNode)
 
 
