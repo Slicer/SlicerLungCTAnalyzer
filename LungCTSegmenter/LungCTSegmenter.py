@@ -1844,6 +1844,75 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         return normalized_ct_scan
 
+    def calibrate_ct_scan(self, ct_pixel_array, air_mean_hu, muscle_mean_hu):
+        """
+        Calibrate the volume. 
+        Args
+            ct_pixel_array (ndarray): A 3D numpy array representing the CT scan.
+            air_mean_hu (float): The measured mean Hounsfield unit value of air in the CT scan.
+            muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
+        Returns:
+            ndarray: A standardized version of the CT scan.
+        """
+        # Store the data type of the input array
+        _dtype = ct_pixel_array.dtype
+
+        air_output = -1000
+        muscle_output = 40
+        
+        # Find the line that passes through these points
+        d = float(muscle_mean_hu - air_mean_hu)
+        if d == 0:
+            # Prevent overflow
+            d = 0.0000001
+        m = (muscle_output - air_output) / d
+        b = air_output - (m * air_mean_hu)
+
+        # Adjust the CT
+        a2 = ct_pixel_array * m + b
+
+        # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
+        a3 = a2.astype(_dtype)
+
+        return a3
+
+
+    @staticmethod
+    def normalize_CT_image_intensity(image_array, min_value=-300, max_value=700, min_output=0.0, max_output=1.0,
+                                     inplace=True):
+        """
+        Threshold and adjust contrast range in a CT image.
+        :param image_array: int numpy array (CT or partial CT image)
+        :param min_value: int. Min threshold (everything below that value will be thresholded). If None, ignore
+        :param max_value: int. Max threshold (everything below that value will be thresholded). If None, ignore
+        :param min_output: float. Min output value
+        :param max_output: float. Max output value
+        :return: None if in_place==True. Otherwise, float numpy array with adapted intensity
+        """
+        clip = min_value is not None or max_value is not None
+        if min_value is None:
+            min_value = np.min(image_array)
+        if max_value is None:
+            max_value = np.max(image_array)
+        if clip:
+            np.clip(image_array, min_value, max_value, image_array)
+
+        if inplace and image_array.dtype != np.float32:
+            raise Exception(
+                "The image array must contain float32 elements, because the transformation will be performed in place")
+        if not inplace:
+            # Copy the array!
+            image_array = image_array.astype(np.float32)
+
+        # Change of range
+        image_array -= min_value
+        image_array /= (max_value - min_value)
+        image_array *= (max_output - min_output)
+        image_array += min_output
+        if not inplace:
+            return image_array
+
+
     def standardize_ct_scan(self, ct_pixel_array, air_mean_hu, muscle_mean_hu):
         """
         Standardize the mean HU values of air and muscle in a CT scan to the HU values of -1000 and 30, respectively.
@@ -1864,7 +1933,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slope = (30 - (-1000)) / (muscle_mean_hu - air_mean_hu)
         intercept = -1000 - (slope * air_mean_hu)
 
-        print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
+        # print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
 
         # Standardize the pixel array using the slope and intercept
         standardized_array = (ct_pixel_array * slope) + intercept
@@ -2326,7 +2395,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.showStatusMessage('Calibrate data ...')
                     self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
                     voxels = slicer.util.arrayFromVolume(self.inputVolume)
-                    voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
+                    # voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
+                    voxels_standardized = self.calibrate_ct_scan(voxels, mean_air, mean_muscle)
                     slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_standardized)
                     slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
                     print(f"Calibrated volume created.")
