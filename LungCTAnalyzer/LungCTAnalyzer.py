@@ -168,7 +168,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.volumeRenderingPropertyNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.csvOnlyCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
-        #self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.useCalibratedCTCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.scanInputCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
 
         # Advanced options
@@ -237,13 +237,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.csvOnly = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
             self.ui.csvOnlyCheckBox.checked = eval(settings.value("LungCtAnalyzer/csvOnlyCheckBoxChecked", ""))
        
-       
-        self.useCalibratedCT = False
-        self.ui.useCalibratedCTCheckBox.checked = False
-       
-        #if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
-        #    self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
-        #    self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+        if settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "") != "":               
+            self.useCalibratedCT = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
+            self.ui.useCalibratedCTCheckBox.checked = eval(settings.value("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", ""))
 
         if settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", "") != "":               
             self.scanInput = eval(settings.value("LungCtAnalyzer/scanInputCheckBoxChecked", ""))
@@ -524,18 +520,18 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
         self._updatingGUIFromParameterNode = True
 
-        if not self.batchProcessing: 
-            thresholds = self.logic.thresholds
-            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
-            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
-            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
-            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
-            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
+        #if not self.batchProcessing: 
+        #    thresholds = self.logic.thresholds
+        #    self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
+        #    self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+        #    self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+        #    self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+        #    self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
+        #    self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
+        #    self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
+        #    self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
+        #    self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
+        #    self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
 
 
         # Update node selectors and sliders
@@ -552,8 +548,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.testModeCheckBox.checked = self.batchProcessingTestMode
         self.ui.csvOnlyCheckBox.checked = self.csvOnly
-        self.ui.useCalibratedCTCheckBox.checked = False
-        # self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
+        self.ui.useCalibratedCTCheckBox.checked = self.useCalibratedCT
         self.ui.scanInputCheckBox.checked = self.scanInput
 
         self.ui.checkForUpdatesCheckBox.checked = self.checkForUpdates
@@ -635,11 +630,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.csvOnly = self.ui.csvOnlyCheckBox.checked
         settings.setValue("LungCtAnalyzer/csvOnlyCheckBoxChecked", str(self.csvOnly))
         
-        self.useCalibratedCT = False
-        settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", "False")
-        
-        #self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
-        #settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
+        self.useCalibratedCT = self.ui.useCalibratedCTCheckBox.checked
+        settings.setValue("LungCtAnalyzer/useCalibratedCTCheckBoxChecked", str(self.useCalibratedCT))
         
         self.scanInput = self.ui.scanInputCheckBox.checked
         settings.setValue("LungCtAnalyzer/scanInputCheckBoxChecked", str(self.scanInput))
@@ -838,7 +830,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
                 stopProcessWatchTime = time.time()
                 durationProcess = stopProcessWatchTime - startProcessWatchTime
-                self.batchProcessing = False             
 
                 # let slicer process events and update its display
                 slicer.app.processEvents()
@@ -848,6 +839,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 break
             if self.batchProcessingTestMode and counter > 2:
                 break
+        self.batchProcessing = False             
         stopWatchTime = time.time()
         if self.batchProcessingIsCancelled: 
             print('Batch processing cancelled after {0:.2f} seconds'.format(stopWatchTime-startWatchTime))
