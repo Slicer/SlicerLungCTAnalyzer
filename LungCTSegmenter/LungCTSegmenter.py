@@ -1853,6 +1853,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
         Returns:
             ndarray: A standardized version of the CT scan.
+
+        Modified function from CIP_Slicer Calibration
         """
         # Store the data type of the input array
         _dtype = ct_pixel_array.dtype
@@ -1865,11 +1867,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if d == 0:
             # Prevent overflow
             d = 0.0000001
-        m = (muscle_output - air_output) / d
-        b = air_output - (m * air_mean_hu)
+        slope = (muscle_output - air_output) / d
+        intercept = air_output - (slope * air_mean_hu)
+
+        print("slope " + str(slope) + " intercept " + str(intercept) + " d " + str(d) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
 
         # Adjust the CT
-        a2 = ct_pixel_array * m + b
+        a2 = ct_pixel_array * slope + intercept
 
         # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
         a3 = a2.astype(_dtype)
@@ -1888,6 +1892,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         :param min_output: float. Min output value
         :param max_output: float. Max output value
         :return: None if in_place==True. Otherwise, float numpy array with adapted intensity
+
+        Function from CIP_Slicer Calibration
         """
         clip = min_value is not None or max_value is not None
         if min_value is None:
