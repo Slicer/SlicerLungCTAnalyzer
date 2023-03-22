@@ -462,7 +462,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
                       for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
                         volumeNode.AddDefaultStorageNode()
-                        slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + "_source.nii.gz")
+                        slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + ".nii.gz")
                       numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
                       for i in range(numberOfSegments):
                           segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
@@ -471,7 +471,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                           strArr = [str(segID)]                      
                           slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode (self.logic.outputSegmentation, strArr, labelmapVolumeNode, self.logic.inputVolume)
                           labelmapVolumeNode.AddDefaultStorageNode()
-                          slicer.util.saveNode(labelmapVolumeNode, targetdir + segment.GetName().replace(" ", "_") + ".seg.nii.gz")
+                          if not os.path.exists(targetdir + "lung_segmentations/"):
+                              os.makedirs(targetdir + "lung_segmentations/")
+                          slicer.util.saveNode(labelmapVolumeNode, targetdir + "lung_segmentations/" + segment.GetName().replace(" ", "_") + ".nii.gz")
                           slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
                   else: 
                       sceneSaveFilename = targetdir + "CT_seg.mrb"
@@ -483,7 +485,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                         logging.error("Scene saving failed") 
               stopProcessWatchTime = time.time()
               durationProcess = stopProcessWatchTime - startProcessWatchTime
-              
 
               # let slicer process events and update its display
               slicer.app.processEvents()

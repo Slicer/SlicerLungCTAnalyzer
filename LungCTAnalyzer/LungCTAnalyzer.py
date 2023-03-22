@@ -107,7 +107,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.lobeAnalysis = False
         self.areaAnalysis = False
         self.batchProcessing = False
-        
+        self.isNiiGzFormat = False
+        self.checkForUpdates = True
 
 
     def setup(self):
@@ -162,6 +163,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.generateStatisticsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.lobeAnalysisCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
         self.ui.areaAnalysisCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+        self.ui.niigzFormatCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+
         self.ui.lungMaskedVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputSegmentationSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
         self.ui.outputResultsTableSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -252,6 +255,10 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", "") != "":               
             self.areaAnalysis = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
             self.ui.areaAnalysisCheckBox.checked = eval(settings.value("LungCtAnalyzer/areaAnalysisCheckBoxChecked", ""))
+
+        if settings.value("LungCtAnalyzer/niigzFormatCheckBoxChecked", "") != "":
+            self.isNiiGzFormat = eval(settings.value("LungCtAnalyzer/niigzFormatCheckBoxChecked", ""))
+            self.ui.niigzFormatCheckBox.checked = eval(settings.value("LungCtAnalyzer/niigzFormatCheckBoxChecked", ""))
 
         
         # Opacities
@@ -520,18 +527,18 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
         self._updatingGUIFromParameterNode = True
 
-        #if not self.batchProcessing: 
-        #    thresholds = self.logic.thresholds
-        #    self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
-        #    self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
-        #    self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
-        #    self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
-        #    self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
-        #    self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
-        #    self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
-        #    self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
-        #    self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
-        #    self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
+        if not self.batchProcessing: 
+            thresholds = self.logic.thresholds
+            self.ui.BullaRangeWidget.minimumValue = thresholds['thresholdBullaLower']
+            self.ui.BullaRangeWidget.maximumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.minimumValue = thresholds['thresholdBullaInflated']
+            self.ui.InflatedRangeWidget.maximumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.minimumValue = thresholds['thresholdInflatedInfiltrated']
+            self.ui.InfiltratedRangeWidget.maximumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.minimumValue = thresholds['thresholdInfiltratedCollapsed']
+            self.ui.CollapsedRangeWidget.maximumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.minimumValue = thresholds['thresholdCollapsedVessels']
+            self.ui.VesselsRangeWidget.maximumValue = thresholds['thresholdVesselsUpper']
 
 
         # Update node selectors and sliders
@@ -555,6 +562,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.generateStatisticsCheckBox.checked = self.logic.generateStatistics
         self.ui.lobeAnalysisCheckBox.checked = self.lobeAnalysis
         self.ui.areaAnalysisCheckBox.checked = self.areaAnalysis
+        self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
 
         # Update buttons states and tooltips
         if (self.logic.inputVolume and self.logic.inputSegmentation
@@ -648,6 +656,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         settings.setValue("LungCtAnalyzer/lobeAnalysisCheckBoxChecked", str(self.lobeAnalysis))
         self.areaAnalysis = self.ui.areaAnalysisCheckBox.checked
         settings.setValue("LungCtAnalyzer/areaAnalysisCheckBoxChecked", str(self.areaAnalysis))
+        self.isNiiGzFormat = self.ui.niigzFormatCheckBox.checked
+        settings.setValue("LungCtAnalyzer/niigzFormatCheckBoxChecked", str(self.isNiiGzFormat))
+        
         self.logic.countBullae = False
 
         self._parameterNode.EndModify(wasModified)
@@ -719,7 +730,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         scriptThresholds['thresholdCollapsedVessels'] = self.ui.CollapsedRangeWidget.maximumValue
         scriptThresholds['thresholdVesselsUpper'] = self.ui.VesselsRangeWidget.maximumValue
         self.logic.setThresholds(self.logic.getParameterNode(), scriptThresholds)
-          
+
+
     def onBatchProcessingButton(self):
         self.batchProcessingIsCancelled = False
         if self.batchProcessingInputDir == "":
@@ -735,11 +747,17 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         pattern = ''
 
         pattern = '/' '**/*.mrb'
+        
+        if self.isNiiGzFormat: 
+            pattern = '/' '**/*.nii.gz'
+        else:
+            pattern = '/' '**/*.mrb'
+
               
         filesToProcess = 0
         for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
             pathhead, pathtail = os.path.split(filename)
-            if (pathtail == "CT_seg.mrb"):
+            if (pathtail == "CT_seg.mrb" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
                 # input data must be in subdirectories of self.batchProcessingInputDir
                 if pathhead == self.batchProcessingInputDir:
                     self.showCriticalError("Unsupported data structure: Data files in input folder detected, they must be placed in subfolders.")
@@ -767,7 +785,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         startWatchTime = time.time()
         
-        self.batchProcessing = True             
+        self.batchProcessing = True
         counter = 0
         
         if self.scanInput:
@@ -782,28 +800,57 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             filesToProcess = 3
         for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
             pathhead, pathtail = os.path.split(filename)
-            if (pathtail == "CT_seg.mrb") and pathhead != self.batchProcessingInputDir:
+            if (pathtail == "CT_seg.mrb" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
                 startProcessWatchTime = time.time()
                 counter += 1
                 slicer.mrmlScene.Clear(0)
-                slicer.util.loadScene(filename)
+                if not self.isNiiGzFormat: 
+                    slicer.util.loadScene(filename)
+                    if self.useCalibratedCT: 
+                        firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
+                        # to prevent crash TODO find out why
+                        ctVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
+                        if ctVolumeNode: 
+                            slicer.mrmlScene.RemoveNode(ctVolumeNode)
+                    else: 
+                        firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
+                    if firstVolumeNode:
+                        self.logic.inputVolume = firstVolumeNode
+                    else: 
+                        raise ValueError("No input volume.")
+                    if not self.logic.inputSegmentation:
+                        segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
+                        if segNode:
+                            self.logic.inputSegmentation = segNode
+                else: 
+                
+                    # input is NIFTI format 
+                    # Get color node with random colors
+                    randomColorsNode = slicer.mrmlScene.GetNodeByID('vtkMRMLColorTableNodeRandom')
+                    rgba = [0, 0, 0, 0]
 
-                if self.useCalibratedCT: 
-                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
-                    # to prevent crash
-                    ctVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
-                    if ctVolumeNode: 
-                        slicer.mrmlScene.RemoveNode(ctVolumeNode)
-                else: 
-                    firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT")
-                if firstVolumeNode:
-                    self.logic.inputVolume = firstVolumeNode
-                else: 
-                    raise ValueError("No input volume.")
-                if not self.logic.inputSegmentation:
-                    segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
-                    if segNode:
-                        self.logic.inputSegmentation = segNode                    
+                    self.inputVolume = slicer.util.loadVolume(filename)
+                    self.logic.inputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'Lung segmentation')
+                    pattern = '/' '**/*.nii.gz'
+                    print(self.batchProcessingInputDir)
+                    # inpathtail is the first level source folder 
+                    inpathhead, inpathtail = os.path.split(pathhead)
+                    for filename2 in glob.iglob(self.batchProcessingInputDir + '/' + inpathtail + '/lung_segmentations/' +  pattern, recursive=True):
+                        pathhead2, pathtail2 = os.path.split(filename2)
+                        print(f"Importing {filename2}")
+                        underscore_str = pathtail2.replace(".nii.gz","")
+                        segmentName = underscore_str.replace("_" , " ")
+                        
+                        labelmapVolumeNode = slicer.util.loadLabelVolume(filename2, {"name": segmentName})
+                        segmentId = self.logic.inputSegmentation.GetSegmentation().AddEmptySegment(segmentName, segmentName, rgba[0:3])
+                        updatedSegmentIds = vtk.vtkStringArray()
+                        updatedSegmentIds.InsertNextValue(segmentId)
+                        slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelmapVolumeNode, self.logic.inputSegmentation, updatedSegmentIds)
+                        slicer.mrmlScene.RemoveNode(labelmapVolumeNode)
+                        segmentation = self.logic.inputSegmentation.GetSegmentation()
+                        self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+                        self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+
 
                 print("Analyzing '" + filename + "' ...", end='\r')
                 if _doanalyze: 
@@ -821,12 +868,30 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filename, counter, outpathtail)
 
                     if not self.csvOnly:
-                        sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
-                        self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
-                        if slicer.util.saveScene(sceneSaveFilename):
-                          logging.info("Scene saved to: {0}".format(sceneSaveFilename))
-                        else:
-                          logging.error("Scene saving failed") 
+                      if self.isNiiGzFormat:
+                          self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
+                          for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
+                            volumeNode.AddDefaultStorageNode()
+                            slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName().lower().replace(" ", "_") + ".nii.gz")
+                          numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
+                          for i in range(numberOfSegments):
+                              segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
+                              labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode")
+                              segID = self.logic.outputSegmentation.GetSegmentation().GetSegmentIdBySegment(segment)
+                              strArr = [str(segID)]                      
+                              slicer.modules.segmentations.logic().ExportSegmentsToLabelmapNode (self.logic.outputSegmentation, strArr, labelmapVolumeNode, self.logic.inputVolume)
+                              labelmapVolumeNode.AddDefaultStorageNode()
+                              if not os.path.exists(targetdir + "lung_analysis_segmentations/"):
+                                  os.makedirs(targetdir + "lung_analysis_segmentations/")
+                              slicer.util.saveNode(labelmapVolumeNode, targetdir + "lung_analysis_segmentations/" + segment.GetName().lower().replace(" ", "_") + ".seg.nii.gz")
+                              slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
+                      else:                    
+                          sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
+                          self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
+                          if slicer.util.saveScene(sceneSaveFilename):
+                              logging.info("Scene saved to: {0}".format(sceneSaveFilename))
+                          else:
+                              logging.error("Scene saving failed") 
     
                 stopProcessWatchTime = time.time()
                 durationProcess = stopProcessWatchTime - startProcessWatchTime
