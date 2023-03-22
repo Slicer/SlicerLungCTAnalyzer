@@ -742,6 +742,33 @@
         <property name="verticalSpacing">
          <number>4</number>
         </property>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="testModeCheckBox">
+          <property name="toolTip">
+           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
+          </property>
+          <property name="text">
+           <string>Test mode: analyze three cases from input folder</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Output folder: </string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QCheckBox" name="useCalibratedCTCheckBox">
+          <property name="toolTip">
+           <string>Use the normalized CT in the input dataset if present</string>
+          </property>
+          <property name="text">
+           <string>Use calibrated CT</string>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="1">
          <widget class="ctkPathLineEdit" name="outputDirectoryPathLineEdit">
           <property name="toolTip">
@@ -752,6 +779,33 @@
           </property>
           <property name="options">
            <set>ctkPathLineEdit::ShowDirsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Input folder:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="csvOnlyCheckBox">
+          <property name="toolTip">
+           <string>Do not write CT_seg_analyzed mrb file, just add data to the CSV file. </string>
+          </property>
+          <property name="text">
+           <string>Write CSV results only</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QCheckBox" name="scanInputCheckBox">
+          <property name="toolTip">
+           <string>Just load the input files one after another for inspection, no analysis, no writing. </string>
+          </property>
+          <property name="text">
+           <string>Load iinput files  only</string>
           </property>
          </widget>
         </item>
@@ -768,57 +822,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>Output folder: </string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Input folder:</string>
-          </property>
-         </widget>
-        </item>
         <item row="4" column="1">
-         <widget class="QCheckBox" name="useCalibratedCTCheckBox">
-          <property name="toolTip">
-           <string>Use the normalized CT in the input dataset if present</string>
-          </property>
+         <widget class="QCheckBox" name="niigzFormatCheckBox">
           <property name="text">
-           <string>Use calibrated CT</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QCheckBox" name="csvOnlyCheckBox">
-          <property name="toolTip">
-           <string>Do not write CT_seg_analyzed mrb file, just add data to the CSV file. </string>
-          </property>
-          <property name="text">
-           <string>Write CSV results only</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="testModeCheckBox">
-          <property name="toolTip">
-           <string>If this is checked, batch processing will scan the complete input directory but do only the first three cases. </string>
-          </property>
-          <property name="text">
-           <string>Test mode: analyze three cases from input folder</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="1">
-         <widget class="QCheckBox" name="scanInputCheckBox">
-          <property name="toolTip">
-           <string>Just load the input files one after another for inspection, no analysis, no writing. </string>
-          </property>
-          <property name="text">
-           <string>Load iinput files  only</string>
+           <string>Input is NIFTI (*.nii.gz) format</string>
           </property>
          </widget>
         </item>
