@@ -822,8 +822,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                         segNode = slicer.util.getFirstNodeByClassByName("vtkMRMLSegmentationNode", "Lung segmentation")
                         if segNode:
                             self.logic.inputSegmentation = segNode
-                else: 
-                
+                else:                
                     # input is NIFTI format 
                     # Get color node with random colors
                     randomColorsNode = slicer.mrmlScene.GetNodeByID('vtkMRMLColorTableNodeRandom')
@@ -842,7 +841,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                         segmentName = underscore_str.replace("_" , " ")
                         
                         labelmapVolumeNode = slicer.util.loadLabelVolume(filename2, {"name": segmentName})
-                        segmentId = self.logic.inputSegmentation.GetSegmentation().AddEmptySegment(segmentName, segmentName, rgba[0:3])
+                        segmentId = self.logic.inputSegmentation.GetSegmentation().AddEmptySegment(segmentName, segmentName)
                         updatedSegmentIds = vtk.vtkStringArray()
                         updatedSegmentIds.InsertNextValue(segmentId)
                         slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(labelmapVolumeNode, self.logic.inputSegmentation, updatedSegmentIds)

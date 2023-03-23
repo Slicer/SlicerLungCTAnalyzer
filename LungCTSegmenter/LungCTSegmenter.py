@@ -438,8 +438,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               import gc
               gc.collect()
               
-              self.inputVolume = slicer.util.loadVolume(filename)
-
+              try:
+                  self.inputVolume = slicer.util.loadVolume(filename)
+              except Exception as e:
+                  # Failed to read volume, probably a faulty NIFTI file 
+                  
+                  print("Skipping file due to read error. " + str(counter) + " ("  + filename + ")")
+                  print(str(e))
+                  continue
+              
               # let slicer process events and update its display
               slicer.app.processEvents()
               time.sleep(5)
@@ -1803,52 +1810,44 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slicer.util.updateSegmentBinaryLabelmapFromArray(segment_np, outputSegmentation, segmentId, inputVolume)
 
 
-    def normalizeImageHU(self, img, air, muscle):
-        air_HU = -1000
-        # fat_HU = -100
-        muscle_HU = 30
-        
-        delta_air_muscle_HU = abs(air_HU - muscle_HU)
-        delta_air = abs(air - air_HU)
-        delta_muscle_air_rgb = abs(muscle - air)
-        ratio = delta_air_muscle_HU / delta_muscle_air_rgb
-        
-        img = img - air
-        img = img * ratio
-        img = img + air_HU
-        return img
-        
-    def normalize_ct_scan(self, ct_scan, air_hu=-1000, blood_hu=30):
+    def normalize_ct_scan(self, ct_scan, air_hu=-1000, muscle_hu=30):
         """
-        Normalize a CT scan based on the HU values of air and blood.
-
+        Normalize a CT scan based on the HU values of air and muscle.
         Args:
             ct_scan (ndarray): A 3D numpy array representing the CT scan.
             air_hu (int, optional): The Hounsfield unit value of air. Defaults to -1000.
-            blood_hu (int, optional): The Hounsfield unit value of blood. Defaults to 30.
+            muscle_hu (int, optional): The Hounsfield unit value of muscle. Defaults to 30.
 
         Returns:
             ndarray: A normalized version of the CT scan.
         """
         import numpy as np
         
+        # Store the data type of the input array
+        _dtype = ct_scan.dtype
+
         # Find the min and max HU values in the CT scan
         min_hu = np.min(ct_scan)
         max_hu = np.max(ct_scan)
 
         # Calculate the slope and intercept for normalization
-        slope = (blood_hu - air_hu) / (max_hu - min_hu)
+        slope = (muscle_hu - air_hu) / (max_hu - min_hu)
         intercept = air_hu - (slope * min_hu)
+
+        # print("normalize_ct_scan: slope " + str(slope) + " intercept " + str(intercept) + " min_hu " + str(min_hu) + " max_hu " + str(max_hu))
 
         # Apply the normalization
         normalized_ct_scan = (ct_scan * slope) + intercept
 
-        return normalized_ct_scan
+        # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
+        array = normalized_ct_scan.astype(_dtype)
+
+        return array
 
     def calibrate_ct_scan(self, ct_pixel_array, air_mean_hu, muscle_mean_hu):
         """
         Calibrate the volume. 
-        Args
+        Args:
             ct_pixel_array (ndarray): A 3D numpy array representing the CT scan.
             air_mean_hu (float): The measured mean Hounsfield unit value of air in the CT scan.
             muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
@@ -1861,7 +1860,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         _dtype = ct_pixel_array.dtype
 
         air_output = -1000
-        muscle_output = 40
+        muscle_output = 30
         
         # Find the line that passes through these points
         d = float(muscle_mean_hu - air_mean_hu)
@@ -1871,7 +1870,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         slope = (muscle_output - air_output) / d
         intercept = air_output - (slope * air_mean_hu)
 
-        print("slope " + str(slope) + " intercept " + str(intercept) + " d " + str(d) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
+        # print("calibrate_ct_scan: slope " + str(slope) + " intercept " + str(intercept) + " d " + str(d) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
 
         # Adjust the CT
         a2 = ct_pixel_array * slope + intercept
@@ -1918,37 +1917,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         image_array += min_output
         if not inplace:
             return image_array
-
-
-    def standardize_ct_scan(self, ct_pixel_array, air_mean_hu, muscle_mean_hu):
-        """
-        Standardize the mean HU values of air and muscle in a CT scan to the HU values of -1000 and 30, respectively.
-
-        Args:
-            ct_pixel_array (ndarray): A 3D numpy array representing the CT scan.
-            air_mean_hu (float): The measured mean Hounsfield unit value of air in the CT scan.
-            muscle_mean_hu (float): The measured mean Hounsfield unit value of muscle in the CT scan.
-
-        Returns:
-            ndarray: A standardized version of the CT scan.
-        """
-        
-        # Store the data type of the input array
-        _dtype = ct_pixel_array.dtype
-        
-        # Calculate the slope and intercept based on the measured mean HU values
-        slope = (30 - (-1000)) / (muscle_mean_hu - air_mean_hu)
-        intercept = -1000 - (slope * air_mean_hu)
-
-        # print("slope " + str(slope) + " intercept " + str(intercept) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
-
-        # Standardize the pixel array using the slope and intercept
-        standardized_array = (ct_pixel_array * slope) + intercept
-
-        # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
-        array = standardized_array.astype(_dtype)
-
-        return array
 
     def get_script_path(self):
         return os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -2403,8 +2371,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
                     voxels = slicer.util.arrayFromVolume(self.inputVolume)
                     # voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
-                    voxels_standardized = self.calibrate_ct_scan(voxels, mean_air, mean_muscle)
-                    slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_standardized)
+                    voxels_calibrated = self.calibrate_ct_scan(voxels, mean_air, mean_muscle)
+                    slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_calibrated)
                     slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
                     print(f"Calibrated volume created.")
                     
