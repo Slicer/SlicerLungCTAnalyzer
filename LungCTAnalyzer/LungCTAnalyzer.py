@@ -757,7 +757,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         filesToProcess = 0
         for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
             pathhead, pathtail = os.path.split(filename)
-            if (pathtail == "CT_seg.mrb" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
+            if (pathtail.lower() == "ct_seg.mrb" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat):
                 # input data must be in subdirectories of self.batchProcessingInputDir
                 if pathhead == self.batchProcessingInputDir:
                     self.showCriticalError("Unsupported data structure: Data files in input folder detected, they must be placed in subfolders.")
@@ -772,7 +772,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if filesToProcess == 0: 
             self.showCriticalError("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
 
-        minutesRequired = filesToProcess * 20 / 60
+        minutesRequired = (filesToProcess * 180) / 60
           
         if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each analysis takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
             logging.info('Batch processing cancelled by user.')
@@ -800,7 +800,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             filesToProcess = 3
         for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
             pathhead, pathtail = os.path.split(filename)
-            if (pathtail == "CT_seg.mrb" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
+            if (pathtail.lower() == "ct_seg.mrb" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
                 startProcessWatchTime = time.time()
                 counter += 1
                 slicer.mrmlScene.Clear(0)
@@ -868,6 +868,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
                     if not self.csvOnly:
                       if self.isNiiGzFormat:
+                          # write NIFTI format 
                           self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
                           for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
                             volumeNode.AddDefaultStorageNode()
@@ -884,8 +885,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                                   os.makedirs(targetdir + "lung_analysis_segmentations/")
                               slicer.util.saveNode(labelmapVolumeNode, targetdir + "lung_analysis_segmentations/" + segment.GetName().lower().replace(" ", "_") + ".seg.nii.gz")
                               slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
-                      else:                    
-                          sceneSaveFilename = targetdir + "CT_seg_analyzed.mrb"
+                      else:
+                          # write default format 
+                          sceneSaveFilename = targetdir + "ct_seg_analyzed.mrb"
                           self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + " processing and write time) to '" + sceneSaveFilename + "' ...")
                           if slicer.util.saveScene(sceneSaveFilename):
                               logging.info("Scene saved to: {0}".format(sceneSaveFilename))

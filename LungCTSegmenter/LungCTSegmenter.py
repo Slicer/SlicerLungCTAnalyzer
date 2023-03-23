@@ -382,7 +382,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       filesToProcess = 0
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
-          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat):
+          if (pathtail.lower() == "ct.nrrd" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat):
               # input data must be in subdirectories of self.batchProcessingInputDir
               if pathhead == self.batchProcessingInputDir:
                   self.showCriticalError("Unsupported data structure: Data files in input folder detected, they must be placed in subfolders.")
@@ -397,8 +397,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       if filesToProcess == 0: 
           self.showCriticalError("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
 
-
-      minutesRequired = filesToProcess * 180 / 60
+      minutesRequired = (filesToProcess * 180) / 60
       
       if not self.batchProcessingTestMode and not slicer.util.confirmYesNoDisplay("If each segmentation takes about 3 minutes, batch segmentation of " + str(filesToProcess) + " input files will last around " + str(minutesRequired) + "  minutes. Are you sure you want to continue?"):
           logging.info('Batch processing cancelled by user.')
@@ -413,11 +412,15 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stop = 0
       counter = 0
       durationProcess = 0
+      
+      if os.path.exists(self.batchProcessingOutputDir + "/results.csv"):
+          os.remove(self.batchProcessingOutputDir + "/results.csv")
+
       if self.batchProcessingTestMode:
           filesToProcess = 3
       for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
           pathhead, pathtail = os.path.split(filename)
-          if (pathtail == "CT.nrrd" and not self.isNiiGzFormat) or (pathtail == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
+          if (pathtail.lower() == "ct.nrrd" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
               counter += 1
               startProcessWatchTime = time.time()
               if start != 0 or stop != 0: 
@@ -428,7 +431,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       print("Skipping file after  # " + str(stop) + " ("  + filename + ")")
                       continue
               print("Processing '" + filename + "' ...")
-              # continue
                             
               slicer.mrmlScene.Clear(0)
 
@@ -451,7 +453,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
               slicer.app.processEvents()
               time.sleep(5)
 
-              print("Processing '" + filename + "' ...")
               if self.useAI and (not self.createDetailedAirways or (self.createDetailedAirways and self.useAI and self.logic.engineAI.find("TotalSegmentator") == 0)):
                   self.onStartButton()
               else:
@@ -469,7 +470,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                       self.showStatusMessage("Writing NIFTI output files for input " + str(counter) +  "/" + str(filesToProcess) + " to '" + targetdir + "' ...")
                       for volumeNode in slicer.util.getNodesByClass("vtkMRMLScalarVolumeNode"):
                         volumeNode.AddDefaultStorageNode()
-                        slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName() + ".nii.gz")
+                        slicer.util.saveNode(volumeNode, targetdir + volumeNode.GetName().lower() + ".nii.gz")
                       numberOfSegments = self.logic.outputSegmentation.GetSegmentation().GetNumberOfSegments()
                       for i in range(numberOfSegments):
                           segment = self.logic.outputSegmentation.GetSegmentation().GetNthSegment(i)
@@ -480,18 +481,20 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                           labelmapVolumeNode.AddDefaultStorageNode()
                           if not os.path.exists(targetdir + "lung_segmentations/"):
                               os.makedirs(targetdir + "lung_segmentations/")
-                          slicer.util.saveNode(labelmapVolumeNode, targetdir + "lung_segmentations/" + segment.GetName().replace(" ", "_") + ".nii.gz")
+                          slicer.util.saveNode(labelmapVolumeNode, targetdir + "lung_segmentations/" + segment.GetName().lower().replace(" ", "_") + ".nii.gz")
                           slicer.mrmlScene.RemoveNode(labelmapVolumeNode)  
                   else: 
-                      sceneSaveFilename = targetdir + "CT_seg.mrb"
+                      sceneSaveFilename = targetdir + "ct_seg.mrb"
                       self.showStatusMessage("Writing mrb output file for input " + str(counter) +  "/" + str(filesToProcess) + " (last process: {0:.2f} s ".format(durationProcess) + ", time remaining {0:.2f} m ".format((durationProcess *(filesToProcess-counter))/60.) + ") to '" + sceneSaveFilename + "' ...")
                       print('Saving scene to ' + sceneSaveFilename)
                       if slicer.util.saveScene(sceneSaveFilename):
                         logging.info("Scene saved to: {0}".format(sceneSaveFilename))
                       else:
                         logging.error("Scene saving failed") 
+                  self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv",str(counter),outpathtail,outpathtail)
               stopProcessWatchTime = time.time()
               durationProcess = stopProcessWatchTime - startProcessWatchTime
+              
 
               # let slicer process events and update its display
               slicer.app.processEvents()
@@ -1267,8 +1270,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.detailedMasks = False
         self.maskedVolume = None
         self.updateAI = False
-
-
+        self.meanAir = 0.
+        self.meanMuscle = 0.
         
     def __del__(self):
         self.removeTemporaryObjects()
@@ -1293,6 +1296,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("airwaySegmentationDetailLevel", "3")
         if not parameterNode.GetParameter("engineAI"):
           parameterNode.SetParameter("engineAI", "lungmask")
+
     @property
     def lungThresholdMin(self):
         thresholdStr = self.getParameterNode().GetParameter("LungThresholdMin")
@@ -1424,6 +1428,43 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         scaleFactor = 1.5
         rgbBrighter = np.array(rgb) * scaleFactor
         return np.clip(rgbBrighter, 0.0, 1.0)
+
+    def saveExtendedDataToFile(self,filename,user_str1,user_str2,user_str3):
+        import os.path
+        file_exists = os.path.isfile(filename)
+
+        import csv
+
+        header = [
+        'user1',
+        'user2',
+        'user3',
+        'meanAirHU',
+        'meanMuscleHU',
+        ]
+
+        data = [
+        user_str1,
+        user_str2,
+        user_str3,
+        self.meanAir,
+        self.meanMuscle,
+        ]
+        try:
+            with open(filename, 'a') as f:
+                if not file_exists:
+                    for item in header: 
+                        f.write('"')
+                        f.write(item)  # file doesn't exist yet, write a header
+                        f.write('"')
+                        f.write(";")
+                    f.write("\n")
+                for item in data: 
+                    f.write(str(item))  
+                    f.write(";")
+                f.write("\n")
+        except IOError:
+            logging.error("I/O error")
 
     def startSegmentation(self):
         if not self.inputVolume:
@@ -2354,24 +2395,24 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     stats = segStatLogic.getStatistics()
                     
                     # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
-                    mean_air = 0.
-                    mean_muscle = 0.
+                    self.meanAir = 0.
+                    self.meanMuscle = 0.
                     centroid_trachea = [0,0,0]
                     
                     segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
                     centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
-                    mean_air = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
-                    mean_muscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                     
-                    print(f"Mean radiodensity of trachea = {mean_air} HU")
-                    print(f"Mean radiodensity of left erector spinae muscle = {mean_muscle} HU")
+                    print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
+                    print("Mean radiodensity of left erector spinar muscle = {0:.2f}".format(self.meanMuscle) + " HU")
 
                     self.showStatusMessage('Calibrate data ...')
                     self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
                     voxels = slicer.util.arrayFromVolume(self.inputVolume)
                     # voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
-                    voxels_calibrated = self.calibrate_ct_scan(voxels, mean_air, mean_muscle)
+                    voxels_calibrated = self.calibrate_ct_scan(voxels, self.meanAir, self.meanMuscle)
                     slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_calibrated)
                     slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
                     print(f"Calibrated volume created.")
