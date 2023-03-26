@@ -170,3 +170,6 @@ V 2.65
 
 ENH: implement CT data calibration 
  
+V 2.66
+
+ENH: Implement Lung CT Analyzer NIFTI input and output 
