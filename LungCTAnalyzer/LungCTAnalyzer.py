@@ -90,7 +90,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.65
+        self.version = 2.66
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -755,8 +755,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
               
         filesToProcess = 0
-        for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
-            pathhead, pathtail = os.path.split(filename)
+        for filepath in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+            pathhead, pathtail = os.path.split(filepath)
             if (pathtail.lower() == "ct_seg.mrb" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat):
                 # input data must be in subdirectories of self.batchProcessingInputDir
                 if pathhead == self.batchProcessingInputDir:
@@ -767,7 +767,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     self.showCriticalError("Unsupported data structure: There seem to be input data in sub-subfolders of the input folder. Only one subfolder dimension is allowed.")
                 filesToProcess += 1
                 if self.batchProcessingTestMode: 
-                  print("Input file '" + filename + "' detected ...")
+                  print("Input file '" + filepath + "' detected ...")
           
         if filesToProcess == 0: 
             self.showCriticalError("No files to process. Each input file must be placed in a separate subdirectory of the input folder.")
@@ -780,8 +780,6 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         if self.batchProcessingTestMode and filesToProcess < 3:
             self.showCriticalError("Not enough input files for test mode (3 needed) during recursive reading below input directory path.")
-
-
 
         startWatchTime = time.time()
         
@@ -798,14 +796,26 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         durationProcess = 0
         if self.batchProcessingTestMode:
             filesToProcess = 3
-        for filename in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
-            pathhead, pathtail = os.path.split(filename)
-            if (pathtail.lower() == "ct_seg.mrb" and not self.isNiiGzFormat) or (pathtail.lower() == "ct.nii.gz" and self.isNiiGzFormat) and pathhead != self.batchProcessingInputDir:
+        for filepath in glob.iglob(self.batchProcessingInputDir + pattern, recursive=True):
+            pathhead, pathtail = os.path.split(filepath)
+
+            filename = pathtail.lower()
+            _doread = False
+            if filename == "ct_seg.mrb" and not self.isNiiGzFormat: 
+                _doread = True
+            if filename == "ct.nii.gz" and self.isNiiGzFormat and not self.useCalibratedCT: 
+                _doread = True
+            if filename == "ct_calibrated.nii.gz" and self.isNiiGzFormat and self.useCalibratedCT: 
+                _doread = True
+            if pathhead != self.batchProcessingInputDir: 
+                _doread = True
+            if _doread:
                 startProcessWatchTime = time.time()
                 counter += 1
                 slicer.mrmlScene.Clear(0)
                 if not self.isNiiGzFormat: 
-                    slicer.util.loadScene(filename)
+                    # input is not NRRD format 
+                    slicer.util.loadScene(filepath)
                     if self.useCalibratedCT: 
                         firstVolumeNode = slicer.util.getFirstNodeByClassByName("vtkMRMLScalarVolumeNode","CT_calibrated")
                         # to prevent crash TODO find out why
@@ -828,19 +838,19 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     randomColorsNode = slicer.mrmlScene.GetNodeByID('vtkMRMLColorTableNodeRandom')
                     rgba = [0, 0, 0, 0]
 
-                    self.inputVolume = slicer.util.loadVolume(filename)
+                    self.inputVolume = slicer.util.loadVolume(filepath)
                     self.logic.inputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'Lung segmentation')
                     pattern = '/' '**/*.nii.gz'
                     print(self.batchProcessingInputDir)
                     # inpathtail is the first level source folder 
                     inpathhead, inpathtail = os.path.split(pathhead)
-                    for filename2 in glob.iglob(self.batchProcessingInputDir + '/' + inpathtail + '/lung_segmentations/' +  pattern, recursive=True):
-                        pathhead2, pathtail2 = os.path.split(filename2)
-                        print(f"Importing {filename2}")
+                    for filepath2 in glob.iglob(self.batchProcessingInputDir + '/' + inpathtail + '/lung_segmentations/' +  pattern, recursive=True):
+                        pathhead2, pathtail2 = os.path.split(filepath2)
+                        print(f"Importing {filepath2}")
                         underscore_str = pathtail2.replace(".nii.gz","")
                         segmentName = underscore_str.replace("_" , " ")
                         
-                        labelmapVolumeNode = slicer.util.loadLabelVolume(filename2, {"name": segmentName})
+                        labelmapVolumeNode = slicer.util.loadLabelVolume(filepath2, {"name": segmentName})
                         segmentId = self.logic.inputSegmentation.GetSegmentation().AddEmptySegment(segmentName, segmentName)
                         updatedSegmentIds = vtk.vtkStringArray()
                         updatedSegmentIds.InsertNextValue(segmentId)
@@ -851,7 +861,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                         self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
 
 
-                print("Analyzing '" + filename + "' ...", end='\r')
+                print("Analyzing '" + filepath + "' ...", end='\r')
                 if _doanalyze: 
                     self.onApplyButton()
 
@@ -862,9 +872,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     if not os.path.exists(targetdir):
                         os.makedirs(targetdir)
                         
-                    self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv", filename, counter, outpathtail)
-                    self.logic.saveExtendedRegionDataToFile(self.batchProcessingOutputDir + "/regionResults.csv", filename, counter, outpathtail)
-                    self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filename, counter, outpathtail)
+                    self.logic.saveExtendedDataToFile(self.batchProcessingOutputDir + "/results.csv", filepath, counter, outpathtail)
+                    self.logic.saveExtendedRegionDataToFile(self.batchProcessingOutputDir + "/regionResults.csv", filepath, counter, outpathtail)
+                    self.logic.saveExtendedLobeDataToFile(self.batchProcessingOutputDir + "/lobeResults.csv", filepath, counter, outpathtail)
 
                     if not self.csvOnly:
                       if self.isNiiGzFormat:
