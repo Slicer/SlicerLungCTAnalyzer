@@ -2473,46 +2473,86 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
             elif self.engineAI.find("MONAILabel") == 0:
             
-                # try to connect to MONAILabel server
-                self.showStatusMessage(' Creating segmentations with MONAILabel ...')
-                logic = slicer.util.getModuleLogic('MONAILabel')
-                try:
-                    #check if Monailabel is connected correctly
-                    server_add = "http://127.0.0.1:8000"
-                    logic.setServer(server_url=server_add)
-                    MONAILabelClient = logic.info()
-                    print(MONAILabelClient)
-                except Exception as e:
-                    slicer.util.errorDisplay("Unable to connect to MONAILabel server on http://127.0.0.1:8000"+str(e))
-                    import traceback
-                    traceback.print_exc()
-                else:
-                    # save the volume and get the path
-                    tempVolDir, image_id, in_file = self.saveVolTemp(self.inputVolume)
-                    model = "segmentation_lung"
-                    params = {'largest_cc': True}
-                    # infer
-                    result_file, params = logic.infer(model, in_file, params)
-                    # load the autosegmented segmentation file in Slicer
-                    tempResultSegmentation = slicer.util.loadSegmentation(result_file)
-                    # copy segments to lung segmentation and tag them
-                    self.outputSegmentation.GetSegmentation().DeepCopy(tempResultSegmentation.GetSegmentation())
-                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_1")
-                    segment.SetName("right lung")
-                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
-                    self.setAnatomicalTag(self.outputSegmentation, "right lung", segID)
-                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_2")
-                    segment.SetName("left lung")
-                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung")
-                    self.setAnatomicalTag(self.outputSegmentation, "left lung", segID)
-                    segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_3")
-                    segment.SetName("airways")
-                    segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
-                    self.setAnatomicalTag(self.outputSegmentation, "airways", segID)
-                    # cleanup
-                    if os.path.exists(in_file):
-                      os.remove(in_file)
-                    slicer.mrmlScene.RemoveNode(tempResultSegmentation)
+                _runScripted = False
+                if _runScripted:
+                                       
+                    import os
+                    
+                    # change to 3D Slicer home directory
+                    os.chdir(slicer.app.slicerHome)
+
+                    # clone MONAILabel if its directory not present
+                    if not os.path.exists(slicer.app.slicerHome + "/MONAILabel/"): 
+                        import git                        
+                        git.Git(slicer.app.slicerHome).clone("https://github.com/Project-MONAI/MONAILabel")
+                        slicer.util.pip_install("-r MONAILabel/requirements.txt")
+
+                    # download radiology apps if its directory not present
+                    if not os.path.exists(slicer.app.slicerHome + "/apps/"): 
+                        cmd = os.path.join(slicer.app.slicerHome + "/MONAILabel/monailabel/scripts", "monailabel.bat apps --download --name radiology --output apps")  
+                        print(cmd)
+                        proc = slicer.util.launchConsoleProcess(cmd)
+                        slicer.util.logProcessOutput(proc)
+
+                    
+                    import sysconfig
+                    # cmdpath = os.path.join(sysconfig.get_path('scripts'), "monailabel")
+                    cmd = os.path.join(slicer.app.slicerHome + "/MONAILabel/monailabel/scripts", "monailabel.bat")
+                    print(cmd)
+                    # Get Python executable path
+                    import shutil
+                    pythonSlicerExecutablePath = shutil.which('PythonSlicer')
+                    if not pythonSlicerExecutablePath:
+                        raise RuntimeError("Python was not found")
+                    # totalCommand = [ pythonSlicerExecutablePath, cmdpath]
+                    options = [""]
+                    options.append("")
+
+                    proc = slicer.util.launchConsoleProcess(cmd)
+                    slicer.util.logProcessOutput(proc)
+
+
+                else: 
+                    # try to connect to MONAILabel server
+                    self.showStatusMessage(' Creating segmentations with MONAILabel ...')
+                    logic = slicer.util.getModuleLogic('MONAILabel')
+                    try:
+                        #check if Monailabel is connected correctly
+                        server_add = "http://127.0.0.1:8000"
+                        logic.setServer(server_url=server_add)
+                        MONAILabelClient = logic.info()
+                        print(MONAILabelClient)
+                    except Exception as e:
+                        slicer.util.errorDisplay("Unable to connect to MONAILabel server on http://127.0.0.1:8000"+str(e))
+                        import traceback
+                        traceback.print_exc()
+                    else:
+                        # save the volume and get the path
+                        tempVolDir, image_id, in_file = self.saveVolTemp(self.inputVolume)
+                        model = "segmentation_lung"
+                        params = {'largest_cc': True}
+                        # infer
+                        result_file, params = logic.infer(model, in_file, params)
+                        # load the autosegmented segmentation file in Slicer
+                        tempResultSegmentation = slicer.util.loadSegmentation(result_file)
+                        # copy segments to lung segmentation and tag them
+                        self.outputSegmentation.GetSegmentation().DeepCopy(tempResultSegmentation.GetSegmentation())
+                        segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_1")
+                        segment.SetName("right lung")
+                        segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+                        self.setAnatomicalTag(self.outputSegmentation, "right lung", segID)
+                        segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_2")
+                        segment.SetName("left lung")
+                        segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung")
+                        self.setAnatomicalTag(self.outputSegmentation, "left lung", segID)
+                        segment = self.outputSegmentation.GetSegmentation().GetSegment("Segment_3")
+                        segment.SetName("airways")
+                        segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("airways")
+                        self.setAnatomicalTag(self.outputSegmentation, "airways", segID)
+                        # cleanup
+                        if os.path.exists(in_file):
+                          os.remove(in_file)
+                        slicer.mrmlScene.RemoveNode(tempResultSegmentation)
             else:
                 logging.info("No AI engine defined.")  
         
