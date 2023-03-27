@@ -2475,43 +2475,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             
                 _runScripted = False
                 if _runScripted:
-                                       
-                    import os
-                    
-                    # change to 3D Slicer home directory
-                    os.chdir(slicer.app.slicerHome)
-
-                    # clone MONAILabel if its directory not present
-                    if not os.path.exists(slicer.app.slicerHome + "/MONAILabel/"): 
-                        import git                        
-                        git.Git(slicer.app.slicerHome).clone("https://github.com/Project-MONAI/MONAILabel")
-                        slicer.util.pip_install("-r MONAILabel/requirements.txt")
-
-                    # download radiology apps if its directory not present
-                    if not os.path.exists(slicer.app.slicerHome + "/apps/"): 
-                        cmd = os.path.join(slicer.app.slicerHome + "/MONAILabel/monailabel/scripts", "monailabel.bat apps --download --name radiology --output apps")  
-                        print(cmd)
-                        proc = slicer.util.launchConsoleProcess(cmd)
-                        slicer.util.logProcessOutput(proc)
-
-                    
-                    import sysconfig
-                    # cmdpath = os.path.join(sysconfig.get_path('scripts'), "monailabel")
-                    cmd = os.path.join(slicer.app.slicerHome + "/MONAILabel/monailabel/scripts", "monailabel.bat")
-                    print(cmd)
-                    # Get Python executable path
-                    import shutil
-                    pythonSlicerExecutablePath = shutil.which('PythonSlicer')
-                    if not pythonSlicerExecutablePath:
-                        raise RuntimeError("Python was not found")
-                    # totalCommand = [ pythonSlicerExecutablePath, cmdpath]
-                    options = [""]
-                    options.append("")
-
-                    proc = slicer.util.launchConsoleProcess(cmd)
-                    slicer.util.logProcessOutput(proc)
-
-
+                   # This is not yet fully supported
+                   pass
                 else: 
                     # try to connect to MONAILabel server
                     self.showStatusMessage(' Creating segmentations with MONAILabel ...')
