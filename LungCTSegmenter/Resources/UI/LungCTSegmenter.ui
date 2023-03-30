@@ -642,45 +642,13 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Airway thresholds: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="ctkRangeWidget" name="AirwayThresholdRangeWidget">
-        <property name="toolTip">
-         <string>This parameter equals 'threshold range' in the airway segmentation 'Local Threshold-&gt; Growcut' algorithm. It is only effective if 'Airway segmentation' is enabled.  It is recommended to leave the lower threshold slider -&gt;  full left.  If airway segment is incomplete or leaking, modify the upper threshold slider slightly and stepwise (+/- 30). Re-run the segmentation by pressing 'Apply' to see any effect. See 'detail' dropdown menu (above) for additional airway segmentation effects. </string>
-        </property>
-        <property name="singleStep">
-         <double>1.000000000000000</double>
-        </property>
-        <property name="minimum">
-         <double>-1500.000000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>0.000000000000000</double>
-        </property>
-        <property name="minimumValue">
-         <double>-1500.000000000000000</double>
-        </property>
-        <property name="maximumValue">
-         <double>-850.000000000000000</double>
-        </property>
-        <property name="tickInterval">
-         <double>0.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>Vessel thresholds:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="1" column="1">
        <widget class="ctkRangeWidget" name="VesselThresholdRangeWidget">
         <property name="toolTip">
          <string>Set vessel thresholds depending on the vascular contrast medium used in your input volume. </string>
@@ -699,14 +667,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>Volume rendering Shift</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="2" column="1">
        <widget class="ctkSliderWidget" name="VolumeRenderingShiftSliderWidget">
         <property name="minimum">
          <double>-300.000000000000000</double>
@@ -719,7 +687,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="3" column="0">
        <widget class="QPushButton" name="setDefaultButton">
         <property name="toolTip">
          <string>Reset lung range and airway range to default values.</string>
@@ -729,7 +697,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="3" column="1">
        <widget class="QPushButton" name="updateIntensityButton">
         <property name="toolTip">
          <string>Update current segmentation preview after lung intensity range changes</string>
@@ -739,7 +707,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
+      <item row="4" column="0">
        <widget class="QCheckBox" name="saveFiducialsCheckBox">
         <property name="toolTip">
          <string>Save markups, created during mask segmentation, in current data directory. This happens when pressing &quot;Apply&quot;. Use &quot;Load last markups&quot; checkbox for loading the markups again after &quot;Cancel/Reset&quot; and &quot;Start&quot;. </string>
@@ -749,7 +717,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
+      <item row="5" column="0">
        <widget class="QCheckBox" name="detailedMasksCheckBox">
         <property name="toolTip">
          <string>Choose this if you want to create  ventral, dorsal, upper, middle and lower lung masks. Slows down the procedure.  </string>
@@ -759,37 +727,7 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
-       <widget class="QCheckBox" name="shrinkMasksCheckBox">
-        <property name="toolTip">
-         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
-        </property>
-        <property name="text">
-         <string>Auto shrink masks (1 mm)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="0">
-       <widget class="QCheckBox" name="fastCheckBox">
-        <property name="toolTip">
-         <string>Try this on systems with low GPU memory (&lt; 7GB)</string>
-        </property>
-        <property name="text">
-         <string>Totalsegmentator: --fast option</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="0">
-       <widget class="QCheckBox" name="smoothLungsCheckBox">
-        <property name="toolTip">
-         <string>Smooth AI generated lungs and lobes. Prolongs processing and is on by default.  </string>
-        </property>
-        <property name="text">
-         <string>Smooth lungs and lobes</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
+      <item row="6" column="0">
        <widget class="QCheckBox" name="calibrateDataCheckBox">
         <property name="enabled">
          <bool>true</bool>
@@ -799,6 +737,36 @@
         </property>
         <property name="text">
          <string>CT calibration</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="shrinkMasksCheckBox">
+        <property name="toolTip">
+         <string>This option shrinks the lung masks to avoid artifacts from pleura and pericardium. </string>
+        </property>
+        <property name="text">
+         <string>Auto shrink masks (1 mm)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QCheckBox" name="fastCheckBox">
+        <property name="toolTip">
+         <string>Try this on systems with low GPU memory (&lt; 7GB)</string>
+        </property>
+        <property name="text">
+         <string>Totalsegmentator: --fast option</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QCheckBox" name="smoothLungsCheckBox">
+        <property name="toolTip">
+         <string>Smooth AI generated lungs and lobes. Prolongs processing and is on by default.  </string>
+        </property>
+        <property name="text">
+         <string>Smooth lungs and lobes</string>
         </property>
        </widget>
       </item>

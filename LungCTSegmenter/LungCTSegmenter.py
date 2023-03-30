@@ -94,8 +94,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       self.lungThresholdMin = 0.
       self.lungThresholdMax = 0. 
-      self.airwayThresholdMin = 0.
-      self.airwayThresholdMax = 0.
       self.vesselThresholdMin = 0.
       self.vesselThresholdMax = 0.
 
@@ -180,7 +178,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       
       # Connect threshold range sliders 
       self.ui.LungThresholdRangeWidget.connect('valuesChanged(double,double)', self.onLungThresholdRangeWidgetChanged)
-      self.ui.AirwayThresholdRangeWidget.connect('valuesChanged(double,double)', self.onAirwayThresholdRangeWidgetChanged)
       self.ui.VesselThresholdRangeWidget.connect('valuesChanged(double,double)', self.onVesselThresholdRangeWidgetChanged)
 
       # Connect double sliders 
@@ -232,10 +229,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin = float(settings.value("LungCtSegmenter/lungThresholdRangeMinimumValue", ""))  
       if settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", "") != "":               
         self.ui.LungThresholdRangeWidget.maximumValue = self.lungThresholdMax =  float(settings.value("LungCtSegmenter/lungThresholdRangeMaximumValue", ""))
-      if settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", "") != "":               
-        self.ui.AirwayThresholdRangeWidget.minimumValue = self.airwayThresholdMin =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMinimumValue", ""))
-      if settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", "") != "":               
-        self.ui.AirwayThresholdRangeWidget.maximumValue = self.airwayThresholdMax =  float(settings.value("LungCtSegmenter/airwayThresholdRangeMaximumValue", ""))
 
       if settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", "") != "":               
         self.ui.VesselThresholdRangeWidget.minimumValue = self.vesselThresholdMin =  float(settings.value("LungCtSegmenter/vesselThresholdRangeMinimumValue", ""))
@@ -329,8 +322,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.value = 0
       self.ui.LungThresholdRangeWidget.minimumValue = -1500
       self.ui.LungThresholdRangeWidget.maximumValue = -400
-      self.ui.AirwayThresholdRangeWidget.minimumValue = -1500
-      self.ui.AirwayThresholdRangeWidget.maximumValue = -700
       self.ui.VesselThresholdRangeWidget.minimumValue = -0
       self.ui.VesselThresholdRangeWidget.maximumValue = 3000
       self.updateParameterNodeFromGUI()
@@ -521,9 +512,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onLungThresholdRangeWidgetChanged(self):
        self.updateParameterNodeFromGUI()
       
-  def onAirwayThresholdRangeWidgetChanged(self):
-       self.updateParameterNodeFromGUI()
-
   def onVesselThresholdRangeWidgetChanged(self):
        self.updateParameterNodeFromGUI()
 
@@ -694,10 +682,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.value = self.VolumeRenderingShift
       self.ui.LungThresholdRangeWidget.minimumValue = self.lungThresholdMin
       self.ui.LungThresholdRangeWidget.maximumValue = self.lungThresholdMax 
-      self.ui.AirwayThresholdRangeWidget.minimumValue = self.airwayThresholdMin
-      self.ui.AirwayThresholdRangeWidget.maximumValue = self.airwayThresholdMax
-      self.ui.VesselThresholdRangeWidget.minimumValue = self.vesselThresholdMin
-      self.ui.VesselThresholdRangeWidget.maximumValue = self.vesselThresholdMax
 
       self.updateFiducialObservations(self._rightLungFiducials, self.logic.rightLungFiducials)
       self.updateFiducialObservations(self._leftLungFiducials, self.logic.leftLungFiducials)
@@ -749,10 +733,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       settings.setValue("LungCtSegmenter/lungThresholdRangeMinimumValue", str(self.ui.LungThresholdRangeWidget.minimumValue))
       self.lungThresholdMax = self.ui.LungThresholdRangeWidget.maximumValue
       settings.setValue("LungCtSegmenter/lungThresholdRangeMaximumValue", str(self.ui.LungThresholdRangeWidget.maximumValue))
-      self.airwayThresholdMin = self.ui.AirwayThresholdRangeWidget.minimumValue
-      settings.setValue("LungCtSegmenter/airwayThresholdRangeMinimumValue", str(self.ui.AirwayThresholdRangeWidget.minimumValue))
-      self.airwayThresholdMax = self.ui.AirwayThresholdRangeWidget.maximumValue
-      settings.setValue("LungCtSegmenter/airwayThresholdRangeMaximumValue", str(self.ui.AirwayThresholdRangeWidget.maximumValue))
       self.vesselThresholdMin = self.ui.VesselThresholdRangeWidget.minimumValue
       settings.setValue("LungCtSegmenter/vesselThresholdRangeMinimumValue", str(self.ui.VesselThresholdRangeWidget.minimumValue))
       self.vesselThresholdMax = self.ui.VesselThresholdRangeWidget.maximumValue
@@ -965,8 +945,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
           self.logic.lungThresholdMin = self.lungThresholdMin
           self.logic.lungThresholdMax = self.lungThresholdMax 
-          self.logic.airwayThresholdMin = self.airwayThresholdMin
-          self.logic.airwayThresholdMax = self.airwayThresholdMax
           self.logic.vesselThresholdMin = self.vesselThresholdMin
           self.logic.vesselThresholdMax = self.vesselThresholdMax
 
@@ -1286,10 +1264,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
           parameterNode.SetParameter("LungThresholdMin", "-1500")
         if not parameterNode.GetParameter("LungThresholdMax"):
           parameterNode.SetParameter("LungThresholdMax", "-400")
-        if not parameterNode.GetParameter("AirwayThresholdMin"):
-          parameterNode.SetParameter("AirwayThresholdMin", "-1500")
-        if not parameterNode.GetParameter("AirwayThresholdMax"):
-          parameterNode.SetParameter("AirwayThresholdMax", "-850")
         if not parameterNode.GetParameter("VesselThresholdMin"):
           parameterNode.SetParameter("VesselThresholdMin", "0")
         if not parameterNode.GetParameter("VesselThresholdMax"):
@@ -1316,24 +1290,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     @lungThresholdMax.setter
     def lungThresholdMax(self, value):
         self.getParameterNode().SetParameter("LungThresholdMax", str(value))
-
-    @property
-    def airwayThresholdMin(self):
-        thresholdStr = self.getParameterNode().GetParameter("AirwayThresholdMin")
-        return float(thresholdStr) if thresholdStr else -1500
-
-    @airwayThresholdMin.setter
-    def airwayThresholdMin(self, value):
-        self.getParameterNode().SetParameter("AirwayThresholdMin", str(value))
-
-    @property
-    def airwayThresholdMax(self):
-        thresholdStr = self.getParameterNode().GetParameter("AirwayThresholdMax")
-        return float(thresholdStr) if thresholdStr else -850
-
-    @airwayThresholdMax.setter
-    def airwayThresholdMax(self, value):
-        self.getParameterNode().SetParameter("AirwayThresholdMax", str(value))
 
     @property
     def vesselThresholdMin(self):
@@ -2135,6 +2091,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         import time
         startTime = time.time()
 
+
         if not self.useAI: 
             self.showStatusMessage('Finalize region growing...')
             # Ensure closed surface representation is not present (would slow down computations)
@@ -2547,7 +2504,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using the extension manager.")
             else:
                 self.showStatusMessage('Airway segmentation ...')
-                scalarRange = self.inputVolume.GetImageData().GetScalarRange()
                 
                 # self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
@@ -2559,6 +2515,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
                     self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
 
+                scalarRange = self.inputVolume.GetImageData().GetScalarRange()
 
                 # Trigger display update
                 self.outputSegmentation.Modified()
@@ -2575,8 +2532,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("HistogramSetLower","LOWER")
                 effect.setParameter("HistogramSetUpper","UPPER")
                 effect.setParameter("MaximumThreshold",self.medianLungs)
-                # effect.setParameter("MaximumThreshold",self.airwayThresholdMax)
-                effect.setParameter("MinimumThreshold",self.airwayThresholdMin)
+                effect.setParameter("MinimumThreshold",scalarRange[0])
                                 
                 if self.airwaySegmentationDetailLevel == "low detail":
                     effect.setParameter("MinimumDiameterMm","3")
@@ -3048,7 +3004,7 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
 
         # Logic testing is disabled by default to not overload automatic build machines (pytorch is a huge package and computation
         # on CPU takes 5-10 minutes). Set testLogic to True to enable testing.
-        testLogic = False
+        testLogic = True
         if testLogic:
 
             # Test the module logic
