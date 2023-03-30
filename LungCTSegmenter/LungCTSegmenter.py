@@ -11,6 +11,7 @@ from slicer.util import VTKObservationMixin
 import SimpleITK as sitk
 import sitkUtils
 
+
 #
 # LungCTSegmenter
 #
@@ -1272,6 +1273,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.updateAI = False
         self.meanAir = 0.
         self.meanMuscle = 0.
+        self.medianLungs = 0.
         
     def __del__(self):
         self.removeTemporaryObjects()
@@ -1685,10 +1687,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
     def createDetailedMasks(self): 
         segmentationNode = self.outputSegmentation
+        
+        import SegmentStatistics
 
         # Compute centroids
         self.showStatusMessage('Computing centroids ...')
-        import SegmentStatistics
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
         segStatLogic.getParameterNode().SetParameter("Segmentation", segmentationNode.GetID())
         segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", str(True))
@@ -2360,54 +2363,65 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     for i in range(1, 13):
                         self.importTotalSegmentatorSegment("left rib " + str(i),"left rib " + str(i),self.outputSegmentation, self.tsOutputSegmentation, self.ribColor, False)
 
-                if self.calibrateData: 
                 
-                    import SegmentStatistics
-            
-                    self.showStatusMessage('Data calibration: determine air and muscle HU ...')
-                    
-                    tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
-                    tempSegmentationNode.CreateDefaultDisplayNodes()
- 
-                    newSeg = slicer.vtkSegment()
-                    newSeg.SetName("trachea")
-                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"trachea")
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
-                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
-                    newSeg.SetName("trachea")
+                # Evaluate standardized HU intensities of regions trachea and muscle
+                      
+                tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
+                tempSegmentationNode.CreateDefaultDisplayNodes()
 
-                    newSeg = slicer.vtkSegment()
-                    newSeg.SetName("left erector spinae muscle")
-                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"left erector spinae muscle")
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
-                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
-                    newSeg.SetName("left erector spinae muscle")
+                newSeg = slicer.vtkSegment()
+                newSeg.SetName("trachea")
+                tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"trachea")
+                tracheaSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(tracheaSegID))
+                newSeg.SetName("trachea")
 
-                    segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
-                  
-                    segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
-                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
-                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
-                    segStatLogic.computeStatistics()
-                    stats = segStatLogic.getStatistics()
-                    
-                    # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
-                    self.meanAir = 0.
-                    self.meanMuscle = 0.
-                    centroid_trachea = [0,0,0]
-                    
-                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
-                    centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
-                    self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
-                    self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                    
-                    print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
-                    print("Mean radiodensity of left erector spinar muscle = {0:.2f}".format(self.meanMuscle) + " HU")
+                newSeg = slicer.vtkSegment()
+                newSeg.SetName("left erector spinae muscle")
+                tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"left erector spinae muscle")
+                muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(muscleSegID))
+                newSeg.SetName("left erector spinae muscle")
+                
+                # self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
+                self.segmentEditorWidget.setSegmentationNode(tempSegmentationNode)
+                self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
 
+                self.segmentEditorNode.SetSelectedSegmentID(tracheaSegID)
+                self.segmentEditorWidget.setActiveEffectByName("Margin")
+                effect = self.segmentEditorWidget.activeEffect()
+                effect.setParameter("MarginSizeMm","-1")
+                effect.self().onApply()
+
+                import SegmentStatistics
+                segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+              
+                segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
+                segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
+                segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+                segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
+                segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+                segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+                segStatLogic.computeStatistics()
+                stats = segStatLogic.getStatistics()
+                
+                # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
+                self.meanAir = 0.
+                self.meanMuscle = 0.
+                centroid_trachea = [0,0,0]
+                
+                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+                self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                
+                print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
+                
+                print("Mean radiodensity of left erector spinar muscle = {0:.2f}".format(self.meanMuscle) + " HU")
+                
+
+                if self.calibrateData:
                     self.showStatusMessage('Calibrate data ...')
                     self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
                     voxels = slicer.util.arrayFromVolume(self.inputVolume)
@@ -2417,52 +2431,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
                     print(f"Calibrated volume created.")
                     
-                    if self.detailedAirways:
-                        # add one fiducial markup
-                        self.tracheaFiducials.CreateDefaultDisplayNodes()
-                        self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
-                                                                
-                    slicer.mrmlScene.RemoveNode(tempSegmentationNode)
-
-
-                if self.detailedAirways and not self.calibrateData: 
-
-                    import SegmentStatistics
-            
-                    self.showStatusMessage('Determine centroid of trachea ...')
-                    tempSegmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Temp segmentation")
-                    tempSegmentationNode.CreateDefaultDisplayNodes()
- 
-                    newSeg = slicer.vtkSegment()
-                    newSeg.SetName("trachea")
-                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"trachea")
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
-                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(segID))
-                    newSeg.SetName("trachea")
-
-                    segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
-                  
-                    segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
-                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
-                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
-                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
-                    segStatLogic.computeStatistics()
-                    stats = segStatLogic.getStatistics()
-                    
-                    centroid_trachea = [0,0,0]
-                    
-                    segID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("trachea")
-                    centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
-                    
-                    
-                    # add one fiducial 
+                if self.detailedAirways:
+                    # add one fiducial markup
                     self.tracheaFiducials.CreateDefaultDisplayNodes()
                     self.tracheaFiducials.AddFiducialFromArray(centroid_trachea, "T_1")
-
-                    slicer.mrmlScene.RemoveNode(tempSegmentationNode)
-                        
+                                                            
+                slicer.mrmlScene.RemoveNode(tempSegmentationNode)
+                
                 if self.removeAIOutputData: 
                     if self.tsOutputSegmentation: 
                         slicer.mrmlScene.RemoveNode(self.tsOutputSegmentation)
@@ -2521,6 +2496,26 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             else:
                 logging.info("No AI engine defined.")  
         
+        
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"): 
+            # AI created right lobes only, so create lungs and add lobes 
+            rightLungID = self.addSegment(self.outputSegmentation, "right lung", self.rightLungColor, 0.3)
+            self.addSegmentToSegment(self.outputSegmentation, "right upper lobe", "right lung")
+            self.addSegmentToSegment(self.outputSegmentation, "right middle lobe", "right lung")
+            self.addSegmentToSegment(self.outputSegmentation, "right lower lobe", "right lung")
+
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung"): 
+            # AI created left lobes only, so create lungs and add lobes 
+            leftLungID = self.addSegment(self.outputSegmentation, "left lung", self.leftLungColor, 0.3)
+            self.addSegmentToSegment(self.outputSegmentation, "left upper lobe", "left lung")
+            self.addSegmentToSegment(self.outputSegmentation, "left lower lobe", "left lung")
+
+        self.addSegmentToSegment(self.outputSegmentation, "right lung", "thoracic cavity")
+        self.addSegmentToSegment(self.outputSegmentation, "left lung", "thoracic cavity")
+    
+        self.addSegmentToSegment(self.outputSegmentation, "right lung", "lungs")
+        self.addSegmentToSegment(self.outputSegmentation, "left lung", "lungs")
+
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
@@ -2528,10 +2523,32 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             
             airwaySegID = self.addSegment(self.outputSegmentation, "airways", self.tracheaColor)
 
+            import SegmentStatistics
+            segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+          
+            segStatLogic.getParameterNode().SetParameter("Segmentation", self.outputSegmentation.GetID())
+            segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
+            segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+            segStatLogic.computeStatistics()
+            stats = segStatLogic.getStatistics()
+            # print(stats)
+           
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung")
+            medianRightLung = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.median"]
+            segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung")
+            medianLeftLung = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.median"]
+            
+            self.medianLungs = (medianRightLung + medianLeftLung) / 2.
+            print("Median radiodensity of lungs = {0:.2f}".format(self.medianLungs) + " HU")
+
             if not self.segmentEditorWidget.effectByName("Local Threshold"):
                 slicer.util.errorDisplay("Please install 'SegmentEditorExtraEffects' extension using the extension manager.")
             else:
                 self.showStatusMessage('Airway segmentation ...')
+                scalarRange = self.inputVolume.GetImageData().GetScalarRange()
+                
                 # self.segmentEditorNode = self.segmentEditorWidget.mrmlSegmentEditorNode()
                 wasModified = self.outputSegmentation.StartModify()
                 self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
@@ -2541,6 +2558,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 else: 
                     self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
                     self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
+
+
                 # Trigger display update
                 self.outputSegmentation.Modified()
                 self.outputSegmentation.EndModify(wasModified)
@@ -2555,7 +2574,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("FeatureSizeMm:","3")
                 effect.setParameter("HistogramSetLower","LOWER")
                 effect.setParameter("HistogramSetUpper","UPPER")
-                effect.setParameter("MaximumThreshold",self.airwayThresholdMax)
+                effect.setParameter("MaximumThreshold",self.medianLungs)
+                # effect.setParameter("MaximumThreshold",self.airwayThresholdMax)
                 effect.setParameter("MinimumThreshold",self.airwayThresholdMin)
                                 
                 if self.airwaySegmentationDetailLevel == "low detail":
@@ -2641,24 +2661,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteNone) 
         self.segmentEditorNode.SetMaskMode(slicer.vtkMRMLSegmentationNode.EditAllowedEverywhere)
 
-        # AI created lobes only, so create lungs and add lobes 
-        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("right lung"): 
-            rightLungID = self.addSegment(self.outputSegmentation, "right lung", self.rightLungColor, 0.3)
-            self.addSegmentToSegment(self.outputSegmentation, "right upper lobe", "right lung")
-            self.addSegmentToSegment(self.outputSegmentation, "right middle lobe", "right lung")
-            self.addSegmentToSegment(self.outputSegmentation, "right lower lobe", "right lung")
-
-        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left lung"): 
-            leftLungID = self.addSegment(self.outputSegmentation, "left lung", self.leftLungColor, 0.3)
-            self.addSegmentToSegment(self.outputSegmentation, "left upper lobe", "left lung")
-            self.addSegmentToSegment(self.outputSegmentation, "left lower lobe", "left lung")
-
- 
-        self.addSegmentToSegment(self.outputSegmentation, "right lung", "thoracic cavity")
-        self.addSegmentToSegment(self.outputSegmentation, "left lung", "thoracic cavity")
-    
-        self.addSegmentToSegment(self.outputSegmentation, "right lung", "lungs")
-        self.addSegmentToSegment(self.outputSegmentation, "left lung", "lungs")
 
         self.maskedVolume = None
         if self.createVessels:
@@ -2904,9 +2906,8 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
         #logic.process(inputVolume, -1000.,-200.,False)
         resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
-        # Compute statistics
+        # Compute statistics       
         import SegmentStatistics
-        
         segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
        
         segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
@@ -2996,8 +2997,8 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
             resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
             # Compute stats
-            import SegmentStatistics
             
+            import SegmentStatistics
             segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
            
             segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
@@ -3073,8 +3074,8 @@ class LungCTSegmenterTest(ScriptedLoadableModuleTest):
             resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode', '_maskResultsTable')
 
             # Compute stats
-            import SegmentStatistics
             
+            import SegmentStatistics
             segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
            
             segStatLogic.getParameterNode().SetParameter("Segmentation", logic.outputSegmentation.GetID())
