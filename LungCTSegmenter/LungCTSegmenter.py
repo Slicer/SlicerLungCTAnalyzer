@@ -2467,11 +2467,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.addSegmentToSegment(self.outputSegmentation, "left upper lobe", "left lung")
             self.addSegmentToSegment(self.outputSegmentation, "left lower lobe", "left lung")
 
-        self.addSegmentToSegment(self.outputSegmentation, "right lung", "thoracic cavity")
-        self.addSegmentToSegment(self.outputSegmentation, "left lung", "thoracic cavity")
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("thoracic cavity"): 
+            thoracicCavityID = self.addSegment(self.outputSegmentation, "thoracic cavity", self.thoracicCavityColor, 0.3)        
+            self.addSegmentToSegment(self.outputSegmentation, "right lung", "thoracic cavity")
+            self.addSegmentToSegment(self.outputSegmentation, "left lung", "thoracic cavity")
     
-        self.addSegmentToSegment(self.outputSegmentation, "right lung", "lungs")
-        self.addSegmentToSegment(self.outputSegmentation, "left lung", "lungs")
+        if not self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("lungs"): 
+            lungsID = self.addSegment(self.outputSegmentation, "lungs", self.rightLungColor, 0.3)        
+            self.addSegmentToSegment(self.outputSegmentation, "right lung", "lungs")
+            self.addSegmentToSegment(self.outputSegmentation, "left lung", "lungs")
 
         if self.detailedAirways:
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
@@ -2606,9 +2610,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(PVSegmentID,False)
         tumorSegmentID = self.addSegment(self.outputSegmentation, "tumor", self.tumorColor, 1.0)
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(tumorSegmentID,False)
-        thoracicCavityID = self.addSegment(self.outputSegmentation, "thoracic cavity", self.thoracicCavityColor, 0.3)
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(thoracicCavityID,False)
-        lungsID = self.addSegment(self.outputSegmentation, "lungs", self.rightLungColor, 0.3)
         self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungsID,False)
 
         self.segmentEditorWidget.mrmlSegmentEditorNode().SetMasterVolumeIntensityMask(False)
@@ -2728,9 +2730,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(rightLungID,False)
                 leftLungID = segmentation.GetSegmentIdBySegmentName("left lung")
                 self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(leftLungID,False)
-                lungID = segmentation.GetSegmentIdBySegmentName("lung")
-                if lungID:
-                    self.outputSegmentation.GetDisplayNode().SetSegmentVisibility(lungID,False)
                 
         # Never show both lungs initially 
         segmentation = self.outputSegmentation.GetSegmentation()
