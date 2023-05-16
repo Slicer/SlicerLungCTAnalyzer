@@ -1252,6 +1252,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.meanAir = 0.
         self.meanMuscle = 0.
         self.medianLungs = 0.
+        self.slope = 0.
+        self.intercept = 0.
         
     def __del__(self):
         self.removeTemporaryObjects()
@@ -1399,6 +1401,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         'user3',
         'meanAirHU',
         'meanMuscleHU',
+        "slope",
+        "intercept"
         ]
 
         data = [
@@ -1407,6 +1411,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         user_str3,
         self.meanAir,
         self.meanMuscle,
+        self.slope,
+        self.intercept
         ]
         try:
             with open(filename, 'a') as f:
@@ -1867,13 +1873,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if d == 0:
             # Prevent overflow
             d = 0.0000001
-        slope = (muscle_output - air_output) / d
-        intercept = air_output - (slope * air_mean_hu)
+        self.slope = (muscle_output - air_output) / d
+        self.intercept = air_output - (self.slope * air_mean_hu)
 
-        # print("calibrate_ct_scan: slope " + str(slope) + " intercept " + str(intercept) + " d " + str(d) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
+        # print("calibrate_ct_scan: slope " + str(self.slope) + " intercept " + str(self.intercept) + " d " + str(d) + " air_mean_hu " + str(air_mean_hu) + " muscle_mean_hu " + str(muscle_mean_hu))
 
         # Adjust the CT
-        a2 = ct_pixel_array * slope + intercept
+        a2 = ct_pixel_array * self.slope + self.intercept
 
         # Convert the data type of the generated standardized_array (float) into a new array with the type of the input array before returning it
         a3 = a2.astype(_dtype)
