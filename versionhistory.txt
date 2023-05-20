@@ -173,3 +173,7 @@ ENH: implement CT data calibration
 V 2.66
 
 ENH: Implement Lung CT Analyzer NIFTI input and output 
+
+V 2.67
+
+MAINT: Change infer mode of lungmask AI which was established in a lungmask version change (2.0.14)

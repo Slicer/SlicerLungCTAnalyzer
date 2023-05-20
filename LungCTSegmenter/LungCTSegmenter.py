@@ -2089,6 +2089,19 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("Operation","UNION")
         effect.self().onApply()
 
+    def compare_versions(self, current_version, provided_version):
+        current_major, current_minor, current_patch = map(int, current_version.split('.'))
+        provided_major, provided_minor, provided_patch = map(int, provided_version.split('.'))
+
+        if current_major > provided_major:
+            return True
+        elif current_major == provided_major and current_minor > provided_minor:
+            return True
+        elif current_major == provided_major and current_minor == provided_minor and current_patch > provided_patch:
+            return True
+        else:
+            return False
+
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
@@ -2224,14 +2237,30 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     slicer.util.pip_install(lungmaskPackage)
                     import lungmask
                 
-                from lungmask import mask
+                
+                import pkg_resources  # type: ignore
+                current_version = pkg_resources.require("lungmask")[0].version
+                print("Lungmask version: " + current_version)
+                provided_version = "0.2.13"
+
+                if self.compare_versions(current_version, provided_version):
+                    # Current version is greater 0.2.13, infer_mode has changed
+                    infer_mode = "LMInferer"
+                    from lungmask import LMInferer
+
+                else:
+                    infer_mode = "mask"
+                    from lungmask import mask
                                    
                 inputVolumeSitk = sitkUtils.PullVolumeFromSlicer(self.inputVolume)
                 if self.engineAI == "lungmask R231":
                     self.showStatusMessage('Creating lungs with lungmask AI ...')
-                    model = mask.get_model('unet','R231')
-                    segmentation_np = mask.apply(inputVolumeSitk, model)
-                    
+                    if infer_mode == "mask": 
+                        model = mask.get_model('unet','R231')
+                        segmentation_np = mask.apply(inputVolumeSitk, model)
+                    else: 
+                        inferer = LMInferer()
+                        segmentation_np = inferer.apply(inputVolumeSitk)                   
                     # add lung segments
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume, self.rightLungColor)
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume, self.leftLungColor)
@@ -2240,8 +2269,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,1,"left lung")
                 elif self.engineAI == "lungmask LTRCLobes":
                     self.showStatusMessage('Creating lungs and lobes with lungmask AI ...')
-                    model = mask.get_model('unet','LTRCLobes')
-                    segmentation_np = mask.apply(inputVolumeSitk, model)
+                    if infer_mode == "mask": 
+                        model = mask.get_model('unet','LTRCLobes')
+                        segmentation_np = mask.apply(inputVolumeSitk, model)
+                    else: 
+                        inferer = LMInferer(modelname='LTRCLobes')
+                        segmentation_np = inferer.apply(inputVolumeSitk)
                     # add lobe segments
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume, self.leftUpperLobeColor)
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume, self.leftLowerLobeColor)
@@ -2256,7 +2289,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
                 elif self.engineAI == "lungmask LTRCLobes_R231":
                     self.showStatusMessage('Creating lungs and lobes with lungmask AI ...')
-                    segmentation_np = mask.apply_fused(inputVolumeSitk)
+                    if infer_mode == "mask": 
+                        segmentation_np = mask.apply_fused(inputVolumeSitk)
+                    else: 
+                        inferer = LMInferer(modelname='LTRCLobes', fillmodel='R231')
+                        segmentation_np = inferer.apply(inputVolumeSitk)                                   
                     # add lobe segments
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left upper lobe", 1, self.inputVolume, self.leftUpperLobeColor)
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lower lobe", 2, self.inputVolume, self.leftLowerLobeColor)
@@ -2271,8 +2308,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                     self.postprocessSegment(self.outputSegmentation,4,"right lower lobe")
                 elif self.engineAI == "lungmask R231CovidWeb":
                     self.showStatusMessage('Creating lungs with lungmask AI ...')
-                    model = mask.get_model('unet','R231CovidWeb')
-                    segmentation_np = mask.apply(inputVolumeSitk, model)
+                    if infer_mode == "mask": 
+                        model = mask.get_model('unet','R231CovidWeb')
+                        segmentation_np = mask.apply(inputVolumeSitk, model)
+                    else: 
+                        inferer = LMInferer(modelname='R231CovidWeb')
+                        segmentation_np = inferer.apply(inputVolumeSitk)
                     # add lung segments
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "right lung", 1, self.inputVolume, self.rightLungColor)
                     self.addSegmentFromNumpyArray(self.outputSegmentation, segmentation_np, "left lung", 2, self.inputVolume, self.leftLungColor)
