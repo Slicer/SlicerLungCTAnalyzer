@@ -1,4 +1,5 @@
 import os
+import requests
 import unittest
 import glob
 import time
@@ -371,6 +372,25 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # show version on GUI 
         self.versionText = "Lung CT Analyzer V %.2f" % self.version       
         self.ui.versionLabel.text = self.versionText
+        
+        # show uses 
+        import os
+        import requests
+
+        def get_counter_values():
+            url = 'http://scientific-networks.de/get_counter_values.php'
+            api_key = "WVnB2F7Uibt2TC"
+            params = {'api_key': api_key}
+            response = requests.get(url, params=params)
+            return response.json()
+
+        # use it
+        counter_values = get_counter_values()
+        print(counter_values['counter_lcts'])  # outputs the value of counter_lcts
+        
+        usage_text = counter_values['counter_lcts'] + " uses since 5/23"       
+        self.ui.label_uses.text = usage_text
+        
         
         
         from urllib.request import urlopen
@@ -2756,12 +2776,19 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         slicer.mrmlScene.RemoveNode(self.segmentEditorNode)    
         self.segmentEditorNode = None
 
+    def increment_counter(self, counter):
+        url = 'http://scientific-networks.de/increment_counter.php'
+        api_key = "WVnB2F7Uibt2TC"
+        params = {'api_key': api_key, 'counter': counter}
+        requests.get(url, params=params)
 
     def process(self):
         """
         Run the processing algorithm.
         Can be used without GUI widget.
         """
+        self.increment_counter('counter_lcta')  # increment counter_lcta
+
         logging.info('Processing started.')
         import time
         startTime = time.time()

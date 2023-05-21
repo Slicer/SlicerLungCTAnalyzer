@@ -1,4 +1,5 @@
 import os
+import requests
 import sys
 import time
 import glob
@@ -149,6 +150,21 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           placeWidget.buttonsVisible=False
           placeWidget.placeButton().show()
           placeWidget.deleteButton().show()
+          
+      def get_counter_values():
+          url = 'http://scientific-networks.de/get_counter_values.php'
+          api_key = "WVnB2F7Uibt2TC"
+          params = {'api_key': api_key}
+          response = requests.get(url, params=params)
+          return response.json()
+
+      # use it
+      counter_values = get_counter_values()
+      print(counter_values['counter_lcts'])  # outputs the value of counter_lcts
+        
+      usage_text = " LungCTSegmenter: " + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23"       
+      self.ui.label_lcts.text = usage_text
+        
 
       # Populate comboboxes
       list = ["low detail", "medium detail", "high detail"]
@@ -274,6 +290,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.batchProcessingCollapsibleButton.collapsed = True
       self.ui.outputCollapsibleButton.collapsed = True
       self.ui.calibrateDataCheckBox.enabled = False
+
 
 
 
@@ -2102,6 +2119,15 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         else:
             return False
 
+
+    def increment_counter(self, counter):
+        url = 'http://scientific-networks.de/increment_counter.php'
+        api_key = "WVnB2F7Uibt2TC"
+        params = {'api_key': api_key, 'counter': counter}
+        requests.get(url, params=params)
+
+
+
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
@@ -2110,8 +2136,11 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         import time
         startTime = time.time()
 
+        # use it
+        self.increment_counter('counter_lcts')  # increment counter_lcts
 
         if not self.useAI: 
+            self.increment_counter('counter_man')
             self.showStatusMessage('Finalize region growing...')
             # Ensure closed surface representation is not present (would slow down computations)
             self.outputSegmentation.RemoveClosedSurfaceRepresentation()
@@ -2221,6 +2250,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.outputSegmentation.Modified()
             self.outputSegmentation.EndModify(wasModified)           
             if self.engineAI.find("lungmask") == 0:
+                self.increment_counter('counter_lm')
                 if self.updateAI:
                     if not slicer.util.confirmYesNoDisplay("Updating lunkmask AI will restart 3D Slicer. Are you sure?"):
                         self.showStatusMessage('Uninstalling lungmask AI ...')
@@ -2327,6 +2357,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info("Segmentation done.")
 
             elif self.engineAI.find("TotalSegmentator") == 0:
+                self.increment_counter('counter_ts')
                 self.showStatusMessage(' Creating segmentations with TotalSegmentator ...')
                 tslogic = slicer.util.getModuleLogic('TotalSegmentator')
                 if not tslogic: 
@@ -2451,7 +2482,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info("Segmentation done.")
                 
             elif self.engineAI.find("MONAILabel") == 0:
-            
+
+                self.increment_counter('counter_ml')
                 _runScripted = False
                 if _runScripted:
                    # This is not yet fully supported
@@ -2525,6 +2557,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.addSegmentToSegment(self.outputSegmentation, "left lung", "lungs")
 
         if self.detailedAirways:
+        
+            self.increment_counter('counter_aw')
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
                 self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
@@ -2669,6 +2703,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         self.maskedVolume = None
         if self.createVessels:
+            self.increment_counter('counter_ve')
             if not self.segmentEditorWidget.effectByName("Wrap Solidify"):
                 slicer.util.errorDisplay("Please install 'Wrap Solidify' extension using Extension Manager.")
             else:

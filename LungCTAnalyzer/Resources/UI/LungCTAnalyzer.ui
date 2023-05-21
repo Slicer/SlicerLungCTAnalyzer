@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>1182</height>
+    <height>1204</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -31,6 +31,13 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_uses">
+     <property name="text">
+      <string>x uses since 5/23</string>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
