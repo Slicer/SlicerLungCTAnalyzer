@@ -377,19 +377,22 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         import os
         import requests
 
-        def get_counter_values():
-            url = 'http://scientific-networks.de/get_counter_values.php'
-            api_key = "WVnB2F7Uibt2TC"
-            params = {'api_key': api_key}
-            response = requests.get(url, params=params)
-            return response.json()
+        def get_counter_values():            
+            try:
+                url = 'http://scientific-networks.de/get_counter_values.php'
+                api_key = "WVnB2F7Uibt2TC"
+                params = {'api_key': api_key}
+                response = requests.get(url, params=params)
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                print(f"Unable to get counter values: {e}")
+            return None  # or some default values
 
         # use it
         counter_values = get_counter_values()
-        print(counter_values['counter_lcts'])  # outputs the value of counter_lcts
-        
-        usage_text = counter_values['counter_lcts'] + " uses since 5/23"       
-        self.ui.label_uses.text = usage_text
+        if counter_values: 
+            usage_text = counter_values['counter_lcta'] + " uses since 5/23"       
+            self.ui.label_uses.text = usage_text
         
         
         
@@ -2777,11 +2780,14 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.segmentEditorNode = None
 
     def increment_counter(self, counter):
-        url = 'http://scientific-networks.de/increment_counter.php'
-        api_key = "WVnB2F7Uibt2TC"
-        params = {'api_key': api_key, 'counter': counter}
-        requests.get(url, params=params)
-
+        try:
+            url = 'http://scientific-networks.de/increment_counter.php'
+            api_key = "WVnB2F7Uibt2TC"
+            params = {'api_key': api_key, 'counter': counter}
+            requests.get(url, params=params)
+        except requests.exceptions.RequestException as e:
+            print(f"Unable to increment counter: {e}")
+    
     def process(self):
         """
         Run the processing algorithm.

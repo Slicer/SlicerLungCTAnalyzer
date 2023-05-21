@@ -104,6 +104,18 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       def __init__(self, checkbox_name, uiID):
         self.name = checkbox_name
         self.id = uiID
+
+  def get_counter_values(self):
+    try:
+      url = 'http://scientific-networks.de/get_counter_values.php'
+      api_key = "WVnB2F7Uibt2TC"
+      params = {'api_key': api_key}
+      response = requests.get(url, params=params)
+      return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Unable to get counter values: {e}")
+    return None  # or some default values
+
   
   def setup(self):
       """
@@ -151,20 +163,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           placeWidget.placeButton().show()
           placeWidget.deleteButton().show()
           
-      def get_counter_values():
-          url = 'http://scientific-networks.de/get_counter_values.php'
-          api_key = "WVnB2F7Uibt2TC"
-          params = {'api_key': api_key}
-          response = requests.get(url, params=params)
-          return response.json()
-
+        
+        
       # use it
-      counter_values = get_counter_values()
-      print(counter_values['counter_lcts'])  # outputs the value of counter_lcts
-        
-      usage_text = " LungCTSegmenter: " + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23"       
-      self.ui.label_lcts.text = usage_text
-        
+      counter_values = self.get_counter_values()
+      if counter_values: 
+          usage_text = " LungCTSegmenter: " + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23"       
+          self.ui.label_lcts.text = usage_text
 
       # Populate comboboxes
       list = ["low detail", "medium detail", "high detail"]
@@ -1042,6 +1047,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       Run processing when user clicks "Apply" button.
       """
       self.runProcessing()
+
 
   def onCancelButton(self):
       """
@@ -2121,11 +2127,13 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
 
     def increment_counter(self, counter):
-        url = 'http://scientific-networks.de/increment_counter.php'
-        api_key = "WVnB2F7Uibt2TC"
-        params = {'api_key': api_key, 'counter': counter}
-        requests.get(url, params=params)
-
+        try:
+            url = 'http://scientific-networks.de/increment_counter.php'
+            api_key = "WVnB2F7Uibt2TC"
+            params = {'api_key': api_key, 'counter': counter}
+            requests.get(url, params=params)
+        except requests.exceptions.RequestException as e:
+            print(f"Unable to increment counter: {e}")
 
 
     def applySegmentation(self):
@@ -2242,6 +2250,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 _doAI = True
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
         if _doAI:
+            self.increment_counter('counter_ai')
             # use unsampled, original input volume and set geometry
             self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
             wasModified = self.outputSegmentation.StartModify()
