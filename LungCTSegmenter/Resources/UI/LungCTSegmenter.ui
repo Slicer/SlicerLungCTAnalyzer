@@ -13,6 +13,9 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="label_lcts">
+     <property name="toolTip">
+      <string>This simple use counter evaluates the global uses of the extension, manual assisted (man), total AI (ai), lungmask (lm), TotalSegmentator (ts), MONAILabel (ml), airway (aw) and vessel (ve) segmentations. Apart from a usage ping no other information is transmitted. Incomplete AI runs are not counted (installations), so ai + man may not add up to total.  </string>
+     </property>
      <property name="text">
       <string>LungCTSegmenter (x uses since 6/23)</string>
      </property>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>1204</height>
+    <height>1223</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -34,6 +34,9 @@
    </item>
    <item>
     <widget class="QLabel" name="label_uses">
+     <property name="toolTip">
+      <string>This simple use counter evaluates the global use of the extensionm. No other information transmitted apart a useage ping. </string>
+     </property>
      <property name="text">
       <string>x uses since 5/23</string>
      </property>
