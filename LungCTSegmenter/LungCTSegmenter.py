@@ -172,7 +172,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           self.ui.label_lcts.text = usage_text
 
       # Populate comboboxes
-      list = ["low detail", "medium detail", "high detail"]
+      list = ["very low detail","low detail", "medium low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
 
       list = [
@@ -2617,7 +2617,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
                 self.segmentEditorNode.SetSelectedSegmentID("airways")
                 self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
-                effect = self.segmentEditorWidget.activeEffect()
+                effect = self.segmentEditorWidget.activeEffect()             
                 
                 effect.setParameter("AutoThresholdMethod","OTSU")
                 effect.setParameter("AutoThresholdMode","SET_MIN_UPPER")
@@ -2625,10 +2625,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("FeatureSizeMm:","3")
                 effect.setParameter("HistogramSetLower","LOWER")
                 effect.setParameter("HistogramSetUpper","UPPER")
-                effect.setParameter("MaximumThreshold",self.medianLungs)
+                effect.setParameter("MaximumThreshold",self.medianLungs / 2)
                 effect.setParameter("MinimumThreshold",scalarRange[0])
                                 
+                if self.airwaySegmentationDetailLevel == "very low detail":
+                    effect.setParameter("MinimumDiameterMm","5")
                 if self.airwaySegmentationDetailLevel == "low detail":
+                    effect.setParameter("MinimumDiameterMm","4")
+                if self.airwaySegmentationDetailLevel == "medium low detail":
                     effect.setParameter("MinimumDiameterMm","3")
                 elif self.airwaySegmentationDetailLevel == "medium detail":
                     effect.setParameter("MinimumDiameterMm","2")
