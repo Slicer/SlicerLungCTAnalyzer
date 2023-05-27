@@ -116,6 +116,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
+       
 
         ScriptedLoadableModuleWidget.setup(self)
 
@@ -315,6 +316,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         # Make sure parameter node is initialized (needed for module reload)
+        self.logic.inputSegmentation = None
+        self.logic.inputVolume = None
         self.initializeParameterNode()
         slicer.app.applicationLogic().FitSliceToAll()
      
@@ -487,8 +490,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Parameter node stores all user choices in parameter values, node selections, etc.
         # so that when the scene is saved and reloaded, these settings are restored.
 
-        self.setParameterNode(self.logic.getParameterNode())
-       
+        self.setParameterNode(self.logic.getParameterNode())       
         # Select default input nodes if nothing is selected yet to save a few clicks for the user
         if not self.logic.inputVolume:
             firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
@@ -501,7 +503,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.logic.inputSegmentation = segNode
                 segmentation = segNode.GetSegmentation()
                 self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+                print("right lung segment exists")
                 self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+                print("left lung segment exists")
                 #initial masks always on
                 segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
                 segmentationDisplayNode.Visibility2DOn()
@@ -588,6 +592,11 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
 
         # Update buttons states and tooltips
+        if self.logic.inputSegmentation:
+            segmentation = self.logic.inputSegmentation.GetSegmentation()
+            self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+            self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+
         if (self.logic.inputVolume and self.logic.inputSegmentation
             and self.logic.rightLungMaskSegmentID and self.logic.leftLungMaskSegmentID):
             self.ui.applyButton.toolTip = "Compute results"
