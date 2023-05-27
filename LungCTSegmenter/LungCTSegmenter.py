@@ -2131,7 +2131,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             url = 'http://scientific-networks.de/increment_counter.php'
             api_key = "WVnB2F7Uibt2TC"
             params = {'api_key': api_key, 'counter': counter}
-            requests.get(url, params=params)
+            requests.get(url, params=params,  timeout=5)
         except requests.exceptions.RequestException as e:
             print(f"Unable to increment counter: {e}")
 
