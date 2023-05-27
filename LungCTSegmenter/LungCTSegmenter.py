@@ -110,7 +110,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       url = 'http://scientific-networks.de/get_counter_values.php'
       api_key = "WVnB2F7Uibt2TC"
       params = {'api_key': api_key}
-      response = requests.get(url, params=params)
+      response = requests.get(url, params=params, timeout=5)
       return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Unable to get counter values: {e}")
