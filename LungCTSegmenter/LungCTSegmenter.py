@@ -216,6 +216,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.detailedMasksCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.saveFiducialsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.fastCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
+      self.ui.updateLungmaskCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.smoothLungsCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.testModeCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
       self.ui.niigzFormatCheckBox.connect('toggled(bool)', self.updateParameterNodeFromGUI)
@@ -291,6 +292,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.VolumeRenderingShiftSliderWidget.enabled = False
 
       self.ui.fastCheckBox.enabled = False
+      self.ui.updateLungmaskCheckBox.enabled = False
       self.ui.smoothLungsCheckBox.enabled = False
       self.ui.batchProcessingCollapsibleButton.collapsed = True
       self.ui.outputCollapsibleButton.collapsed = True
@@ -689,6 +691,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.createVesselsCheckBox.checked = self.createVessels
       self.ui.useAICheckBox.checked = self.useAI     
       self.ui.fastCheckBox.checked = self.fastOption
+      self.ui.updateLungmaskCheckBox.checked = self.logic.updateAI
       self.ui.smoothLungsCheckBox.checked = self.smoothLungs
 
       self.ui.calibrateDataCheckBox.checked = self.calibrateData
@@ -764,6 +767,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.useAI = self.ui.useAICheckBox.checked 
       self.fastOption = self.ui.fastCheckBox.checked 
       settings.setValue("LungCtSegmenter/fastCheckBoxChecked", str(self.smoothLungs))
+      self.logic.updateAI = self.ui.updateLungmaskCheckBox.checked
       
       self.batchProcessingTestMode = self.ui.testModeCheckBox.checked
       settings.setValue("LungCtSegmenter/testModeCheckBoxChecked", str(self.batchProcessingTestMode))
@@ -794,6 +798,11 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       else:
           self.ui.fastCheckBox.enabled = False
           self.ui.calibrateDataCheckBox.enabled = False
+
+      if self.logic.engineAI.find("lungmask") == 0:
+          self.ui.updateLungmaskCheckBox.enabled = True
+      else:
+          self.ui.updateLungmaskCheckBox.enabled = False
       
       if self.useAI:
         self.ui.LungThresholdRangeWidget.enabled = False
@@ -1263,7 +1272,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         self.createVessels = False
         self.useAI = False
         self.create3D = True
-        self.smoothLungs = True
+        self.smoothLungs = True 
         self.calibrateData = False
         self.removeAIOutputData = False
         self.fastOption = False
@@ -2261,7 +2270,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             if self.engineAI.find("lungmask") == 0:
                 self.increment_counter('counter_lm')
                 if self.updateAI:
-                    if not slicer.util.confirmYesNoDisplay("Updating lunkmask AI will restart 3D Slicer. Are you sure?"):
+                    if slicer.util.confirmYesNoDisplay("Updating lunkmask AI will restart 3D Slicer. Are you sure?"):
+                        print("uninstalling lungmask ... ")
                         self.showStatusMessage('Uninstalling lungmask AI ...')
                         slicer.util.pip_uninstall("lungmask")
                         # Slicer must be restarted for this to take effect.

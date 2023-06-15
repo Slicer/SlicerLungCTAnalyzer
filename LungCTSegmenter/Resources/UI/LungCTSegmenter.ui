@@ -770,13 +770,20 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
+      <item row="10" column="0">
        <widget class="QCheckBox" name="smoothLungsCheckBox">
         <property name="toolTip">
          <string>Smooth AI generated lungs and lobes. Prolongs processing and is on by default.  </string>
         </property>
         <property name="text">
          <string>Smooth lungs and lobes</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QCheckBox" name="updateLungmaskCheckBox">
+        <property name="text">
+         <string>Update Lungmask AI</string>
         </property>
        </widget>
       </item>
