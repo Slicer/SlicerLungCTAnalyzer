@@ -1727,6 +1727,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 upper = self.createSubSegment(segmentId, "upper")
                 middle = self.createSubSegment(segmentId, "middle")
                 lower = self.createSubSegment(segmentId, "lower")
+                upperhalf = self.createSubSegment(segmentId, "upperhalf")
+                lowerhalf = self.createSubSegment(segmentId, "lowerhalf")
                 
                 ####### anterior
                 
@@ -1754,6 +1756,32 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
                 self.showStatusMessage(' Cropping posterior mask ...')
                 self.trimSegmentWithCube(posterior.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### upper half
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = centroid_ras[2] - (coronalLungDiameter/2.)
+                
+                crop_r = axialLungDiameter
+                crop_a = sagittalLungDiameter
+                crop_s = coronalLungDiameter/2.
+
+                self.showStatusMessage(' Cropping upper half  mask ...')
+                self.trimSegmentWithCube(upperhalf.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+                ####### lower half
+                
+                r = centroid_ras[0]
+                a = centroid_ras[1] 
+                s = centroid_ras[2] + (coronalLungDiameter/2.)
+                
+                crop_r = axialLungDiameter
+                crop_a = sagittalLungDiameter
+                crop_s = coronalLungDiameter/2.
+
+                self.showStatusMessage(' Cropping lower half  mask ...')
+                self.trimSegmentWithCube(lowerhalf.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
                 ####### upper
                 
@@ -1784,6 +1812,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 self.trimSegmentWithCube(middle.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
                 ####### crop lower part
+                
                 r = centroid_ras[0]
                 a = centroid_ras[1] 
                 s = coronalApex - coronalLungDiameter 
