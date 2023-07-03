@@ -91,7 +91,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called when the user opens the module the first time and the widget is initialized.
         """
-        self.version = 2.67
+        self.version = 2.68
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
         self.logic = None
@@ -1486,6 +1486,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         self.subSegmentProperties = [
             {"name": "ventral", "color": [0.0,0.0,0.0]}, 
             {"name": "dorsal","color": [0.0,0.0,0.0]}, 
+            {"name": "upper half","color": [0.0,0.0,0.0]}, 
+            {"name": "lower half","color": [0.0,0.0,0.0]}, 
             {"name": "upper","color": [0.0,0.0,0.0]}, 
             {"name": "middle","color": [0.0,0.0,0.0]}, 
             {"name": "lower","color": [0.0,0.0,0.0]}, 
@@ -2267,8 +2269,8 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         user_str2,
         user_str3]
 
-        
-        regions = ["upper", "middle", "lower", "ventral", "dorsal"]
+             
+        regions = ["ventral", "dorsal", "upper half", "lower half", "upper", "middle", "lower"]
         areas = [
             'total ml',
             'inflated ml',
@@ -2692,6 +2694,34 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
             self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
 
+        elif  typeStr == "upper half": 
+            ####### upper half
+            
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = centroid_ras[2] - (coronalLungDiameter/2.)
+            
+            crop_r = axialLungDiameter
+            crop_a = sagittalLungDiameter
+            crop_s = coronalLungDiameter/2.
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
+        elif  typeStr == "lower half": 
+            ####### lower half
+            
+            r = centroid_ras[0]
+            a = centroid_ras[1] 
+            s = centroid_ras[2] + (coronalLungDiameter/2.)
+            
+            crop_r = axialLungDiameter
+            crop_a = sagittalLungDiameter
+            crop_s = coronalLungDiameter/2.
+
+            self.showStatusMessage(' Cropping ' + segmentSrc.GetName() +  ' segment ...')
+            self.trimSegmentWithCube(segmentSrc.GetName(),r,a,s,crop_r,crop_a,crop_s)
+
         elif typeStr == "upper": 
             ####### upper
             
@@ -2931,7 +2961,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.segmentEditorWidget.setSourceVolumeNode(self.maskLabelVolume)
 
             for side in ['left', 'right']:
-                for region in ['ventral', 'dorsal','upper','middle','lower']: 
+                for region in ['ventral', 'dorsal', 'upper half', 'lower half', 'upper', 'middle', 'lower']: 
                     for segmentProperty in self.segmentProperties:
                         segmentName = f"{segmentProperty['name']} {side}"
                         sourceSegID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(segmentName)

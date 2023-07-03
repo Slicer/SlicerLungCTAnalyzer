@@ -177,3 +177,8 @@ ENH: Implement Lung CT Analyzer NIFTI input and output
 V 2.67
 
 MAINT: Change infer mode of lungmask AI which was established in a lungmask version change (2.0.14)
+
+V 2.68
+
+ENH: Add upper half and lower half of the lungs in both segmenter and analyzer. 
+BUG: Remove header bug in regionresults.csv
