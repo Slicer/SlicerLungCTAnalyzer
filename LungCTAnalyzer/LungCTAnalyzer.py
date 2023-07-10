@@ -1829,7 +1829,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             self.affectedTotalVolume = self.affectedRightVolume + self.affectedLeftVolume
         else: 
             self.functionalRightVolume = self.getVol("Inflated right") + self.getVol("Emphysema right")
-            self.functionalLeftVolume = self.getVol("Inflated left") + self.getVol("Emphysema right")
+            self.functionalLeftVolume = self.getVol("Inflated left") + self.getVol("Emphysema left")
             self.functionalTotalVolume = self.venRightLung + self.venLeftLung
 
             self.affectedRightVolume = self.getVol("Infiltration right") + self.getVol("Collapsed right") 
