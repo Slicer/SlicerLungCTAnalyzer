@@ -110,6 +110,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.batchProcessing = False
         self.isNiiGzFormat = False
         self.checkForUpdates = True
+        self.resetmode = False
+        
 
 
     def setup(self):
@@ -452,7 +454,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Called each time the user opens this module.
         """
         # Make sure parameter node exists and observed
+        print("Enter")
         self.initializeParameterNode()
+        self.updateParameterNodeFromGUI()
 
 
     def exit(self):
@@ -487,6 +491,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Ensure parameter node exists and observed.
         """
+        # print("initializeParameterNode")
         # Parameter node stores all user choices in parameter values, node selections, etc.
         # so that when the scene is saved and reloaded, these settings are restored.
 
@@ -512,11 +517,52 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
                 segmentationDisplayNode.Visibility3DOff()
                 self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
-                
+        
+        #initial masks always on
+        segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
+        segmentationDisplayNode.Visibility2DOn()
+        self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+        segmentationDisplayNode.Visibility3DOff()
+        self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+        
         if (self.logic.inputVolume and self.logic.inputSegmentation
             and self.logic.rightLungMaskSegmentID and self.logic.leftLungMaskSegmentID):
             self.ui.applyButton.toolTip = "Compute results"
             self.ui.applyButton.enabled = True
+
+
+    def checkInputVolumeAndSegmentations(self):
+        """
+        
+        """      
+        self.logic.inputVolume = self.ui.inputVolumeSelector.currentNode()
+        if not self.logic.inputVolume:
+            slicer.util.messageBox("No input volume.")
+            raise ValueError("No input volume.")
+        else: 
+            print("self.logic.inputVolume found")
+
+        self.logic.inputSegmentation = self.ui.inputSegmentationSelector.currentNode()
+         
+        if self.logic.inputSegmentation:
+            print("self.logic.inputsegmentation found")
+            segmentation = self.logic.inputSegmentation.GetSegmentation()
+            self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+            if not self.logic.rightLungMaskSegmentID: 
+                slicer.util.messageBox("right lung input segmentent missing.")
+                raise ValueError("Right lung input segment missing.")
+            else: 
+                print("Right lung  input segment found.")
+            self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+            if not self.logic.leftLungMaskSegmentID: 
+                slicer.util.messageBox("Left lung input segmentent missing.")
+                raise ValueError("Left lung input segment missing.")
+            else: 
+                print("Left lung  input segment found.")
+               
+        else: 
+            slicer.util.messageBox("Input segmentation missing.")
+            raise ValueError("No input segmentation.")
 
 
     def setParameterNode(self, inputParameterNode):
@@ -592,18 +638,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.niigzFormatCheckBox.checked = self.isNiiGzFormat
 
         # Update buttons states and tooltips
-        if self.logic.inputSegmentation:
-            segmentation = self.logic.inputSegmentation.GetSegmentation()
-            self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
-            self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
 
-        if (self.logic.inputVolume and self.logic.inputSegmentation
-            and self.logic.rightLungMaskSegmentID and self.logic.leftLungMaskSegmentID):
-            self.ui.applyButton.toolTip = "Compute results"
-            self.ui.applyButton.enabled = True
-        else:
-            self.ui.applyButton.toolTip = "Select input volume and right and left lung masks"
-            self.ui.applyButton.enabled = False
+        self.ui.applyButton.toolTip = "Compute results"
+        self.ui.applyButton.enabled = True
 
         self.ui.createPDFReportButton.enabled = (self.logic.resultsTable is not None)
         self.ui.saveResultsCSVButton.enabled = (self.logic.resultsTable is not None)
@@ -643,7 +680,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.logic.inputSegmentation:
             segmentation = self.logic.inputSegmentation.GetSegmentation()
             self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
+            print(self.logic.rightLungMaskSegmentID)
             self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
+            print(self.logic.leftLungMaskSegmentID)
 
         thresholds = {}
         thresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
@@ -1240,6 +1279,8 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Run processing when user clicks "Apply" button.
         """
+        self.checkInputVolumeAndSegmentations()
+        
         qt.QApplication.setOverrideCursor(qt.Qt.WaitCursor)
         try:
             # Compute output
@@ -1898,10 +1939,10 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         totalMlArray.SetName("Total (ml)")
 
         functionalMlArray = vtk.vtkDoubleArray()
-        functionalMlArray.SetName("Inflated (ml)")
+        functionalMlArray.SetName("Functional (ml)")
 
         functionalPercentArray = vtk.vtkDoubleArray()
-        functionalPercentArray.SetName("Inflated (%)")
+        functionalPercentArray.SetName("Functional (%)")
 
         affectedMlArray = vtk.vtkDoubleArray()
         affectedMlArray.SetName("Affected (ml)")
