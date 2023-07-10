@@ -182,3 +182,7 @@ V 2.68
 
 ENH: Add upper half and lower half of the lungs in both segmenter and analyzer. 
 BUG: Remove header bug in regionresults.csv
+
+V 2.69
+
+BUG: Remove bug calculating functional volume in extended (infiltration) analysis   
