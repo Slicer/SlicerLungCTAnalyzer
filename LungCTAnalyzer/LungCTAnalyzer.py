@@ -519,12 +519,13 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
         
         #initial masks always on
-        segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
-        segmentationDisplayNode.Visibility2DOn()
-        self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
-        segmentationDisplayNode.Visibility3DOff()
-        self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
-        
+        if self.logic.inputSegmentation: 
+            segmentationDisplayNode = self.logic.inputSegmentation.GetDisplayNode()
+            segmentationDisplayNode.Visibility2DOn()
+            self.ui.toggleInputSegmentationVisibility2DPushButton.text = "Hide mask segments in 2D" 
+            segmentationDisplayNode.Visibility3DOff()
+            self.ui.toggleInputSegmentationVisibility3DPushButton.text = "Show mask segments in 3D" 
+            
         if (self.logic.inputVolume and self.logic.inputSegmentation
             and self.logic.rightLungMaskSegmentID and self.logic.leftLungMaskSegmentID):
             self.ui.applyButton.toolTip = "Compute results"
