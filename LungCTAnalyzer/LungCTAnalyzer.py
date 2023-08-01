@@ -28,7 +28,9 @@ class LungCTAnalyzer(ScriptedLoadableModule):
         self.parent.helpText = """Lung analysis consists of producing five different segmentations of lungs based on Hounsfield unit range:
 Bulla / emphysema, inflated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
 as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ -
-for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.
+for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.<br>
+The extension transmits basic information when you use it (simple usage counter). No IP or any personal data are being sent.  
+
 """
         self.parent.acknowledgementText = """
 The first version of this file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Parts of this code were inspired by a code snippet (https://gist.github.com/lassoan/5ad51c89521d3cd9c5faf65767506b37) of Andras Lasso, PerkLab.
