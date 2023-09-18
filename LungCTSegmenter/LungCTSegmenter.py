@@ -181,7 +181,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       counter_values = self.get_counter_values()
       number_users_this_year = self.get_users("lcts")
       if counter_values: 
-          usage_text = " LungCTSegmenter: " + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23," + str(number_users_this_year) + " users since 9/23"       
+          usage_text = " Lung CT Segmenter \n" + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23,\n" + str(number_users_this_year) + " users since 9/23"       
           self.ui.label_lcts.text = usage_text
 
       # Populate comboboxes
