@@ -97,8 +97,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.lungThresholdMax = 0. 
       self.vesselThresholdMin = 0.
       self.vesselThresholdMax = 0.
-
-      
+ 
   
   class checkboxDetails: 
       def __init__(self, checkbox_name, uiID):
@@ -140,6 +139,30 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # Create logic class. Logic implements all computations that should be possible to run
       # in batch mode, without a graphical user interface.
       self.logic = LungCTSegmenterLogic()
+
+      import shutil
+      import subprocess
+      versionInfo = subprocess.check_output([shutil.which('PythonSlicer'), "-m", "pip", "show", "TotalSegmentator"]).decode()
+      # print(versionInfo)      
+ 
+      # Split the text into lines
+      lines = versionInfo.split('\n')
+
+      # Search for the "Version" field
+      self.logic.referencemuscle = ""
+      for line in lines:
+          if line.startswith("Version:"):
+              version = line.split(":")[1].strip()
+              if version.startswith("2."):
+                  print("TotalSegmentator Version 2 detected")
+                  self.logic.referencemuscle = "left deep back muscle"
+              else:
+                  print("TotalSegmentator 1 detected")
+                  self.logic.referencemuscle = "left erector spinae muscle"
+              break
+      else:
+          print("Version information not found")
+
 
       self.outputCheckBoxesDict = {
         "airways": self.ui.toggleAirwaysCheckBox, 
@@ -1415,6 +1438,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def engineAI(self, _name):
         self.getParameterNode().SetParameter("EngineAI", _name)
 
+    @property
+    def referencemuscle(self):
+        return self.getParameterNode().GetParameter("ReferenceMuscle")
+
+    @referencemuscle.setter
+    def referencemuscle(self, _name):
+        self.getParameterNode().SetParameter("ReferenceMuscle", _name)
+    
     def brighterColor(self, rgb):
         import numpy as np
         scaleFactor = 1.5
@@ -2460,11 +2491,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 newSeg.SetName("trachea")
 
                 newSeg = slicer.vtkSegment()
-                newSeg.SetName("left erector spinae muscle")
-                tempSegmentationNode.GetSegmentation().AddSegment(newSeg,"left erector spinae muscle")
-                muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                print(self.referencemuscle)
+                newSeg.SetName(self.referencemuscle)
+                tempSegmentationNode.GetSegmentation().AddSegment(newSeg,self.referencemuscle)
+                muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(self.referencemuscle)
                 newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(muscleSegID))
-                newSeg.SetName("left erector spinae muscle")
+                newSeg.SetName(self.referencemuscle)
                 
                 # self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
                 self.segmentEditorWidget.setSegmentationNode(tempSegmentationNode)
@@ -2488,7 +2520,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 segStatLogic.computeStatistics()
                 stats = segStatLogic.getStatistics()
                 
-                # Get mean HU of each segment, use trachea (air = -1000) and left erector spinae muscle (muscle = 30) for normalization
+                # Get mean HU of each segment, use trachea (air = -1000) and left deep back muscle (muscle = 30) for normalization
                 self.meanAir = 0.
                 self.meanMuscle = 0.
                 centroid_trachea = [0,0,0]
@@ -2496,12 +2528,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
                 centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
                 self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName(self.referencemuscle)
                 self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
                 
                 print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
                 
-                print("Mean radiodensity of left erector spinar muscle = {0:.2f}".format(self.meanMuscle) + " HU")
+                print("Mean radiodensity of deep back muscle muscle = {0:.2f}".format(self.meanMuscle) + " HU")
                 
 
                 if self.calibrateData:
