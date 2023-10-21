@@ -31,6 +31,7 @@ class LungCTSegmenter(ScriptedLoadableModule):
     self.parent.helpText = """
 This module segments lungs and airways from chest CT either with a few user-defined landmarks or by involving AI. 
 See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
+The extension transmits basic information when you use it (counts of manual -, AI - , airway and vessel segmentation). No IP or any personal data are being sent.  
 
 """
     self.parent.acknowledgementText = """
@@ -115,6 +116,17 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         print(f"Unable to get counter values: {e}")
     return None  # or some default values
 
+  def get_users(self, program):
+    try:
+      url = 'http://scientific-networks.de/get_users.php'
+      api_key = "WVnB2F7Uibt2TC"
+      params = {'api_key': api_key, 'prog': program, 'year': "2023"}
+      response = requests.get(url, params=params, timeout=5)
+      return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Unable to get users {e}")
+    return None  # or some default values
+
   
   def setup(self):
       """
@@ -190,8 +202,9 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
       # use it
       counter_values = self.get_counter_values()
+      number_users_this_year = self.get_users("lcts")
       if counter_values: 
-          usage_text = " LungCTSegmenter: " + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23"       
+          usage_text = " Lung CT Segmenter \n" + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23,\n" + str(number_users_this_year) + " users since 9/23"       
           self.ui.label_lcts.text = usage_text
 
       # Populate comboboxes
@@ -2204,6 +2217,14 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         except requests.exceptions.RequestException as e:
             print(f"Unable to increment counter: {e}")
 
+    def increment_users(self,program):
+        try:
+            url = 'http://scientific-networks.de/increment_users.php'
+            api_key = "WVnB2F7Uibt2TC"
+            params = {'api_key': api_key, 'program': program}
+            requests.get(url, params=params,  timeout=5)
+        except requests.exceptions.RequestException as e:
+            print(f"Unable to increment counter: {e}")
 
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
@@ -2215,7 +2236,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         # use it
         self.increment_counter('counter_lcts')  # increment counter_lcts
-
+        self.increment_users('lcts')
         if not self.useAI: 
             self.increment_counter('counter_man')
             self.showStatusMessage('Finalize region growing...')
@@ -2688,7 +2709,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
                 self.segmentEditorNode.SetSelectedSegmentID("airways")
                 self.segmentEditorWidget.setActiveEffectByName("Local Threshold")
-                effect = self.segmentEditorWidget.activeEffect()             
+                effect = self.segmentEditorWidget.activeEffect()
                 
                 effect.setParameter("AutoThresholdMethod","OTSU")
                 effect.setParameter("AutoThresholdMode","SET_MIN_UPPER")
@@ -2698,6 +2719,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("HistogramSetUpper","UPPER")
                 effect.setParameter("MaximumThreshold",self.medianLungs / 2)
                 effect.setParameter("MinimumThreshold",scalarRange[0])
+                print("MaximumThreshold: " + str(self.medianLungs / 2))
+                print("MinimumThreshold: " + str(scalarRange[0]))
                                 
                 if self.airwaySegmentationDetailLevel == "very low detail":
                     effect.setParameter("MinimumDiameterMm","5")

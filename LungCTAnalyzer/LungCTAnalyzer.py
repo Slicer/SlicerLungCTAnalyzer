@@ -28,7 +28,9 @@ class LungCTAnalyzer(ScriptedLoadableModule):
         self.parent.helpText = """Lung analysis consists of producing five different segmentations of lungs based on Hounsfield unit range:
 Bulla / emphysema, inflated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
 as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ -
-for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.
+for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.<br>
+The extension transmits basic information when you use it (simple usage counter). No IP or any personal data are being sent.  
+
 """
         self.parent.acknowledgementText = """
 The first version of this file was originally developed by Rudolf Bumm, Kantonsspital Graubünden, Switzerland. Parts of this code were inspired by a code snippet (https://gist.github.com/lassoan/5ad51c89521d3cd9c5faf65767506b37) of Andras Lasso, PerkLab.
@@ -382,21 +384,20 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         import os
         import requests
 
-        def get_counter_values():            
+        def get_users(program):
             try:
-                url = 'http://scientific-networks.de/get_counter_values.php'
-                api_key = "WVnB2F7Uibt2TC"
-                params = {'api_key': api_key}
-                response = requests.get(url, params=params,  timeout=5)
-                return response.json()
+              url = 'http://scientific-networks.de/get_users.php'
+              api_key = "WVnB2F7Uibt2TC"
+              params = {'api_key': api_key, 'prog': program, 'year': "2023"}
+              response = requests.get(url, params=params, timeout=5)
+              return response.json()
             except requests.exceptions.RequestException as e:
-                print(f"Unable to get counter values: {e}")
+                print(f"Unable to get users {e}")
             return None  # or some default values
-
         # use it
-        counter_values = get_counter_values()
-        if counter_values: 
-            usage_text = counter_values['counter_lcta'] + " uses since 5/23"       
+        uses = get_users("lcta")
+        if uses: 
+            usage_text = str(uses) + " uses since 9/23"       
             self.ui.label_uses.text = usage_text
         
         
@@ -2868,6 +2869,17 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
             requests.get(url, params=params,  timeout=5)
         except requests.exceptions.RequestException as e:
             print(f"Unable to increment counter: {e}")
+            
+
+
+    def increment_users(self,program):
+        try:
+            url = 'http://scientific-networks.de/increment_users.php'
+            api_key = "WVnB2F7Uibt2TC"
+            params = {'api_key': api_key, 'program': program}
+            requests.get(url, params=params,  timeout=5)
+        except requests.exceptions.RequestException as e:
+            print(f"Unable to increment counter: {e}")
     
     def process(self):
         """
@@ -2875,6 +2887,7 @@ class LungCTAnalyzerLogic(ScriptedLoadableModuleLogic):
         Can be used without GUI widget.
         """
         self.increment_counter('counter_lcta')  # increment counter_lcta
+        self.increment_users('lcta')  # increment usage lcta
 
         logging.info('Processing started.')
         import time
