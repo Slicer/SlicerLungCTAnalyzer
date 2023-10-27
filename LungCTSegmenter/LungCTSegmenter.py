@@ -166,10 +166,10 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
           if line.startswith("Version:"):
               version = line.split(":")[1].strip()
               if version.startswith("2."):
-                  print("TotalSegmentator Version 2 detected")
+                  # print("TotalSegmentator Version 2 detected")
                   self.logic.referencemuscle = "left deep back muscle"
               else:
-                  print("TotalSegmentator 1 detected")
+                  # print("TotalSegmentator 1 detected")
                   self.logic.referencemuscle = "left erector spinae muscle"
               break
       else:
