@@ -152,29 +152,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       # in batch mode, without a graphical user interface.
       self.logic = LungCTSegmenterLogic()
 
-      import shutil
-      import subprocess
-      versionInfo = subprocess.check_output([shutil.which('PythonSlicer'), "-m", "pip", "show", "TotalSegmentator"]).decode()
-      # print(versionInfo)      
- 
-      # Split the text into lines
-      lines = versionInfo.split('\n')
-
-      # Search for the "Version" field
-      self.logic.referencemuscle = ""
-      for line in lines:
-          if line.startswith("Version:"):
-              version = line.split(":")[1].strip()
-              if version.startswith("2."):
-                  # print("TotalSegmentator Version 2 detected")
-                  self.logic.referencemuscle = "left deep back muscle"
-              else:
-                  # print("TotalSegmentator 1 detected")
-                  self.logic.referencemuscle = "left erector spinae muscle"
-              break
-      else:
-          print("Version information not found")
-
 
       self.outputCheckBoxesDict = {
         "airways": self.ui.toggleAirwaysCheckBox, 
@@ -2462,6 +2439,30 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 tslogic = slicer.util.getModuleLogic('TotalSegmentator')
                 if not tslogic: 
                     raise RuntimeError("TotalSegmentator program logic not found - please install the TotalSegmentator extension.")
+
+                import shutil
+                import subprocess
+                versionInfo = subprocess.check_output([shutil.which('PythonSlicer'), "-m", "pip", "show", "TotalSegmentator"]).decode()
+                # print(versionInfo)      
+             
+                # Split the text into lines
+                lines = versionInfo.split('\n')
+
+                # Search for the "Version" field
+                self.referencemuscle = ""
+                for line in lines:
+                    if line.startswith("Version:"):
+                        version = line.split(":")[1].strip()
+                        if version.startswith("2."):
+                            # print("TotalSegmentator Version 2 detected")
+                            self.referencemuscle = "left deep back muscle"
+                        else:
+                            # print("TotalSegmentator 1 detected")
+                            self.referencemuscle = "left erector spinae muscle"
+                        break
+                else:
+                    print("Version information not found")
+
 
                 self.tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
                 self.tsOutputExtendedSegmentation = None
