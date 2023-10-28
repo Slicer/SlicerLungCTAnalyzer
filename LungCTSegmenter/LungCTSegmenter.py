@@ -1428,13 +1428,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
     def engineAI(self, _name):
         self.getParameterNode().SetParameter("EngineAI", _name)
 
-    @property
-    def referencemuscle(self):
-        return self.getParameterNode().GetParameter("ReferenceMuscle")
-
-    @referencemuscle.setter
-    def referencemuscle(self, _name):
-        self.getParameterNode().SetParameter("ReferenceMuscle", _name)
     
     def brighterColor(self, rgb):
         import numpy as np
@@ -2443,26 +2436,12 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 import shutil
                 import subprocess
                 versionInfo = subprocess.check_output([shutil.which('PythonSlicer'), "-m", "pip", "show", "TotalSegmentator"]).decode()
-                # print(versionInfo)      
+                #print(versionInfo)      
              
                 # Split the text into lines
-                lines = versionInfo.split('\n')
+                #lines = versionInfo.split('\n')
 
-                # Search for the "Version" field
-                self.referencemuscle = ""
-                for line in lines:
-                    if line.startswith("Version:"):
-                        version = line.split(":")[1].strip()
-                        if version.startswith("2."):
-                            # print("TotalSegmentator Version 2 detected")
-                            self.referencemuscle = "left deep back muscle"
-                        else:
-                            # print("TotalSegmentator 1 detected")
-                            self.referencemuscle = "left erector spinae muscle"
-                        break
-                else:
-                    print("Version information not found")
-
+                self.referencemuscle = "left deep back muscle"
 
                 self.tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
                 self.tsOutputExtendedSegmentation = None
