@@ -2441,7 +2441,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 # Split the text into lines
                 #lines = versionInfo.split('\n')
 
-                self.referencemuscle = "left deep back muscle"
 
                 self.tsOutputSegmentation = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLSegmentationNode', 'TotalSegmentator')
                 self.tsOutputExtendedSegmentation = None
@@ -2491,14 +2490,26 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(tracheaSegID))
                 newSeg.SetName("trachea")
 
-                newSeg = slicer.vtkSegment()
-                print(self.referencemuscle)
-                newSeg.SetName(self.referencemuscle)
-                tempSegmentationNode.GetSegmentation().AddSegment(newSeg,self.referencemuscle)
-                muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(self.referencemuscle)
-                newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(muscleSegID))
-                newSeg.SetName(self.referencemuscle)
-                
+                muscleSegID = None
+                self.referencemuscle = "no reference muscle found" 
+                muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left erector spinae muscle")
+                if muscleSegID:              
+                    # TotalSegmentator v1
+                    self.referencemuscle = "left erector spinae muscle" 
+                else: 
+                    muscleSegID = self.tsOutputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("left deep back muscle")
+                    if muscleSegID:
+                        # TotalSegmentator v2
+                        self.referencemuscle = "left deep back muscle" 
+                    
+                print("Reference: " + self.referencemuscle)
+                if muscleSegID:
+                    newSeg = slicer.vtkSegment()
+                    newSeg.SetName(self.referencemuscle)
+                    tempSegmentationNode.GetSegmentation().AddSegment(newSeg,self.referencemuscle)
+                    newSeg.DeepCopy(self.tsOutputSegmentation.GetSegmentation().GetSegment(muscleSegID))
+                    newSeg.SetName(self.referencemuscle)
+                    
                 # self.segmentEditorWidget.setSegmentationNode(self.outputSegmentation)
                 self.segmentEditorWidget.setSegmentationNode(tempSegmentationNode)
                 self.segmentEditorWidget.setSourceVolumeNode(self.inputVolume)
@@ -2509,43 +2520,44 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("MarginSizeMm","-1")
                 effect.self().onApply()
 
-                import SegmentStatistics
-                segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
-              
-                segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
-                segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
-                segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
-                segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
-                segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
-                segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
-                segStatLogic.computeStatistics()
-                stats = segStatLogic.getStatistics()
-                
-                # Get mean HU of each segment, use trachea (air = -1000) and left deep back muscle (muscle = 30) for normalization
-                self.meanAir = 0.
-                self.meanMuscle = 0.
-                centroid_trachea = [0,0,0]
-                
-                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
-                centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
-                self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName(self.referencemuscle)
-                self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
-                
-                print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
-                
-                print("Mean radiodensity of deep back muscle muscle = {0:.2f}".format(self.meanMuscle) + " HU")
-                
+                if muscleSegID:
+                    import SegmentStatistics
+                    segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+                  
+                    segStatLogic.getParameterNode().SetParameter("Segmentation", tempSegmentationNode.GetID())
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolume", self.inputVolume.GetID())
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.centroid_ras.enabled", "True")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.voxel_count.enabled", "False")
+                    segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled", "False")
+                    segStatLogic.computeStatistics()
+                    stats = segStatLogic.getStatistics()
+                    
+                    # Get mean HU of each segment, use trachea (air = -1000) and left deep back muscle (muscle = 30) for normalization
+                    self.meanAir = 0.
+                    self.meanMuscle = 0.
+                    centroid_trachea = [0,0,0]
+                    
+                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName("trachea")
+                    centroid_trachea = stats[segID,"LabelmapSegmentStatisticsPlugin.centroid_ras"]
+                    self.meanAir = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    segID = tempSegmentationNode.GetSegmentation().GetSegmentIdBySegmentName(self.referencemuscle)
+                    self.meanMuscle = stats[segID,"ScalarVolumeSegmentStatisticsPlugin.mean"]
+                    
+                    print("Mean radiodensity of trachea = {0:.2f}".format(self.meanAir) + " HU")
+                    
+                    print("Mean radiodensity of deep back muscle muscle = {0:.2f}".format(self.meanMuscle) + " HU")
+                    
 
-                if self.calibrateData:
-                    self.showStatusMessage('Calibrate data ...')
-                    self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
-                    voxels = slicer.util.arrayFromVolume(self.inputVolume)
-                    # voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
-                    voxels_calibrated = self.calibrate_ct_scan(voxels, self.meanAir, self.meanMuscle)
-                    slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_calibrated)
-                    slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
-                    print(f"Calibrated volume created.")
+                    if self.calibrateData:
+                        self.showStatusMessage('Calibrate data ...')
+                        self.calibratedInputVolumeNode = slicer.modules.volumes.logic().CloneVolume(self.inputVolume, "CT_calibrated")
+                        voxels = slicer.util.arrayFromVolume(self.inputVolume)
+                        # voxels_standardized = self.standardize_ct_scan(voxels, mean_air, mean_muscle)
+                        voxels_calibrated = self.calibrate_ct_scan(voxels, self.meanAir, self.meanMuscle)
+                        slicer.util.updateVolumeFromArray(self.calibratedInputVolumeNode, voxels_calibrated)
+                        slicer.util.setSliceViewerLayers(self.calibratedInputVolumeNode)
+                        print(f"Calibrated volume created.")
                     
                 if self.detailedAirways:
                     # add one fiducial markup
