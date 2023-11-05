@@ -2709,9 +2709,9 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 effect.setParameter("FeatureSizeMm:","3")
                 effect.setParameter("HistogramSetLower","LOWER")
                 effect.setParameter("HistogramSetUpper","UPPER")
-                effect.setParameter("MaximumThreshold",self.medianLungs / 2)
+                effect.setParameter("MaximumThreshold",self.medianLungs)
                 effect.setParameter("MinimumThreshold",scalarRange[0])
-                print("MaximumThreshold: " + str(self.medianLungs / 2))
+                print("MaximumThreshold: " + str(self.medianLungs))
                 print("MinimumThreshold: " + str(scalarRange[0]))
                                 
                 if self.airwaySegmentationDetailLevel == "very low detail":
