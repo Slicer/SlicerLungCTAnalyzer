@@ -334,12 +334,13 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
       Called each time the user opens a different module.
       """
-      segmentationNode = self.logic.outputSegmentation
-      segmentationNode.CreateDefaultDisplayNodes()
-      segmentationDisplayNode = segmentationNode.GetDisplayNode()
-      if not segmentationDisplayNode.GetVisibility2D():
-          segmentationDisplayNode.Visibility2DOn()
-          segmentationDisplayNode.Visibility3DOn()
+      if self.logic.outputSegmentation: 
+          segmentationNode = self.logic.outputSegmentation
+          segmentationNode.CreateDefaultDisplayNodes()
+          segmentationDisplayNode = segmentationNode.GetDisplayNode()
+          if not segmentationDisplayNode.GetVisibility2D():
+              segmentationDisplayNode.Visibility2DOn()
+              segmentationDisplayNode.Visibility3DOn()
 
       # Do not react to parameter node changes (GUI will be updated when the user enters into the module)
       self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
