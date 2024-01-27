@@ -2305,8 +2305,18 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 torch = torchLogic.installTorch(askConfirmation=True)
                 if torch is None:
                   raise ValueError('Torch needs to be installed to use this module.')
-            else:
-                import torch
+            else:       
+                # torch is installed, check version
+                minimumTorchVersion = "2"
+                from packaging import version
+                print("Torch version:")
+                print(version.parse(torchLogic.torch.__version__))
+                if version.parse(torchLogic.torch.__version__) < version.parse(minimumTorchVersion):
+                    raise ValueError(f'PyTorch version {torchLogic.torch.__version__} is not compatible with this module.'
+                                     + f' Minimum required version is {minimumTorchVersion}. You can use "PyTorch Util" module to install PyTorch'
+                                     + f' with version requirement set to: >={minimumTorchVersion}')
+            
+            import torch
             if not torch.cuda.is_available():
                 logging.info('Pytorch CUDA is not available. AI will use CPU processing.')
                 if not slicer.util.confirmYesNoDisplay("Warning: Pytorch CUDA is not found on your system. The AI processing will last 3-10 minutes. Are you sure you want to continue AI segmentation?"):
