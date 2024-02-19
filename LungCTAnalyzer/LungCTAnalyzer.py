@@ -554,17 +554,29 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 slicer.util.messageBox("right lung input segmentent missing.")
                 raise ValueError("Right lung input segment missing.")
             else: 
-                print("Right lung  input segment found.")
+                print("Right lung input segment found.")
             self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
             if not self.logic.leftLungMaskSegmentID: 
-                slicer.util.messageBox("Left lung input segmentent missing.")
+                slicer.util.messageBox("Left lung input segment missing.")
                 raise ValueError("Left lung input segment missing.")
             else: 
-                print("Left lung  input segment found.")
+                print("Left lung input segment found.")
                
         else: 
             slicer.util.messageBox("Input segmentation missing.")
             raise ValueError("No input segmentation.")
+
+        if self.lobeAnalysis: 
+            lobemissing = False
+            for lobeName in ['right upper lobe', 'right middle lobe', 'right lower lobe', 'left upper lobe', 'left lower lobe' ]:
+                sourceSegID = self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(lobeName)
+                if not sourceSegID: 
+                    slicer.util.messageBox(lobeName + " input segment missing. Recreate input segmentation with AI and lobe generation.")
+                    lobeMissing = True
+                else: 
+                    print(lobeName + "input segment found.")
+            if lobeMissing:     
+                raise ValueError("Lobe input segment is missing.")
 
 
     def setParameterNode(self, inputParameterNode):
@@ -682,9 +694,9 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.logic.inputSegmentation:
             segmentation = self.logic.inputSegmentation.GetSegmentation()
             self.logic.rightLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("right lung")
-            print(self.logic.rightLungMaskSegmentID)
+            # print(self.logic.rightLungMaskSegmentID)
             self.logic.leftLungMaskSegmentID = segmentation.GetSegmentIdBySegmentName("left lung")
-            print(self.logic.leftLungMaskSegmentID)
+            # print(self.logic.leftLungMaskSegmentID)
 
         thresholds = {}
         thresholds['thresholdBullaLower'] = self.ui.BullaRangeWidget.minimumValue
