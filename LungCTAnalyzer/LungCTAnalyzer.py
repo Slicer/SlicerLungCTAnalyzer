@@ -567,14 +567,14 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             raise ValueError("No input segmentation.")
 
         if self.lobeAnalysis: 
-            lobemissing = False
+            lobeMissing = False
             for lobeName in ['right upper lobe', 'right middle lobe', 'right lower lobe', 'left upper lobe', 'left lower lobe' ]:
                 sourceSegID = self.logic.inputSegmentation.GetSegmentation().GetSegmentIdBySegmentName(lobeName)
                 if not sourceSegID: 
                     slicer.util.messageBox(lobeName + " input segment missing. Recreate input segmentation with AI and lobe generation.")
                     lobeMissing = True
                 else: 
-                    print(lobeName + "input segment found.")
+                    print(lobeName + " input segment found.")
             if lobeMissing:     
                 raise ValueError("Lobe input segment is missing.")
 
