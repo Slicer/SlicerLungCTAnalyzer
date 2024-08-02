@@ -178,12 +178,7 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
         
       # use it
-      counter_values = self.get_counter_values()
-      number_users_this_year = self.get_users("lcts")
-      if counter_values: 
-          usage_text = " Lung CT Segmenter \n" + counter_values['counter_lcts'] + " uses [man: " + counter_values['counter_man'] + " ai: " + counter_values['counter_ai'] + " lm: " + counter_values['counter_lm'] + " ts: " + counter_values['counter_ts'] + " ml: " + counter_values['counter_ml'] + " aw: " + counter_values['counter_aw'] + " ve: " + counter_values['counter_ve'] + "] since 5/23,\n" + str(number_users_this_year) + " users since 9/23"       
-          self.ui.label_lcts.text = usage_text
-
+      
       # Populate comboboxes
       list = ["very low detail","low detail", "medium low detail", "medium detail", "high detail"]
       self.ui.detailLevelComboBox.addItems(list);
@@ -193,7 +188,6 @@ class LungCTSegmenterWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         "lungmask LTRCLobes", 
         "lungmask LTRCLobes_R231", 
         "lungmask R231CovidWeb", 
-        "MONAILabel", 
         "TotalSegmentator lung basic", 
         "TotalSegmentator lung extended", 
         ]
@@ -2186,24 +2180,8 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             return False
 
 
-    def increment_counter(self, counter):
-        try:
-            url = 'http://scientific-networks.de/increment_counter.php'
-            api_key = "WVnB2F7Uibt2TC"
-            params = {'api_key': api_key, 'counter': counter}
-            requests.get(url, params=params,  timeout=5)
-        except requests.exceptions.RequestException as e:
-            print(f"Unable to increment counter: {e}")
-
-    def increment_users(self,program):
-        try:
-            url = 'http://scientific-networks.de/increment_users.php'
-            api_key = "WVnB2F7Uibt2TC"
-            params = {'api_key': api_key, 'program': program}
-            requests.get(url, params=params,  timeout=5)
-        except requests.exceptions.RequestException as e:
-            print(f"Unable to increment counter: {e}")
-
+    
+    
     def applySegmentation(self):
         if not self.segmentEditorWidget.activeEffect() and not self.useAI:
             # no region growing was done
@@ -2213,10 +2191,7 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         startTime = time.time()
 
         # use it
-        self.increment_counter('counter_lcts')  # increment counter_lcts
-        self.increment_users('lcts')
         if not self.useAI: 
-            self.increment_counter('counter_man')
             self.showStatusMessage('Finalize region growing...')
             # Ensure closed surface representation is not present (would slow down computations)
             self.outputSegmentation.RemoveClosedSurfaceRepresentation()
@@ -2328,7 +2303,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 _doAI = True
                 logging.info('Pytorch CUDA is available. AI will use GPU processing.')
         if _doAI:
-            self.increment_counter('counter_ai')
             # use unsampled, original input volume and set geometry
             self.outputSegmentation.SetReferenceImageGeometryParameterFromVolumeNode(self.inputVolume)
             wasModified = self.outputSegmentation.StartModify()
@@ -2337,7 +2311,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
             self.outputSegmentation.Modified()
             self.outputSegmentation.EndModify(wasModified)           
             if self.engineAI.find("lungmask") == 0:
-                self.increment_counter('counter_lm')
                 if self.updateAI:
                     if slicer.util.confirmYesNoDisplay("Updating lunkmask AI will restart 3D Slicer. Are you sure?"):
                         print("uninstalling lungmask ... ")
@@ -2445,7 +2418,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 logging.info("Segmentation done.")
 
             elif self.engineAI.find("TotalSegmentator") == 0:
-                self.increment_counter('counter_ts')
                 self.showStatusMessage(' Creating segmentations with TotalSegmentator ...')
                 tslogic = slicer.util.getModuleLogic('TotalSegmentator')
                 if not tslogic: 
@@ -2594,7 +2566,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
                 
             elif self.engineAI.find("MONAILabel") == 0:
 
-                self.increment_counter('counter_ml')
                 _runScripted = False
                 if _runScripted:
                    # This is not yet fully supported
@@ -2669,7 +2640,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         if self.detailedAirways:
         
-            self.increment_counter('counter_aw')
             segID = self.outputSegmentation.GetSegmentation().GetSegmentIdBySegmentName("other")
             if segID: 
                 self.outputSegmentation.GetSegmentation().RemoveSegment(segID)
@@ -2820,7 +2790,6 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
 
         self.maskedVolume = None
         if self.createVessels:
-            self.increment_counter('counter_ve')
             if not self.segmentEditorWidget.effectByName("Wrap Solidify"):
                 slicer.util.errorDisplay("Please install 'Wrap Solidify' extension using Extension Manager.")
             else:
