@@ -30,7 +30,7 @@ class LungCTSegmenter(ScriptedLoadableModule):
     self.parent.contributors = ["Rudolf Bumm (KSGR), Andras Lasso (PERK)"]
     self.parent.helpText = """
 This module segments lungs and airways from chest CT either with a few user-defined landmarks or by involving AI. 
-See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
+See more information in <a href="https://github.com/Slicer/SlicerLungCTAnalyzer">LungCTAnalyzer extension documentation</a>.<br>
 The extension transmits basic information when you use it (counts of manual -, AI - , airway and vessel segmentation). No IP or any personal data are being sent.  
 
 """

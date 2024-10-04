@@ -13,9 +13,9 @@ The aim of this project (Lung CT Analyzer, LCTA) was to develop a software progr
 <br>
 [Video Lung CT Analyzer](https://youtu.be/JcgMnDhlknM) <br>
 <br>
-[Installation manual](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki/Installation)<br>
+[Installation manual](https://github.com/Slicer/SlicerLungCTAnalyzer/wiki/Installation)<br>
 <br>
-[Instruction manual](https://github.com/rbumm/SlicerLungCTAnalyzer/wiki)</b><br>
+[Instruction manual](https://github.com/Slicer/SlicerLungCTAnalyzer/wiki)</b><br>
 <br>
 <br>
 <b>Details</b><br>
@@ -66,13 +66,13 @@ Thank you Johannes Hofmanninger.
 <br>
 <b>Screenshots:</b> <br>
 <br>
-![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
+![alt text](https://github.com/Slicer/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerGUI.jpg?raw=true)
 <br>
 <br>
 Graphical user interface
 <br>
 <br>
-![alt text](https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerCovid19Result.jpg?raw=true)
+![alt text](https://github.com/Slicer/SlicerLungCTAnalyzer/blob/master/Screenshots/LungCTAnalyzerCovid19Result.jpg?raw=true)
 <br>
 <br>
 CT Lung Analyzer with COVID-19 result table
@@ -82,7 +82,7 @@ Image data: COVID-19 patient under surveillance, with patient's permission.<br>
 <b>Citations</b><br>
 <br>
 For publications please include this text (modifying the initial part to describe your use case):<br>
-"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/rbumm/SlicerLungCTAnalyzer/)"
+"We performed a volumetric analysis and/or visualization in 3D Slicer (http://www.slicer.org) via the Lung CT Analyzer project (https://github.com/Slicer/SlicerLungCTAnalyzer/)"
 <br>
 <br>
 If you use the lungmask U-net function from this software in your research, please cite: 

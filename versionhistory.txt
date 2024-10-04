@@ -185,4 +185,6 @@ BUG: Remove header bug in regionresults.csv
 
 V 2.69
 
-BUG: Remove bug calculating functional volume in extended (infiltration) analysis   
+BUG: Remove bug calculating functional volume in extended (infiltration) analysis
+
+2024-10-04 Repository moved to https://github.com/Slicer/SlicerLungCTAnalyzer

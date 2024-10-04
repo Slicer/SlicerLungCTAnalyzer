@@ -28,7 +28,7 @@ class LungCTAnalyzer(ScriptedLoadableModule):
         self.parent.helpText = """Lung analysis consists of producing five different segmentations of lungs based on Hounsfield unit range:
 Bulla / emphysema, inflated lung, infiltrated llung, collapsed lung and thoracic vessels. It allows a volume quantification
 as well as a spacial representation of the diseased lung regions. Furthermore, we introduce a new parameter - CovidQ -
-for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/rbumm/SlicerLungCTAnalyzer">module documentation</a>.<br>
+for an instant estimation of the severity of  infestation. See more information in <a href="https://github.com/Slicer/SlicerLungCTAnalyzer">module documentation</a>.<br>
 The extension transmits basic information when you use it (simple usage counter). No IP or any personal data are being sent.  
 
 """
@@ -62,7 +62,7 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="Lung",
         sampleName='DemoChestCT',
-        uris='https://github.com/rbumm/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerChestCT.nrrd',
+        uris='https://github.com/Slicer/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerChestCT.nrrd',
         fileNames='DemoChestCT.nrrd',
         nodeNames='DemoChestCT',
         thumbnailFileName=os.path.join(iconsPath, 'DemoChestCT.png'),
@@ -72,7 +72,7 @@ def registerSampleData():
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         category="Lung",
         sampleName='DemoLungMasks',
-        uris='https://github.com/rbumm/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerMaskSegmentation.seg.nrrd',
+        uris='https://github.com/Slicer/SlicerLungCTAnalyzer/releases/download/SampleData/LungCTAnalyzerMaskSegmentation.seg.nrrd',
         fileNames='DemoLungMasks.seg.nrrd',
         nodeNames='DemoLungMasks',
         thumbnailFileName=os.path.join(iconsPath, 'DemoLungMasks.png'),
@@ -406,7 +406,7 @@ class LungCTAnalyzerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         import json
         
         if self.checkForUpdates: 
-            link = "https://github.com/rbumm/SlicerLungCTAnalyzer/blob/master/version.json?raw=true"
+            link = "https://github.com/Slicer/SlicerLungCTAnalyzer/blob/master/version.json?raw=true"
             try:
                 f = urlopen(link)
                 myfile = f.read()

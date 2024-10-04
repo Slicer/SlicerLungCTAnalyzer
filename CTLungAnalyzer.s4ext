@@ -6,7 +6,7 @@
 
 # This is source code manager (i.e. svn)
 scm git
-scmurl https://github.com/rbumm/SlicerLungCTAnalyzer
+scmurl https://github.com/Slicer/SlicerLungCTAnalyzer
 scmrevision master
 
 # list dependencies
@@ -18,7 +18,7 @@ depends NA
 build_subdirectory .
 
 # homepage
-homepage https://github.com/rbumm/SlicerLungCTAnalyzer#lung-ct-analyzer
+homepage https://github.com/Slicer/SlicerLungCTAnalyzer#lung-ct-analyzer
 
 # Firstname1 Lastname1 ([SubOrg1, ]Org1), Firstname2 Lastname2 ([SubOrg2, ]Org2)
 # For example: Jane Roe (Superware), John Doe (Lab1, Nowhere), Joe Bloggs (Noware)
@@ -28,7 +28,7 @@ contributors Rudolf Bumm (KSGR Chur Switzerland)
 category Chest Imaging Platform
 
 # url to icon (png, size 128x128 pixels)
-iconurl https://raw.githubusercontent.com/rbumm/SlicerLungCTAnalyzer/master/LungCTAnalyzer.png
+iconurl https://raw.githubusercontent.com/Slicer/SlicerLungCTAnalyzer/master/LungCTAnalyzer.png
 
 # Give people an idea what to expect from this code
 #  - Is it just a test or something you stand behind?
